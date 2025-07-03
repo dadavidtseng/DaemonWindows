@@ -3,14 +3,14 @@
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-#include "Game/GameCommon.hpp"
+#include "Game/Framework/GameCommon.hpp"
 
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Platform/Window.hpp"
 #include "Engine/Renderer/Renderer.hpp"
-#include "Game/App.hpp"
+#include "Game/Framework/App.hpp"
 
 //-----------------------------------------------------------------------------------------------
 void DebugDrawLine(Vec2 const& start, Vec2 const& end, float thickness, Rgba8 const& color)

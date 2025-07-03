@@ -3,7 +3,7 @@
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-#include "Game/App.hpp"
+#include "Game/Framework/App.hpp"
 
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Core/Clock.hpp"
@@ -18,8 +18,8 @@
 #include "Engine/Platform/Window.hpp"
 // #include "Engine/Platform/WindowEx.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
-#include "Game/Game.hpp"
-#include "Game/GameCommon.hpp"
+#include "Game/Gameplay/Game.hpp"
+#include "Game/Framework/GameCommon.hpp"
 
 //----------------------------------------------------------------------------------------------------
 App*         g_theApp        = nullptr;       // Created and owned by Main_Windows.cpp
