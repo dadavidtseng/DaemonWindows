@@ -192,13 +192,17 @@
     <ClCompile Include="Framework\App.cpp" />
     <ClCompile Include="Framework\GameCommon.cpp" />
     <ClCompile Include="Framework\Main_Windows.cpp" />
+    <ClCompile Include="Gameplay\Actor.cpp" />
     <ClCompile Include="Gameplay\Game.cpp" />
+    <ClCompile Include="Subsystem\Window\WindowSubsystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineBuildPreferences.hpp" />
     <ClInclude Include="Framework\App.hpp" />
     <ClInclude Include="Framework\GameCommon.hpp" />
+    <ClInclude Include="Gameplay\Actor.hpp" />
     <ClInclude Include="Gameplay\Game.hpp" />
+    <ClInclude Include="Subsystem\Window\WindowSubsystem.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Docs\README.md" />
