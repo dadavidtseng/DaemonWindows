@@ -22,15 +22,14 @@
 #include "Game/Framework/GameCommon.hpp"
 
 //----------------------------------------------------------------------------------------------------
-App*         g_theApp        = nullptr;       // Created and owned by Main_Windows.cpp
-AudioSystem* g_theAudio      = nullptr;       // Created and owned by the App
-BitmapFont*  g_theBitmapFont = nullptr;       // Created and owned by the App
-Game*        g_theGame       = nullptr;       // Created and owned by the App
-Renderer*    g_theRenderer   = nullptr;       // Created and owned by the App
+App*                   g_theApp        = nullptr;       // Created and owned by Main_Windows.cpp
+AudioSystem*           g_theAudio      = nullptr;       // Created and owned by the App
+BitmapFont*            g_theBitmapFont = nullptr;       // Created and owned by the App
+Game*                  g_theGame       = nullptr;       // Created and owned by the App
+Renderer*              g_theRenderer   = nullptr;       // Created and owned by the App
+RandomNumberGenerator* g_theRNG        = nullptr;       // Created and owned by the App
+Window*                g_theWindow     = nullptr;       // Created and owned by the App
 
-RandomNumberGenerator* g_theRNG    = nullptr;       // Created and owned by the App
-Window*                g_theWindow = nullptr;       // Created and owned by the App
-// WindowEx*              g_theWindowEx = nullptr;       // Created and owned by the App
 std::vector<HWND> g_gameWindows;
 
 //----------------------------------------------------------------------------------------------------
@@ -65,7 +64,7 @@ void App::Startup()
     //-Start-of-Window--------------------------------------------------------------------------------
 
     sWindowConfig windowConfig;
-    windowConfig.m_windowType   = eWindowType::FULLSCREEN_CROP;
+    windowConfig.m_windowType   = eWindowType::WINDOWED;
     windowConfig.m_aspectRatio  = 2.f;
     windowConfig.m_inputSystem  = g_theInput;
     windowConfig.m_windowTitle  = "FirstMultipleWindows";

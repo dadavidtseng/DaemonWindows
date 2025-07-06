@@ -6,7 +6,7 @@
 #pragma once
 #include <vector>
 #include <windows.h>
-class Window;
+
 //-Forward-Declaration--------------------------------------------------------------------------------
 struct Rgba8;
 struct Vec2;
@@ -15,6 +15,7 @@ class AudioSystem;
 class BitmapFont;
 class Game;
 class Renderer;
+class Window;
 class RandomNumberGenerator;
 
 // one-time declaration
