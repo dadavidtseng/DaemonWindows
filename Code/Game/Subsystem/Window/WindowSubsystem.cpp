@@ -34,17 +34,17 @@ WindowID WindowSubsystem::createWindow(ActorID owner) {
     WindowID newId = nextId++;
 
     // 創建新視窗
-    auto newWindow = std::make_unique<Window>();
-    newWindow->setId(newId);
-    newWindow->setOwnerId(owner);
-
-    // 設定預設值
-    newWindow->setPosition(Vec2(100.0f, 100.0f));
-    newWindow->setSize(Vec2(400.0f, 300.0f));
-
-    // 加入管理
-    windows[newId] = std::move(newWindow);
-    entityWindowMapping[owner] = newId;
+    // auto newWindow = std::make_unique<Window>();
+    // newWindow->setId(newId);
+    // newWindow->setOwnerId(owner);
+    //
+    // // 設定預設值
+    // newWindow->setPosition(Vec2(100.0f, 100.0f));
+    // newWindow->setSize(Vec2(400.0f, 300.0f));
+    //
+    // // 加入管理
+    // windows[newId] = std::move(newWindow);
+    // entityWindowMapping[owner] = newId;
 
     return newId;
 }
@@ -56,8 +56,8 @@ void WindowSubsystem::destroyWindow(WindowID id) {
     }
 
     // 找到擁有者並移除映射
-    EntityID owner = windowIt->second->getOwnerId();
-    entityWindowMapping.erase(owner);
+    // EntityID owner = windowIt->second->getOwnerId();
+    // entityWindowMapping.erase(owner);
 
     // 移除視窗
     windows.erase(windowIt);
@@ -66,7 +66,7 @@ void WindowSubsystem::destroyWindow(WindowID id) {
 void WindowSubsystem::updateWindowPosition(WindowID id, Vec2 position) {
     auto it = windows.find(id);
     if (it != windows.end()) {
-        it->second->setPosition(position);
+        // it->second->setPosition(position);
     }
 }
 
@@ -75,10 +75,10 @@ void WindowSubsystem::updateWindowSize(WindowID id, Vec2 size) {
     if (it != windows.end()) {
         // 可以加入最小/最大尺寸限制
         Vec2 clampedSize;
-        clampedSize.x = std::max(100.0f, std::min(1920.0f, size.x));
-        clampedSize.y = std::max(100.0f, std::min(1080.0f, size.y));
+        // clampedSize.x = std::max(100.0f, std::min(1920.0f, size.x));
+        // clampedSize.y = std::max(100.0f, std::min(1080.0f, size.y));
 
-        it->second->setSize(clampedSize);
+        // it->second->setSize(clampedSize);
     }
 }
 
@@ -90,7 +90,7 @@ Window* WindowSubsystem::getWindow(WindowID id) {
     return nullptr;
 }
 
-WindowID WindowSubsystem::getWindowForEntity(EntityID entityId) {
+WindowID WindowSubsystem::getWindowForEntity(ActorID entityId) {
     auto it = entityWindowMapping.find(entityId);
     if (it != entityWindowMapping.end()) {
         return it->second;

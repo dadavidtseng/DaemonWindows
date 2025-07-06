@@ -53,5 +53,5 @@ void GAME_SAFE_RELEASE(T*& pointer)
     }
 }
 
-void CreateAndRegisterMultipleWindows(std::vector<Window>& windows, HINSTANCE hInstance, int windowCount);
-HWND CreateGameWindow(HINSTANCE hInstance, const wchar_t* title, int x, int y, int width, int height);
+void CreateAndRegisterMultipleWindows(std::vector<Window>& windows, int windowCount);
+HWND CreateGameWindow( const wchar_t* title, int x, int y, int width, int height);

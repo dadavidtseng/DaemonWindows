@@ -21,7 +21,7 @@ int WINAPI WinMain(HINSTANCE const applicationInstanceHandle,
     UNUSED(applicationInstanceHandle)
     UNUSED(commandLineString)
 
-    g_theApp = new App(applicationInstanceHandle);
+    g_theApp = new App();
     g_theApp->Startup();
     g_theApp->RunMainLoop();
     g_theApp->Shutdown();

@@ -16,7 +16,7 @@ class Game;
 class App
 {
 public:
-    App(HINSTANCE const& hInstance);
+    App()  = default;
     ~App() = default;
     void Startup();
     void Shutdown();

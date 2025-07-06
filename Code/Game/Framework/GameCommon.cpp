@@ -213,7 +213,7 @@ void DebugDrawBoxRing(Vec2 const& center, float radius, float thickness, Rgba8 c
     // g_theRendererEx->DrawVertexArray(24, &verts[0]);
 }
 
-void CreateAndRegisterMultipleWindows(std::vector<Window>& windows, HINSTANCE hInstance, int windowCount)
+void CreateAndRegisterMultipleWindows(std::vector<Window>& windows, int windowCount)
 {
     const int width   = 400;
     const int height  = 300;
@@ -228,7 +228,7 @@ void CreateAndRegisterMultipleWindows(std::vector<Window>& windows, HINSTANCE hI
         int          x     = startX + (i % 5) * offsetX;       // 每列最多5個視窗
         int          y     = startY + (i / 5) * offsetY;       // 每滿5個換行
 
-        HWND hwnd = CreateGameWindow(hInstance, title.c_str(), x, y, width, height);
+        HWND hwnd = CreateGameWindow( title.c_str(), x, y, width, height);
         if (hwnd)
         {
             g_gameWindows.push_back(hwnd);
@@ -239,14 +239,14 @@ void CreateAndRegisterMultipleWindows(std::vector<Window>& windows, HINSTANCE hI
 }
 
 // 創建窗口
-HWND CreateGameWindow(HINSTANCE hInstance, const wchar_t* title, int x, int y, int width, int height)
+HWND CreateGameWindow( const wchar_t* title, int x, int y, int width, int height)
 {
     static bool classRegistered = false;
     if (!classRegistered)
     {
         WNDCLASS wc      = {};
         wc.lpfnWndProc   = (WNDPROC)GetWindowLongPtr((HWND)Window::s_mainWindow->GetWindowHandle(), GWLP_WNDPROC);
-        wc.hInstance     = hInstance;
+        wc.hInstance     = GetModuleHandle(nullptr);
         wc.lpszClassName = L"GameWindow";
         wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
         wc.hCursor       = LoadCursor(nullptr, IDC_ARROW);
@@ -270,7 +270,7 @@ HWND CreateGameWindow(HINSTANCE hInstance, const wchar_t* title, int x, int y, i
         x, y, adjustedWidth, adjustedHeight,
         nullptr,
         nullptr,
-        hInstance,
+        GetModuleHandle(nullptr),
         nullptr
     );
 

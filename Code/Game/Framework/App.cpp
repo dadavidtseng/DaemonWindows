@@ -35,11 +35,6 @@ std::vector<HWND> g_gameWindows;
 //----------------------------------------------------------------------------------------------------
 STATIC bool App::m_isQuitting = false;
 
-App::App(HINSTANCE const& hInstance)
-    : m_hInstance(hInstance)
-{
-}
-
 //----------------------------------------------------------------------------------------------------
 /// @brief
 /// Create all engine subsystems in a specific order.
@@ -64,7 +59,7 @@ void App::Startup()
     //-Start-of-Window--------------------------------------------------------------------------------
 
     sWindowConfig windowConfig;
-    windowConfig.m_windowType   = eWindowType::WINDOWED;
+    windowConfig.m_windowType   = eWindowType::FULLSCREEN_CROP;
     windowConfig.m_aspectRatio  = 2.f;
     windowConfig.m_inputSystem  = g_theInput;
     windowConfig.m_windowTitle  = "FirstMultipleWindows";
@@ -125,7 +120,7 @@ void App::Startup()
     g_theRNG        = new RandomNumberGenerator();
     g_theGame       = new Game();
 
-    CreateAndRegisterMultipleWindows(windows, m_hInstance, 2);
+    CreateAndRegisterMultipleWindows(windows, 2);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -230,7 +225,7 @@ void App::Update()
 
     if (g_theInput->WasKeyJustPressed(KEYCODE_Z))
     {
-        CreateAndRegisterMultipleWindows(windows, m_hInstance, 1);
+        CreateAndRegisterMultipleWindows(windows, 1);
     }
 
     UpdateCursorMode();

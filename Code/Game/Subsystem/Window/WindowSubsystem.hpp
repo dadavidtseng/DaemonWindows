@@ -12,6 +12,7 @@
 #include "Game/Gameplay/Actor.hpp"
 
 using WindowID = uint32_t;
+using ActorID = uint32_t;
 
 //----------------------------------------------------------------------------------------------------
 class WindowSubsystem

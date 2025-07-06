@@ -9,7 +9,8 @@
 #include "Game/Subsystem/Window/WindowSubsystem.hpp"
 
 typedef uint32_t ActorID;
-
+typedef uint32_t WindowID;
+class WindowSubsystem;
 class Actor
 {
 protected:
