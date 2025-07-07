@@ -23,8 +23,8 @@ public:
     void ShutDown();
 
     WindowID createWindow(ActorID owner);
-    void     RenderWindows() const;
-    void     UpdateWindowsResizeIfNeeded(std::vector<Window>& windows);
+    void     RenderWindows() ;
+    void     UpdateWindows(std::vector<Window>& windows);
     void     UpdateWindows(std::vector<Window>& windows) const;
     void     CreateAndRegisterMultipleWindows(std::vector<Window>& windows, int windowCount);
     HWND CreateGameWindow(const wchar_t* title, int x, int y, int width, int height);

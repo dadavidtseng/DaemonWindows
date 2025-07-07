@@ -11,15 +11,12 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
+#include "Engine/Platform/Window.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
-// #include "Engine/Renderer/RendererEx.hpp"
 #include "Engine/Renderer/Renderer.hpp"
-#include "Engine/Platform/Window.hpp"
-// #include "Engine/Platform/WindowEx.hpp"
-#include "Engine/Core/ErrorWarningAssert.hpp"
-#include "Game/Gameplay/Game.hpp"
 #include "Game/Framework/GameCommon.hpp"
+#include "Game/Gameplay/Game.hpp"
 #include "Game/Subsystem/Window/WindowSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
@@ -64,8 +61,8 @@ void App::Startup()
     windowConfig.m_windowType   = eWindowType::FULLSCREEN_CROP;
     windowConfig.m_aspectRatio  = 2.f;
     windowConfig.m_inputSystem  = g_theInput;
-    windowConfig.m_windowTitle  = "FirstMultipleWindows";
-    windowConfig.m_iconFilePath = L"C:/p4/Personal/SD/FirstMultipleWindows/Run/Data/Images/Test_StbiFlippedAndOpenGL.ico";
+    windowConfig.m_windowTitle  = "WindowKills";
+    windowConfig.m_iconFilePath = L"C:/p4/Personal/SD/WindowKills/Run/Data/Images/windowIcon.ico";
     g_theWindow                 = new Window(windowConfig);
 
     //-End-of-Window----------------------------------------------------------------------------------

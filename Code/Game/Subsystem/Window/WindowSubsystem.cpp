@@ -5,6 +5,8 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Subsystem/Window/WindowSubsystem.hpp"
 
+#include <dxgi1_2.h>
+
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 
@@ -14,7 +16,7 @@ void WindowSubsystem::StartUp()
     // WindowID id = 0;
     // m_windowList.emplace(id, std::make_unique<Window>(config));
     // Window* window = m_windowList.at(id).get();
-    CreateAndRegisterMultipleWindows(m_windowList, 3);
+    CreateAndRegisterMultipleWindows(m_windowList, 1);
     // CreateGameWindow(L"ChildWindow ", 100,100,100,100);
 }
 
@@ -26,11 +28,20 @@ void WindowSubsystem::Update()
 {
     for (Window& window : m_windowList)
     {
-        // window.UpdateWindowDrift((float)Clock::GetSystemClock().GetDeltaSeconds() * 1.5f);
-        window.UpdateWindowPosition();
-    }
+        window.UpdatePosition();
+        window.UpdateDimension();
 
-    UpdateWindowsResizeIfNeeded(m_windowList);
+        if (window.m_shouldUpdateDimension)
+        {
+            HRESULT const hr               = g_theRenderer->ResizeWindowSwapChain(window);
+            window.m_shouldUpdateDimension = false;
+
+            if (FAILED(hr))
+            {
+                DebuggerPrintf("Failed to resize window swap chain: 0x%08X\n", hr);
+            }
+        }
+    }
 }
 
 void WindowSubsystem::Render()
@@ -44,6 +55,12 @@ void WindowSubsystem::EndFrame()
 
 void WindowSubsystem::ShutDown()
 {
+    for (Window& window : m_windowList)
+    {
+        // DX_SAFE_RELEASE(window.m_swapChain)
+        // DX_SAFE_RELEASE(window.m_renderTargetView)
+        window.Shutdown();
+    }
 }
 
 WindowID WindowSubsystem::createWindow(ActorID owner)
@@ -125,26 +142,27 @@ WindowID WindowSubsystem::createWindow(ActorID owner)
 //     return 0; // 0 表示無效的WindowID
 // }
 
-void WindowSubsystem::RenderWindows() const
+void WindowSubsystem::RenderWindows()
 {
-    for (const Window& window : m_windowList)
+    for (Window& window : m_windowList)
     {
-        if (window.needsUpdate)
+        if (window.m_shouldUpdatePosition)
         {
-            g_theRenderer->RenderViewportToWindow(window);
+            // g_theRenderer->RenderViewportToWindow(window);
             g_theRenderer->RenderViewportToWindowDX11(window);
+            window.m_shouldUpdatePosition = false;
         }
     }
 }
 
-void WindowSubsystem::UpdateWindowsResizeIfNeeded(std::vector<Window>& windows)
+void WindowSubsystem::UpdateWindows(std::vector<Window>& windows)
 {
     for (Window& window : windows)
     {
-        if (window.needsResize)
+        if (window.m_shouldUpdateDimension)
         {
-            HRESULT hr         = g_theRenderer->ResizeWindowSwapChain(window);
-            window.needsResize = false;
+            HRESULT hr                     = g_theRenderer->ResizeWindowSwapChain(window);
+            window.m_shouldUpdateDimension = false;
 
             if (FAILED(hr))
             {
@@ -152,7 +170,7 @@ void WindowSubsystem::UpdateWindowsResizeIfNeeded(std::vector<Window>& windows)
                 continue;
             }
 
-            window.needsUpdate = true;
+            // window.m_shouldUpdatePosition = true;
         }
     }
 }
@@ -161,10 +179,10 @@ void WindowSubsystem::UpdateWindows(std::vector<Window>& windows) const
 {
     for (int i = 0; i < windows.size(); ++i)
     {
-        if (windows[i].needsResize)
+        if (windows[i].m_shouldUpdateDimension)
         {
-            HRESULT hr             = g_theRenderer->ResizeWindowSwapChain(windows[i]);
-            windows[i].needsResize = false;
+            HRESULT hr                         = g_theRenderer->ResizeWindowSwapChain(windows[i]);
+            windows[i].m_shouldUpdateDimension = false;
             if (FAILED(hr))
             {
                 DebuggerPrintf("Failed to resize window swap chain: 0x%08X\n", hr);
@@ -172,7 +190,7 @@ void WindowSubsystem::UpdateWindows(std::vector<Window>& windows) const
             }
         }
 
-        if (windows[i].needsUpdate)
+        if (windows[i].m_shouldUpdatePosition)
         {
             // 使用 DirectX 11 版本渲染
             g_theRenderer->RenderViewportToWindowDX11(windows[i]);
@@ -204,7 +222,7 @@ void WindowSubsystem::CreateAndRegisterMultipleWindows(std::vector<Window>& wind
             Window        window    = Window(config);
             window.m_windowHandle   = hwnd;
             window.m_displayContext = GetDC(hwnd);
-            window.needsUpdate      = true;
+            // window.m_shouldUpdatePosition      = true;
 
             m_windowList.push_back(window);
 
