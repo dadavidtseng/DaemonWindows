@@ -18,6 +18,8 @@ public:
     void StartUp();
     void BeginFrame();
     void Update();
+    void UpdatePositionByWindowID(WindowID id);
+    void UpdateDimensionByWindowID(WindowID id);
     void Render();
     void EndFrame();
     void ShutDown();
@@ -25,9 +27,11 @@ public:
     WindowID createWindow(ActorID owner);
     void     RenderWindows() ;
     void     UpdateWindows(std::vector<Window>& windows);
-    void     UpdateWindows(std::vector<Window>& windows) const;
-    void     CreateAndRegisterMultipleWindows(std::vector<Window>& windows, int windowCount);
-    HWND CreateGameWindow(const wchar_t* title, int x, int y, int width, int height);
+    void     CreateAndRegisterMultipleWindows(int windowCount, const std::vector<ActorID>& owners);
+    HWND     CreateGameWindow(ActorID owner, const wchar_t* title, int x, int y, int width, int height);
+    Window*  FindWindowByWindowID(WindowID id);
+    // void     CreateAndRegisterMultipleWindows(int windowCount);
+    // HWND     CreateGameWindow(const wchar_t* title, int x, int y, int width, int height);
     // void     destroyWindow(WindowID id);
     // void     updateWindowPosition(WindowID id, Vec2 position);
     // void     updateWindowSize(WindowID id, Vec2 size);
@@ -35,8 +39,7 @@ public:
     // WindowID getWindowForEntity(ActorID entityId);
 
 private:
-    // std::unordered_map<WindowID, std::unique_ptr<Window>> m_windowList;
-    std::vector<Window> m_windowList;
+    std::unordered_map<WindowID, std::unique_ptr<Window>> m_windowList;
     std::unordered_map<ActorID, WindowID>                 actorWindowMapping;
     WindowID                                                   m_nextWindowID = 0;
 };
