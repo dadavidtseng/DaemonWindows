@@ -3,25 +3,18 @@
 //----------------------------------------------------------------------------------------------------
 
 #pragma once
-#include <cstdint>
-#include <optional>
 
+
+#include "Game/Framework/GameCommon.hpp"
 #include "Game/Subsystem/Window/WindowSubsystem.hpp"
 
-typedef uint32_t ActorID;
-typedef uint32_t WindowID;
-class WindowSubsystem;
+
+
 class Actor
 {
 protected:
-    ActorID                 id;
-    std::optional<WindowID> windowId;
+    ActorID m_id;
 
 public:
-    bool hasWindow() const { return windowId.has_value(); }
-    void requestWindow(WindowSubsystem& winSystem);
-    void releaseWindow(WindowSubsystem& winSystem);
-    Vec2 getDefaultWindowSize() const;
-
     Vec2 m_position = Vec2::ZERO;
 };

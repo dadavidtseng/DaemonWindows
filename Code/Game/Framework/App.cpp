@@ -20,15 +20,17 @@
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Game/Gameplay/Game.hpp"
 #include "Game/Framework/GameCommon.hpp"
+#include "Game/Subsystem/Window/WindowSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
-App*                   g_theApp        = nullptr;       // Created and owned by Main_Windows.cpp
-AudioSystem*           g_theAudio      = nullptr;       // Created and owned by the App
-BitmapFont*            g_theBitmapFont = nullptr;       // Created and owned by the App
-Game*                  g_theGame       = nullptr;       // Created and owned by the App
-Renderer*              g_theRenderer   = nullptr;       // Created and owned by the App
-RandomNumberGenerator* g_theRNG        = nullptr;       // Created and owned by the App
-Window*                g_theWindow     = nullptr;       // Created and owned by the App
+App*                   g_theApp             = nullptr;       // Created and owned by Main_Windows.cpp
+AudioSystem*           g_theAudio           = nullptr;       // Created and owned by the App
+BitmapFont*            g_theBitmapFont      = nullptr;       // Created and owned by the App
+Game*                  g_theGame            = nullptr;       // Created and owned by the App
+Renderer*              g_theRenderer        = nullptr;       // Created and owned by the App
+RandomNumberGenerator* g_theRNG             = nullptr;       // Created and owned by the App
+Window*                g_theWindow          = nullptr;       // Created and owned by the App
+WindowSubsystem*       g_theWindowSubsystem = nullptr;       // Created and owned by the App
 
 std::vector<HWND> g_gameWindows;
 
@@ -107,6 +109,12 @@ void App::Startup()
     g_theAudio = new AudioSystem(audioConfig);
 
     //-End-of-AudioSystem-----------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
+    //-Start-of-WindowSubsystem-----------------------------------------------------------------------
+
+    g_theWindowSubsystem = new WindowSubsystem();
+
+    //-End-of-WindowSubsystem-------------------------------------------------------------------------
 
     g_theEventSystem->Startup();
     g_theWindow->Startup();
@@ -115,12 +123,11 @@ void App::Startup()
     g_theDevConsole->StartUp();
     g_theInput->Startup();
     g_theAudio->Startup();
+    g_theWindowSubsystem->StartUp();
 
     g_theBitmapFont = g_theRenderer->CreateOrGetBitmapFontFromFile("Data/Fonts/SquirrelFixedFont"); // DO NOT SPECIFY FILE .EXTENSION!!  (Important later on.)
     g_theRNG        = new RandomNumberGenerator();
     g_theGame       = new Game();
-
-    CreateAndRegisterMultipleWindows(windows, 2);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -128,16 +135,12 @@ void App::Startup()
 //
 void App::Shutdown()
 {
-    for (Window& window : windows)
-    {
-        if (window.m_displayContext) ReleaseDC((HWND)window.m_windowHandle, (HDC)window.m_displayContext);
-    }
-
     // Destroy all Engine Subsystem
     GAME_SAFE_RELEASE(g_theGame);
     GAME_SAFE_RELEASE(g_theRNG);
     GAME_SAFE_RELEASE(g_theBitmapFont);
 
+    g_theWindowSubsystem->ShutDown();
     g_theAudio->Shutdown();
     g_theInput->Shutdown();
     g_theDevConsole->Shutdown();
@@ -193,19 +196,6 @@ STATIC void App::RequestQuit()
     m_isQuitting = true;
 }
 
-void App::AddWindow(HWND const& hwnd)
-{
-    sWindowConfig config;
-    Window        window    = Window(config);
-    window.m_windowHandle   = hwnd;
-    window.m_displayContext = GetDC(hwnd);
-    window.needsUpdate      = true;
-
-    // UpdateWindowPosition(window);
-    HRESULT hr = g_theRenderer->CreateWindowSwapChain(window);
-    windows.push_back(window);
-}
-
 //----------------------------------------------------------------------------------------------------
 void App::BeginFrame() const
 {
@@ -216,6 +206,7 @@ void App::BeginFrame() const
     g_theDevConsole->BeginFrame();
     g_theInput->BeginFrame();
     g_theAudio->BeginFrame();
+    g_theWindowSubsystem->BeginFrame();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -223,20 +214,9 @@ void App::Update()
 {
     Clock::TickSystemClock();
 
-    if (g_theInput->WasKeyJustPressed(KEYCODE_Z))
-    {
-        CreateAndRegisterMultipleWindows(windows, 1);
-    }
-
     UpdateCursorMode();
-    for (Window& window : windows)
-    {
-        window.UpdateWindowDrift((float)Clock::GetSystemClock().GetDeltaSeconds() * 1.5f);
-        window.UpdateWindowPosition();
-    }
 
-    UpdateWindowsResizeIfNeeded(windows);
-
+    g_theWindowSubsystem->Update();
     g_theGame->Update();
 }
 
@@ -252,7 +232,7 @@ void App::Render() const
     g_theRenderer->ClearScreen(Rgba8::BLUE);
     g_theGame->Render();
     g_theRenderer->Render();
-    RenderWindows(windows); // 安全地呼叫，不會改變狀態
+    g_theWindowSubsystem->Render();
 
     AABB2 const box = AABB2(Vec2::ZERO, Vec2(1600.f, 30.f));
 
@@ -269,6 +249,7 @@ void App::EndFrame() const
     g_theDevConsole->EndFrame();
     g_theInput->EndFrame();
     g_theAudio->EndFrame();
+    g_theWindowSubsystem->EndFrame();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -285,62 +266,5 @@ void App::UpdateCursorMode()
     else
     {
         g_theInput->SetCursorMode(eCursorMode::FPS);
-    }
-}
-
-void App::UpdateWindows(std::vector<Window>& windows) const
-{
-    for (int i = 0; i < windows.size(); ++i)
-    {
-        if (windows[i].needsResize)
-        {
-            HRESULT hr             = g_theRenderer->ResizeWindowSwapChain(windows[i]);
-            windows[i].needsResize = false;
-            if (FAILED(hr))
-            {
-                DebuggerPrintf("Failed to resize window swap chain: 0x%08X\n", hr);
-                continue;
-            }
-        }
-
-        if (windows[i].needsUpdate)
-        {
-            // 使用 DirectX 11 版本渲染
-            g_theRenderer->RenderViewportToWindowDX11(windows[i]);
-            // g_theRenderer->RenderViewportToWindow(windows[i]);
-            // window.needsUpdate = false;
-        }
-    }
-}
-
-void App::RenderWindows(const std::vector<Window>& windows) const
-{
-    for (const Window& window : windows)
-    {
-        if (window.needsUpdate)
-        {
-            g_theRenderer->RenderViewportToWindow(window);
-            // g_theRenderer->RenderViewportToWindowDX11(window);
-        }
-    }
-}
-
-void App::UpdateWindowsResizeIfNeeded(std::vector<Window>& windows)
-{
-    for (Window& window : windows)
-    {
-        if (window.needsResize)
-        {
-            HRESULT hr         = g_theRenderer->ResizeWindowSwapChain(window);
-            window.needsResize = false;
-
-            if (FAILED(hr))
-            {
-                DebuggerPrintf("Failed to resize window swap chain: 0x%08X\n", hr);
-                continue;
-            }
-
-            window.needsUpdate = true;
-        }
     }
 }

@@ -16,6 +16,7 @@ class BitmapFont;
 class Game;
 class Renderer;
 class Window;
+class WindowSubsystem;
 class RandomNumberGenerator;
 
 // one-time declaration
@@ -25,6 +26,7 @@ extern BitmapFont*            g_theBitmapFont;
 extern Game*                  g_theGame;
 extern Renderer*              g_theRenderer;
 extern RandomNumberGenerator* g_theRNG;
+extern WindowSubsystem* g_theWindowSubsystem;
 extern std::vector<HWND>      g_gameWindows;
 
 //-----------------------------------------------------------------------------------------------
@@ -53,5 +55,5 @@ void GAME_SAFE_RELEASE(T*& pointer)
     }
 }
 
-void CreateAndRegisterMultipleWindows(std::vector<Window>& windows, int windowCount);
-HWND CreateGameWindow( const wchar_t* title, int x, int y, int width, int height);
+typedef uint32_t ActorID;
+typedef uint32_t WindowID;

@@ -119,37 +119,37 @@ void Game::UpdateFromInput()
         if (g_theInput->IsKeyDown(KEYCODE_L))
         {
             m_windowPosition.x += 10.f;
-            for (Window& window : g_theApp->windows)
-            {
-                window.UpdateWindowPosition(Vec2(m_windowPosition.x, m_windowPosition.y));
-            }
+            // for (Window& window : g_theApp->windows)
+            // {
+            //     window.UpdateWindowPosition(Vec2(m_windowPosition.x, m_windowPosition.y));
+            // }
         }
         if (g_theInput->IsKeyDown(KEYCODE_J))
         {
             m_windowPosition.x -= 10.f;
-            for (Window& window : g_theApp->windows)
-            {
-                window.UpdateWindowPosition(Vec2(m_windowPosition.x, m_windowPosition.y));
-            }
+            // for (Window& window : g_theApp->windows)
+            // {
+            //     window.UpdateWindowPosition(Vec2(m_windowPosition.x, m_windowPosition.y));
+            // }
         }
 
         if (g_theInput->IsKeyDown(KEYCODE_I))
         {
             m_windowPosition.y += 10.f;
-            for (Window& window : g_theApp->windows)
-            {
-                window.UpdateWindowPosition(Vec2(m_windowPosition.x, m_windowPosition.y));
-            }
+            // for (Window& window : g_theApp->windows)
+            // {
+            //     window.UpdateWindowPosition(Vec2(m_windowPosition.x, m_windowPosition.y));
+            // }
         }
 
         if (g_theInput->IsKeyDown(KEYCODE_K))
         {
             m_windowPosition.y -= 10.f;
 
-            for (Window& window : g_theApp->windows)
-            {
-                window.UpdateWindowPosition(Vec2(m_windowPosition.x, m_windowPosition.y));
-            }
+            // for (Window& window : g_theApp->windows)
+            // {
+            //     window.UpdateWindowPosition(Vec2(m_windowPosition.x, m_windowPosition.y));
+            // }
         }
 
         if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
