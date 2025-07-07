@@ -131,7 +131,7 @@ void WindowSubsystem::RenderWindows() const
     {
         if (window.needsUpdate)
         {
-            // g_theRenderer->RenderViewportToWindow(window);
+            g_theRenderer->RenderViewportToWindow(window);
             g_theRenderer->RenderViewportToWindowDX11(window);
         }
     }

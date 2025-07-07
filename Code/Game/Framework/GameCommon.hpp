@@ -33,7 +33,7 @@ extern std::vector<HWND>      g_gameWindows;
 // initial settings
 //
 float constexpr SCREEN_SIZE_X = 1920.f;
-float constexpr SCREEN_SIZE_Y = 1200.f;
+float constexpr SCREEN_SIZE_Y = 1080.f;
 
 //-----------------------------------------------------------------------------------------------
 // DebugRender-related

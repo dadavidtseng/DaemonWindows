@@ -61,10 +61,11 @@ void Game::Render() const
     g_theRenderer->EndCamera(*m_screenCamera);
     //-End-of-Screen-Camera---------------------------------------------------------------------------
 
-    if (m_gameState == eGameState::GAME)
-    {
-        DebugRenderScreen(*m_screenCamera);
-    }
+    DebugRenderScreen(*m_screenCamera);
+    // if (m_gameState == eGameState::GAME)
+    // {
+    //     DebugRenderScreen(*m_screenCamera);
+    // }
 }
 
 bool Game::OnGameStateChanged(EventArgs& args)
@@ -203,7 +204,7 @@ void Game::AdjustForPauseAndTimeDistortion()
 void Game::RenderAttractMode() const
 {
     VertexList_PCU verts1;
-    AddVertsForAABB2D(verts1, AABB2(Vec2::ZERO, Vec2(1920.0f, 1200.0f)));
+    AddVertsForAABB2D(verts1, AABB2(Vec2::ZERO, Vec2(1920.0f, 1080.0f)));
     g_theRenderer->SetModelConstants();
     g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
     g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
@@ -214,7 +215,7 @@ void Game::RenderAttractMode() const
     g_theRenderer->DrawVertexArray(verts1);
 
     VertexList_PCU verts2;
-    AddVertsForDisc2D(verts2, Vec2(SCREEN_SIZE_X * 0.5f + m_position.x, SCREEN_SIZE_Y * 0.5f + m_position.y), 300.f, 10.f, Rgba8::YELLOW);
+    AddVertsForDisc2D(verts2, Vec2(SCREEN_SIZE_X * 0.5f + m_position.x, SCREEN_SIZE_Y * 0.5f + m_position.y), 30.f, 10.f, Rgba8::YELLOW);
     g_theRenderer->SetModelConstants();
     g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
     g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
@@ -223,6 +224,13 @@ void Game::RenderAttractMode() const
     g_theRenderer->BindTexture(nullptr);
     g_theRenderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
     g_theRenderer->DrawVertexArray(verts2);
+    HWND    hwnd        = GetFocus();
+    wchar_t wTitle[256] = L"";
+    GetWindowTextW(hwnd, wTitle, 256);
+    std::wstring ws(wTitle);
+    std::string  title(ws.begin(), ws.end());
+    DebugAddScreenText(Stringf("Cursor Position(%f, %f)", Window::s_mainWindow->GetNormalizedMouseUV().x, Window::s_mainWindow->GetNormalizedMouseUV().y), m_screenCamera->GetOrthographicBottomLeft(), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
+    DebugAddScreenText(Stringf("Focus Window(%s)", title.c_str()), m_screenCamera->GetOrthographicBottomLeft() + Vec2(0, 20), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
 }
 
 //----------------------------------------------------------------------------------------------------
