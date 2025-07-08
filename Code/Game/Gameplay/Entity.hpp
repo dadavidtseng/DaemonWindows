@@ -20,8 +20,9 @@ public:
     Vec2     m_velocity = Vec2::ZERO;
     int      m_health   = 100;
 
-    virtual void Update(float deltaTime) = 0;
-    virtual void Render() const;
+    virtual void Update(float deltaSeconds) = 0;
+    virtual void Render() const = 0;
+    virtual void UpdateFromInput() = 0;
 
     // 共同邏輯放在基類
     void TakeDamage(int damage);

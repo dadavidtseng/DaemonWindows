@@ -29,8 +29,6 @@ RandomNumberGenerator* g_theRNG             = nullptr;       // Created and owne
 Window*                g_theWindow          = nullptr;       // Created and owned by the App
 WindowSubsystem*       g_theWindowSubsystem = nullptr;       // Created and owned by the App
 
-std::vector<HWND> g_gameWindows;
-
 //----------------------------------------------------------------------------------------------------
 STATIC bool App::m_isQuitting = false;
 

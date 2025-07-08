@@ -58,6 +58,9 @@
     <ClCompile Include="Subsystem\Widget\WidgetSubsystem.cpp">
       <Filter>Subsystem\Widget</Filter>
     </ClCompile>
+    <ClCompile Include="Gameplay\Bullet.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineBuildPreferences.hpp">
@@ -95,6 +98,9 @@
     </ClInclude>
     <ClInclude Include="Subsystem\Widget\WidgetSubsystem.hpp">
       <Filter>Subsystem\Widget</Filter>
+    </ClInclude>
+    <ClInclude Include="Gameplay\Bullet.hpp">
+      <Filter>Gameplay</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

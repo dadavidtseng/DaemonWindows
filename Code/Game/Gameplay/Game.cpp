@@ -8,19 +8,17 @@
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Game/Framework/App.hpp"
 #include "Game/Framework/GameCommon.hpp"
-#include "Game/Subsystem/Window/WindowSubsystem.hpp"
+#include "Game/Gameplay/Player.hpp"
 
 //----------------------------------------------------------------------------------------------------
 Game::Game()
 {
-    g_theEventSystem->SubscribeEventCallbackFunction("OnWindowSizeChanged", OnWindowSizeChanged);
     m_screenCamera = new Camera();
 
     Vec2 const bottomLeft     = Vec2::ZERO;
@@ -30,6 +28,7 @@ Game::Game()
     m_screenCamera->SetNormalizedViewport(AABB2::ZERO_TO_ONE);
 
     m_gameClock = new Clock(Clock::GetSystemClock());
+    m_entities.push_back(new Player());
 }
 
 Game::~Game()
@@ -40,8 +39,28 @@ Game::~Game()
 //----------------------------------------------------------------------------------------------------
 void Game::Update()
 {
+    float gameDeltaSeconds = m_gameClock->GetDeltaSeconds();
+
     UpdateFromInput();
     AdjustForPauseAndTimeDistortion();
+    for (size_t i = 0; i < m_entities.size(); ++i)
+    {
+        Entity* entity = m_entities[i];
+        if (entity != nullptr)  // 先檢查指標
+        {
+            if (entity->IsAlive())  // 再檢查是否存活
+            {
+                entity->Update(gameDeltaSeconds);
+            }
+            else
+            {
+                // 清理死亡的實體
+                delete entity;
+                m_entities.erase(m_entities.begin() + i);
+                --i;  // 調整索引
+            }
+        }
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -81,15 +100,6 @@ bool Game::OnGameStateChanged(EventArgs& args)
     return true;
 }
 
-bool Game::OnWindowSizeChanged(EventArgs& args)
-{
-    int newHeight = args.GetValue("newHeight", -1);
-    int newWidth  = args.GetValue("newWidth", -1);
-    DebuggerPrintf("OnWindowSizeChanged (%d, %d)\n", newWidth, newHeight);
-    // g_theGame->m_screenCamera->SetViewport(AABB2(Vec2::ZERO, Vec2(newWidth, newHeight)));
-    return true;
-}
-
 eGameState Game::GetCurrentGameState() const
 {
     return m_gameState;
@@ -114,47 +124,6 @@ void Game::UpdateFromInput()
 {
     if (m_gameState == eGameState::ATTRACT)
     {
-        if (g_theInput->WasKeyJustPressed(KEYCODE_F1)) g_theWindowSubsystem->DestroyWindow(1);
-        if (g_theInput->IsKeyDown(KEYCODE_W)) m_position.y += 10.f;
-        if (g_theInput->IsKeyDown(KEYCODE_A)) m_position.x -= 10.f;
-        if (g_theInput->IsKeyDown(KEYCODE_S)) m_position.y -= 10.f;
-        if (g_theInput->IsKeyDown(KEYCODE_D)) m_position.x += 10.f;
-        if (g_theInput->IsKeyDown(KEYCODE_L))
-        {
-            m_windowPosition.x += 10.f;
-            // for (Window& window : g_theApp->windows)
-            // {
-            //     window.UpdateWindowPosition(Vec2(m_windowPosition.x, m_windowPosition.y));
-            // }
-        }
-        if (g_theInput->IsKeyDown(KEYCODE_J))
-        {
-            m_windowPosition.x -= 10.f;
-            // for (Window& window : g_theApp->windows)
-            // {
-            //     window.UpdateWindowPosition(Vec2(m_windowPosition.x, m_windowPosition.y));
-            // }
-        }
-
-        if (g_theInput->IsKeyDown(KEYCODE_I))
-        {
-            m_windowPosition.y += 10.f;
-            // for (Window& window : g_theApp->windows)
-            // {
-            //     window.UpdateWindowPosition(Vec2(m_windowPosition.x, m_windowPosition.y));
-            // }
-        }
-
-        if (g_theInput->IsKeyDown(KEYCODE_K))
-        {
-            m_windowPosition.y -= 10.f;
-
-            // for (Window& window : g_theApp->windows)
-            // {
-            //     window.UpdateWindowPosition(Vec2(m_windowPosition.x, m_windowPosition.y));
-            // }
-        }
-
         if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
         {
             App::RequestQuit();
@@ -179,7 +148,7 @@ void Game::UpdateFromInput()
 }
 
 //----------------------------------------------------------------------------------------------------
-void Game::AdjustForPauseAndTimeDistortion()
+void Game::AdjustForPauseAndTimeDistortion() const
 {
     if (g_theInput->WasKeyJustPressed(KEYCODE_P))
     {
@@ -216,16 +185,6 @@ void Game::RenderAttractMode() const
     g_theRenderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
     g_theRenderer->DrawVertexArray(verts1);
 
-    VertexList_PCU verts2;
-    AddVertsForDisc2D(verts2, Window::s_mainWindow->GetScreenDimensions() * 0.5f + m_position, 30.f, 10.f, Rgba8::YELLOW);
-    g_theRenderer->SetModelConstants();
-    g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
-    g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
-    g_theRenderer->SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
-    g_theRenderer->SetDepthMode(eDepthMode::DISABLED);
-    g_theRenderer->BindTexture(nullptr);
-    g_theRenderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
-    g_theRenderer->DrawVertexArray(verts2);
     HWND    hwnd        = GetFocus();
     wchar_t wTitle[256] = L"";
     GetWindowTextW(hwnd, wTitle, 256);
@@ -237,6 +196,14 @@ void Game::RenderAttractMode() const
     DebugAddScreenText(Stringf("Client Dimensions(%.1f, %.1f)", Window::s_mainWindow->GetClientDimensions().x, Window::s_mainWindow->GetClientDimensions().y), m_screenCamera->GetOrthographicBottomLeft() + Vec2(0, 60), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
     DebugAddScreenText(Stringf("Viewport Dimensions(%.1f, %.1f)", Window::s_mainWindow->GetViewportDimensions().x, Window::s_mainWindow->GetViewportDimensions().y), m_screenCamera->GetOrthographicBottomLeft() + Vec2(0, 80), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
     DebugAddScreenText(Stringf("Screen Dimensions(%.1f, %.1f)", Window::s_mainWindow->GetScreenDimensions().x, Window::s_mainWindow->GetScreenDimensions().y), m_screenCamera->GetOrthographicBottomLeft() + Vec2(0, 100), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
+
+    for (Entity* entity:m_entities)
+    {
+        if (entity&&entity->IsAlive())
+        {
+            entity->Render();
+        }
+    }
 }
 
 //----------------------------------------------------------------------------------------------------

@@ -7,7 +7,7 @@
 #include <cstdint>
 
 #include "Engine/Core/EventSystem.hpp"
-#include "Engine/Math/Vec2.hpp"
+#include "Game/Gameplay/Entity.hpp"
 
 //-Forward-Declaration--------------------------------------------------------------------------------
 class Camera;
@@ -31,20 +31,19 @@ public:
     void Render() const;
 
     static bool OnGameStateChanged(EventArgs& args);
-    static bool OnWindowSizeChanged(EventArgs& args);
 
     eGameState GetCurrentGameState() const;
     void       ChangeGameState(eGameState newGameState);
-    Vec2 m_position = Vec2::ZERO;
-    Vec2 m_windowPosition = Vec2::ZERO;
+    std::vector<Entity*> m_entities;
 private:
     void UpdateFromInput();
-    void AdjustForPauseAndTimeDistortion();
+    void AdjustForPauseAndTimeDistortion() const;
     void RenderAttractMode() const;
     void RenderGame() const;
 
     Camera*    m_screenCamera = nullptr;
     eGameState m_gameState    = eGameState::ATTRACT;
     Clock*     m_gameClock    = nullptr;
+
 
 };
