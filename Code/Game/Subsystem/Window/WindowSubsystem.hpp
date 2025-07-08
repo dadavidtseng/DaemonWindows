@@ -11,7 +11,7 @@
 
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Platform/Window.hpp"
-#include "Game/Gameplay/Actor.hpp"
+#include "Game/Gameplay/Entity.hpp"
 
 //----------------------------------------------------------------------------------------------------
 struct WindowData

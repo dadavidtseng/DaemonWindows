@@ -17,6 +17,9 @@
     <Filter Include="Subsystem\Window">
       <UniqueIdentifier>{286db91e-e0c9-434e-9519-c6d5a89ae1d8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Subsystem\Widget">
+      <UniqueIdentifier>{294b592f-648e-4f22-81c3-61412a293e6c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Framework\App.cpp">
@@ -34,8 +37,26 @@
     <ClCompile Include="Subsystem\Window\WindowSubsystem.cpp">
       <Filter>Subsystem\Window</Filter>
     </ClCompile>
-    <ClCompile Include="Gameplay\Actor.cpp">
+    <ClCompile Include="Gameplay\Circle.cpp">
       <Filter>Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="Gameplay\Entity.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="Gameplay\Octagon.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="Gameplay\Triangle.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="Gameplay\Player.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="Subsystem\Widget\WidgetBase.cpp">
+      <Filter>Subsystem\Widget</Filter>
+    </ClCompile>
+    <ClCompile Include="Subsystem\Widget\WidgetSubsystem.cpp">
+      <Filter>Subsystem\Widget</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -54,8 +75,26 @@
     <ClInclude Include="Subsystem\Window\WindowSubsystem.hpp">
       <Filter>Subsystem\Window</Filter>
     </ClInclude>
-    <ClInclude Include="Gameplay\Actor.hpp">
+    <ClInclude Include="Gameplay\Circle.hpp">
       <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="Gameplay\Entity.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="Gameplay\Octagon.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="Gameplay\Triangle.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="Gameplay\Player.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="Subsystem\Widget\WidgetBase.hpp">
+      <Filter>Subsystem\Widget</Filter>
+    </ClInclude>
+    <ClInclude Include="Subsystem\Widget\WidgetSubsystem.hpp">
+      <Filter>Subsystem\Widget</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
