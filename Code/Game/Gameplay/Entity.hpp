@@ -12,13 +12,15 @@
 class Entity
 {
 public:
+    Entity(Vec2 const& position, float orientationDegrees);
     virtual  ~Entity() = default;
-    ActorID  m_actorID  = 0;
-    WindowID m_windowID = 0;
-    String   m_name     = "DEFAULT";
-    Vec2     m_position = Vec2::ZERO;
-    Vec2     m_velocity = Vec2::ZERO;
-    int      m_health   = 100;
+    ActorID  m_actorID            = 0;
+    WindowID m_windowID           = 0;
+    String   m_name               = "DEFAULT";
+    Vec2     m_position           = Vec2::ZERO;
+    Vec2     m_velocity           = Vec2::ZERO;
+    int      m_health             = 100;
+    float    m_orientationDegrees = 0.f;
 
     virtual void Update(float deltaSeconds) = 0;
     virtual void Render() const = 0;

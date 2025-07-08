@@ -21,7 +21,6 @@ void WindowSubsystem::StartUp()
     };
 
     CreateMultipleWindows(ownerGroups);
-    CreateChildWindow(999,"Player Window");
 }
 
 void WindowSubsystem::BeginFrame()

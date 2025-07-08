@@ -6,13 +6,18 @@
 #pragma once
 
 //----------------------------------------------------------------------------------------------------
+#include "Engine/Core/Timer.hpp"
 #include "Game/Gameplay/Entity.hpp"
 
 class Player : public Entity
 {
 public:
-    Player();
+    explicit Player(ActorID actorID,Vec2 const& position, float orientationDegrees);
     void Update(float deltaSeconds) override;
     void Render() const override;
     void UpdateFromInput() override;
+    void FireBullet();
+    void BounceOfWindow() ;
+
+    Timer m_bulletFireTimer;
 };

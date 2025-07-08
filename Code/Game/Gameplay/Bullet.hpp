@@ -11,7 +11,7 @@
 class Bullet : public Entity
 {
 public:
-    Bullet();
+    Bullet(Vec2 const& position, float orientationDegrees);
     void Update(float deltaSeconds) override;
     void Render() const override;
     void UpdateFromInput() override;

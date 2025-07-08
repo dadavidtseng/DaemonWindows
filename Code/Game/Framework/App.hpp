@@ -4,7 +4,7 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#include "GameCommon.hpp"
+
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Platform/Window.hpp"
 
