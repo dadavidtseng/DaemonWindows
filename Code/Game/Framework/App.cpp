@@ -88,7 +88,7 @@ void App::Startup()
     m_devConsoleCamera = new Camera();
 
     Vec2 const bottomLeft     = Vec2::ZERO;
-    Vec2 const screenTopRight = Vec2(SCREEN_SIZE_X, SCREEN_SIZE_Y);
+    Vec2 const screenTopRight = Window::s_mainWindow->GetScreenDimensions();
 
     m_devConsoleCamera->SetOrthoGraphicView(bottomLeft, screenTopRight);
 
