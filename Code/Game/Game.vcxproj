@@ -199,7 +199,7 @@
     <ClCompile Include="Gameplay\Octagon.cpp" />
     <ClCompile Include="Gameplay\Player.cpp" />
     <ClCompile Include="Gameplay\Triangle.cpp" />
-    <ClCompile Include="Subsystem\Widget\WidgetBase.cpp" />
+    <ClCompile Include="Subsystem\Widget\IWidget.cpp" />
     <ClCompile Include="Subsystem\Widget\WidgetSubsystem.cpp" />
     <ClCompile Include="Subsystem\Window\WindowSubsystem.cpp" />
   </ItemGroup>
@@ -214,7 +214,7 @@
     <ClInclude Include="Gameplay\Octagon.hpp" />
     <ClInclude Include="Gameplay\Player.hpp" />
     <ClInclude Include="Gameplay\Triangle.hpp" />
-    <ClInclude Include="Subsystem\Widget\WidgetBase.hpp" />
+    <ClInclude Include="Subsystem\Widget\IWidget.hpp" />
     <ClInclude Include="Subsystem\Widget\WidgetSubsystem.hpp" />
     <ClInclude Include="Subsystem\Window\WindowSubsystem.hpp" />
   </ItemGroup>
