@@ -44,6 +44,7 @@ public:
     WindowID CreateChildWindow(ActorID owner, const std::string& name = "");
     bool     AddActorToWindow(WindowID windowId, ActorID actorId);
     bool     RemoveActorFromWindow(WindowID windowId, ActorID actorId);
+    void     RemoveActorFromMappings(ActorID actorId);
     void     DestroyWindow(WindowID windowId);
     void     DestroyAllWindows();
 
@@ -79,8 +80,8 @@ private:
     WindowID m_nextWindowID = 1; // 從1開始，0保留為無效ID
 
     // 內部輔助函數
-    WindowID    CreateWindowInternal(const std::vector<ActorID>& owners, const std::string& name, int x, int y, int width, int height);
-    void        RemoveActorFromMappings(ActorID actorId);
-    HWND        CreateOSWindow(const std::wstring& title, int x, int y, int width, int height);
+    WindowID CreateWindowInternal(std::vector<ActorID> const& owners, String const& name, int x, int y, int width, int height);
+
+    HWND        CreateOSWindow(std::wstring const& title, int x, int y, int width, int height);
     std::string GenerateDefaultWindowName(const std::vector<ActorID>& owners);
 };

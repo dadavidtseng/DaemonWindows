@@ -7,20 +7,19 @@
 
 #include <dxgi1_2.h>
 
-#include "Engine/Core/Clock.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 
 void WindowSubsystem::StartUp()
 {
     // 創建一些測試視窗
-    std::vector<std::vector<ActorID>> ownerGroups = {
-        {0},        // 視窗1: Actor 0
-        {1, 2},     // 視窗2: Actor 1和2共享
-        {3},        // 視窗3: Actor 3
-        {4, 5},     // 視窗4: Actor 4和5共享
-    };
-
-    CreateMultipleWindows(ownerGroups);
+    // std::vector<std::vector<ActorID>> ownerGroups = {
+    //     {0},        // 視窗1: Actor 0
+    //     {1, 2},     // 視窗2: Actor 1和2共享
+    //     {3},        // 視窗3: Actor 3
+    //     {4, 5},     // 視窗4: Actor 4和5共享
+    // };
+    //
+    // CreateMultipleWindows(ownerGroups);
 }
 
 void WindowSubsystem::BeginFrame()
@@ -473,7 +472,11 @@ void WindowSubsystem::RemoveActorFromMappings(ActorID actorId)
     }
 }
 
-HWND WindowSubsystem::CreateOSWindow(const std::wstring& title, int x, int y, int width, int height)
+HWND WindowSubsystem::CreateOSWindow(std::wstring const& title,
+                                     int                 x,
+                                     int                 y,
+                                     int                 width,
+                                     int                 height)
 {
     // 註冊視窗類別（只需要註冊一次）
     static bool classRegistered = false;

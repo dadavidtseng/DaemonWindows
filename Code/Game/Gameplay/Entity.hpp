@@ -21,6 +21,9 @@ public:
     Vec2     m_velocity           = Vec2::ZERO;
     int      m_health             = 100;
     float    m_orientationDegrees = 0.f;
+    float    m_physicRadius       = 0.f;
+    float    m_cosmeticRadius     = 0.f;
+    float    m_thickness          = 0.f;
 
     virtual void Update(float deltaSeconds) = 0;
     virtual void Render() const = 0;

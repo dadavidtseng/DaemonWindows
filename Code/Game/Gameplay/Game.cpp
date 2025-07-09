@@ -39,7 +39,7 @@ Game::~Game()
 //----------------------------------------------------------------------------------------------------
 void Game::Update()
 {
-    float gameDeltaSeconds = m_gameClock->GetDeltaSeconds();
+    float gameDeltaSeconds = (float)m_gameClock->GetDeltaSeconds();
 
     UpdateFromInput();
     AdjustForPauseAndTimeDistortion();
@@ -124,6 +124,11 @@ void Game::UpdateFromInput()
 {
     if (m_gameState == eGameState::ATTRACT)
     {
+        if (g_theInput->WasKeyJustPressed(KEYCODE_Q))
+        {
+            g_theWindowSubsystem->RemoveActorFromMappings(0);
+        }
+
         if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
         {
             App::RequestQuit();
