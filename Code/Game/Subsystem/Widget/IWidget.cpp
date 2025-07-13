@@ -15,7 +15,8 @@
 // Widget Implementation
 //----------------------------------------------------------------------------------------------------
 
-IWidget::IWidget()
+IWidget::IWidget(WidgetSubsystem* owner)
+    : m_owner(owner)
 {
 }
 
@@ -53,7 +54,7 @@ void IWidget::EndFrame()
 
 Entity* IWidget::GetOwner() const
 {
-    return m_owner;
+    return m_entity;
 }
 
 int IWidget::GetZOrder() const
@@ -83,7 +84,7 @@ bool IWidget::IsGarbage() const
 
 void IWidget::SetOwner(Entity* owner)
 {
-    m_owner = owner;
+    m_entity = owner;
 }
 
 void IWidget::SetZOrder(int zOrder)
@@ -92,7 +93,7 @@ void IWidget::SetZOrder(int zOrder)
     {
         m_zOrder = zOrder;
         // 通知 WidgetSubsystem 需要重新排序
-        WidgetSubsystem::GetInstance().m_bNeedsSorting = true;
+        m_owner->m_bNeedsSorting = true;
     }
 }
 
@@ -114,20 +115,20 @@ void IWidget::SetTick(bool tick)
 void IWidget::AddToViewport(int zOrder)
 {
     m_zOrder = zOrder;
-    m_owner = nullptr; // 全域 Widget 沒有擁有者
-    WidgetSubsystem::GetInstance().AddWidget(std::shared_ptr<IWidget>(this), zOrder);
+    m_owner  = nullptr; // 全域 Widget 沒有擁有者
+    m_owner->AddWidget(std::shared_ptr<IWidget>(this), zOrder);
 }
 
 void IWidget::AddToEntityViewport(Entity* entity, int zOrder)
 {
     m_zOrder = zOrder;
-    m_owner = entity;
-    WidgetSubsystem::GetInstance().AddWidgetToEntity(std::shared_ptr<IWidget>(this), entity, zOrder);
+    m_entity = entity;
+    m_owner->AddWidgetToEntity(std::shared_ptr<IWidget>(this), entity, zOrder);
 }
 
 void IWidget::RemoveFromViewport()
 {
-    WidgetSubsystem::GetInstance().RemoveWidget(std::shared_ptr<IWidget>(this));
+    m_owner->RemoveWidget(std::shared_ptr<IWidget>(this));
 }
 
 void IWidget::MarkForDestroy()

@@ -17,7 +17,9 @@
 #include "Engine/Renderer/Renderer.hpp"
 #include "Game/Framework/GameCommon.hpp"
 #include "Game/Gameplay/Game.hpp"
+#include "Game/Subsystem/Widget/WidgetSubsystem.hpp"
 #include "Game/Subsystem/Window/WindowSubsystem.hpp"
+
 
 //----------------------------------------------------------------------------------------------------
 App*                   g_theApp             = nullptr;       // Created and owned by Main_Windows.cpp
@@ -27,6 +29,7 @@ Game*                  g_theGame            = nullptr;       // Created and owne
 Renderer*              g_theRenderer        = nullptr;       // Created and owned by the App
 RandomNumberGenerator* g_theRNG             = nullptr;       // Created and owned by the App
 Window*                g_theWindow          = nullptr;       // Created and owned by the App
+WidgetSubsystem*       g_theWidgetSubsystem = nullptr;       // Created and owned by the App
 WindowSubsystem*       g_theWindowSubsystem = nullptr;       // Created and owned by the App
 
 //----------------------------------------------------------------------------------------------------
@@ -110,6 +113,13 @@ void App::Startup()
     g_theWindowSubsystem = new WindowSubsystem();
 
     //-End-of-WindowSubsystem-------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
+    //-Start-of-WindowSubsystem-----------------------------------------------------------------------
+
+g_theWidgetSubsystem = new WidgetSubsystem();
+
+    //-End-of-WindowSubsystem-------------------------------------------------------------------------
+
 
     g_theEventSystem->Startup();
     g_theWindow->Startup();
@@ -119,6 +129,7 @@ void App::Startup()
     g_theInput->Startup();
     g_theAudio->Startup();
     g_theWindowSubsystem->StartUp();
+    g_theWidgetSubsystem->StartUp();
 
     g_theBitmapFont = g_theRenderer->CreateOrGetBitmapFontFromFile("Data/Fonts/SquirrelFixedFont"); // DO NOT SPECIFY FILE .EXTENSION!!  (Important later on.)
     g_theRNG        = new RandomNumberGenerator();
@@ -135,6 +146,7 @@ void App::Shutdown()
     GAME_SAFE_RELEASE(g_theRNG);
     GAME_SAFE_RELEASE(g_theBitmapFont);
 
+    g_theWidgetSubsystem->ShutDown();
     g_theWindowSubsystem->ShutDown();
     g_theAudio->Shutdown();
     g_theInput->Shutdown();
@@ -202,6 +214,7 @@ void App::BeginFrame() const
     g_theInput->BeginFrame();
     g_theAudio->BeginFrame();
     g_theWindowSubsystem->BeginFrame();
+    g_theWidgetSubsystem->BeginFrame();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -212,6 +225,7 @@ void App::Update()
     UpdateCursorMode();
 
     g_theWindowSubsystem->Update();
+    g_theWidgetSubsystem->Update();
     g_theGame->Update();
 }
 
@@ -227,6 +241,7 @@ void App::Render() const
     g_theRenderer->ClearScreen(Rgba8::BLUE);
     g_theGame->Render();
     g_theWindowSubsystem->Render();
+    g_theWidgetSubsystem->Render();
 
     AABB2 const box = AABB2(Vec2::ZERO, Vec2(1600.f, 30.f));
 
@@ -244,6 +259,7 @@ void App::EndFrame() const
     g_theInput->EndFrame();
     g_theAudio->EndFrame();
     g_theWindowSubsystem->EndFrame();
+    g_theWidgetSubsystem->EndFrame();
 }
 
 //----------------------------------------------------------------------------------------------------

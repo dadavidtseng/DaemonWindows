@@ -10,18 +10,23 @@
 // WidgetSubsystem Implementation
 //----------------------------------------------------------------------------------------------------
 
-WidgetSubsystem& WidgetSubsystem::GetInstance()
+WidgetSubsystem::WidgetSubsystem()
 {
-    static WidgetSubsystem instance;
-    return instance;
+    m_widgets.reserve(64);
+    m_entityWidgets.reserve(32);
+}
+
+WidgetSubsystem::~WidgetSubsystem()
+{
 }
 
 void WidgetSubsystem::StartUp()
 {
+    // 清空所有容器
     m_widgets.clear();
     m_entityWidgets.clear();
     m_viewportWidget = nullptr;
-    m_bNeedsSorting = false;
+    m_bNeedsSorting  = false;
 }
 
 void WidgetSubsystem::BeginFrame()
@@ -125,7 +130,7 @@ void WidgetSubsystem::RemoveWidget(WidgetPtr widget)
     if (owner && m_entityWidgets.find(owner) != m_entityWidgets.end())
     {
         auto& entityWidgets = m_entityWidgets[owner];
-        auto entityIt = std::find(entityWidgets.begin(), entityWidgets.end(), widget);
+        auto  entityIt      = std::find(entityWidgets.begin(), entityWidgets.end(), widget);
         if (entityIt != entityWidgets.end())
         {
             entityWidgets.erase(entityIt);
@@ -204,19 +209,14 @@ WidgetPtr WidgetSubsystem::GetViewportWidget() const
     return m_viewportWidget;
 }
 
-template<typename T, typename... Args>
-std::shared_ptr<T> WidgetSubsystem::CreateWidget(Args&&... args)
-{
-    static_assert(std::is_base_of_v<IWidget, T>, "T must derive from Widget");
-    return std::make_shared<T>(std::forward<Args>(args)...);
-}
 
 void WidgetSubsystem::SortWidgetsByZOrder()
 {
+    if (m_widgets.empty()) return;
     std::sort(m_widgets.begin(), m_widgets.end(),
-        [](const WidgetPtr& a, const WidgetPtr& b) {
-            return a->GetZOrder() < b->GetZOrder();
-        });
+              [](const WidgetPtr& a, const WidgetPtr& b) {
+                  return a->GetZOrder() < b->GetZOrder();
+              });
 }
 
 void WidgetSubsystem::CleanupGarbageWidgets()
@@ -224,9 +224,9 @@ void WidgetSubsystem::CleanupGarbageWidgets()
     // 移除標記為垃圾的 Widget
     m_widgets.erase(
         std::remove_if(m_widgets.begin(), m_widgets.end(),
-            [](const WidgetPtr& widget) {
-                return !widget || widget->IsGarbage();
-            }),
+                       [](const WidgetPtr& widget) {
+                           return !widget || widget->IsGarbage();
+                       }),
         m_widgets.end());
 
     // 清理 Entity 映射中的垃圾 Widget
@@ -235,9 +235,9 @@ void WidgetSubsystem::CleanupGarbageWidgets()
         auto& widgets = pair.second;
         widgets.erase(
             std::remove_if(widgets.begin(), widgets.end(),
-                [](const WidgetPtr& widget) {
-                    return !widget || widget->IsGarbage();
-                }),
+                           [](const WidgetPtr& widget) {
+                               return !widget || widget->IsGarbage();
+                           }),
             widgets.end());
     }
 

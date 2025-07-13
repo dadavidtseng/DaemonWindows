@@ -15,6 +15,7 @@ class BitmapFont;
 class Game;
 class Renderer;
 class Window;
+class WidgetSubsystem;
 class WindowSubsystem;
 class RandomNumberGenerator;
 
@@ -25,6 +26,7 @@ extern BitmapFont*            g_theBitmapFont;
 extern Game*                  g_theGame;
 extern Renderer*              g_theRenderer;
 extern RandomNumberGenerator* g_theRNG;
+extern WidgetSubsystem*       g_theWidgetSubsystem;
 extern WindowSubsystem*       g_theWindowSubsystem;
 
 //-----------------------------------------------------------------------------------------------
