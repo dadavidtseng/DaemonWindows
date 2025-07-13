@@ -3,7 +3,7 @@
 //----------------------------------------------------------------------------------------------------
 
 #pragma once
-#include "WidgetBase.hpp"
+#include "IWidget.hpp"
 #include <vector>
 #include <memory>
 #include <unordered_map>
@@ -12,7 +12,7 @@
 #include "Engine/Core/StringUtils.hpp"
 
 class Entity;
-using WidgetPtr = std::shared_ptr<Widget>;
+using WidgetPtr = std::shared_ptr<IWidget>;
 
 //----------------------------------------------------------------------------------------------------
 class WidgetSubsystem
@@ -46,7 +46,7 @@ public:
     /// Template function for creating widgets
     template<typename T, typename... Args>
     std::shared_ptr<T> CreateWidget(Args&&... args);
-
+    bool m_bNeedsSorting = false;
 private:
     WidgetSubsystem() = default;
     ~WidgetSubsystem() = default;
@@ -59,5 +59,5 @@ private:
     std::vector<WidgetPtr> m_widgets;
     std::unordered_map<Entity*, std::vector<WidgetPtr>> m_entityWidgets;
     WidgetPtr m_viewportWidget = nullptr;
-    bool m_bNeedsSorting = false;
+
 };

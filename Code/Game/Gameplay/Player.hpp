@@ -13,11 +13,12 @@ class Player : public Entity
 {
 public:
     explicit Player(ActorID actorID,Vec2 const& position, float orientationDegrees);
-    void Update(float deltaSeconds) override;
-    void Render() const override;
-    void UpdateFromInput() override;
-    void FireBullet();
-    void BounceOfWindow() ;
+    void     UpdateWindowFocus();
+    void     Update(float deltaSeconds) override;
+    void     Render() const override;
+    void     UpdateFromInput() override;
+    void     FireBullet();
+    void     BounceOfWindow() ;
 
     Timer m_bulletFireTimer;
 };

@@ -23,11 +23,28 @@ Player::Player(ActorID actorID, Vec2 const& position, float const orientationDeg
 
     g_theWindowSubsystem->CreateChildWindow(m_actorID, "Player Window");
 }
+void Player::UpdateWindowFocus()
+{
+    WindowID    windowID   = g_theWindowSubsystem->FindWindowByActor(m_actorID);
+    WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
 
+    if (windowData && windowData->window && windowData->window->GetWindowHandle())
+    {
+        HWND hwnd = (HWND)windowData->window->GetWindowHandle();
+
+        // 只有在視窗失去焦點時才重新設定
+        if (GetForegroundWindow() != hwnd)
+        {
+            SetForegroundWindow(hwnd);
+            SetFocus(hwnd);
+        }
+    }
+}
 void Player::Update(float deltaSeconds)
 {
     UpdateFromInput();
     BounceOfWindow();
+    UpdateWindowFocus();
 }
 
 void Player::Render() const
