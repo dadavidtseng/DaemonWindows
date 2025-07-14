@@ -11,6 +11,8 @@
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Game/Gameplay/Bullet.hpp"
 #include "Game/Gameplay/Game.hpp"
+#include "Game/Subsystem/Widget/ButtonWidget.hpp"
+#include "Game/Subsystem/Widget/WidgetSubsystem.hpp"
 
 Player::Player(EntityID const actorID, Vec2 const& position, float const orientationDegrees, Rgba8 const& color)
     : Entity(position, orientationDegrees, color),
@@ -22,6 +24,8 @@ Player::Player(EntityID const actorID, Vec2 const& position, float const orienta
     m_cosmeticRadius = m_physicRadius + m_thickness;
 
     g_theWindowSubsystem->CreateChildWindow(m_actorID, "Player Window");
+    m_textWidget = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("%d", m_coin), 200, 200, 300, 300, Rgba8::BLUE);
+    g_theWidgetSubsystem->AddWidget(m_textWidget, 100);
 }
 
 void Player::UpdateWindowFocus()
@@ -70,6 +74,12 @@ void Player::UpdateFromInput()
     if (g_theInput->IsKeyDown(KEYCODE_A)) m_position.x -= 10.f;
     if (g_theInput->IsKeyDown(KEYCODE_S)) m_position.y -= 10.f;
     if (g_theInput->IsKeyDown(KEYCODE_D)) m_position.x += 10.f;
+
+    if (g_theInput->WasKeyJustPressed(KEYCODE_L))
+    {
+        m_coin += 1;
+        m_textWidget->SetText(Stringf("%d", m_coin));
+    }
 
     // if (g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
     // {

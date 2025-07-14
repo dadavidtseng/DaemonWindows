@@ -5,6 +5,8 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Subsystem/Widget/ButtonWidget.hpp"
 
+#include "Engine/Renderer/BitmapFont.hpp"
+
 ButtonWidget::ButtonWidget(WidgetSubsystem* owner, const String& text, int x, int y, int width, int height, Rgba8 const& color)
     : m_text(text),
       m_x(x),
@@ -23,7 +25,8 @@ void ButtonWidget::Draw() const
     // Renderer::DrawButton(m_x, m_y, m_width, m_height, m_text);
     VertexList_PCU verts;
     AddVertsForAABB2D(verts, AABB2(Vec2(m_x, m_y), Vec2(m_x + m_width, m_y + m_height)), m_color);
-    g_theRenderer->BindTexture(nullptr);
+    g_theBitmapFont->AddVertsForText2D(verts, m_text, Vec2(m_x, m_y), 20.f);
+    g_theRenderer->BindTexture(&g_theBitmapFont->GetTexture());
     g_theRenderer->DrawVertexArray(verts);
 }
 
