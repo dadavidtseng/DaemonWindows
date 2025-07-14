@@ -15,6 +15,7 @@
 #include "Game/Framework/App.hpp"
 #include "Game/Framework/GameCommon.hpp"
 #include "Game/Gameplay/Player.hpp"
+#include "Game/Subsystem/Widget/ButtonWidget.hpp"
 #include "Game/Subsystem/Widget/WidgetSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
@@ -31,8 +32,10 @@ Game::Game()
     m_gameClock = new Clock(Clock::GetSystemClock());
     m_entities.push_back(new Player(0, Window::s_mainWindow->GetScreenDimensions() * 0.5f, 0.f));
 
-    auto mainMenuButton = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, "Main Menu", 10, 10, 100, 30);
-    g_theWidgetSubsystem->AddWidget(mainMenuButton, 100);
+    auto test1 = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, "test1", 0, 0, 300, 300, Rgba8::BLUE);
+    g_theWidgetSubsystem->AddWidget(test1, 100);
+    auto test2 = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, "test2", 300, 200, 500, 500, Rgba8::WHITE);
+    g_theWidgetSubsystem->AddWidget(test2, 10);
 }
 
 Game::~Game()

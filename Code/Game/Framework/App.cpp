@@ -115,8 +115,8 @@ void App::Startup()
     //-End-of-WindowSubsystem-------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
     //-Start-of-WindowSubsystem-----------------------------------------------------------------------
-
-g_theWidgetSubsystem = new WidgetSubsystem();
+    sWidgetSubsystemConfig widgetConfig;
+    g_theWidgetSubsystem = new WidgetSubsystem(widgetConfig);
 
     //-End-of-WindowSubsystem-------------------------------------------------------------------------
 
@@ -240,8 +240,8 @@ void App::Render() const
 {
     g_theRenderer->ClearScreen(Rgba8::BLUE);
     g_theGame->Render();
-    g_theWindowSubsystem->Render();
     g_theWidgetSubsystem->Render();
+    g_theWindowSubsystem->Render();
 
     AABB2 const box = AABB2(Vec2::ZERO, Vec2(1600.f, 30.f));
 

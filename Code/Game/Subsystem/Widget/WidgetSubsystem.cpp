@@ -4,16 +4,20 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Game/Subsystem/Widget/WidgetSubsystem.hpp"
+
+#include <algorithm>
+
 #include "Game/Subsystem/Widget/IWidget.hpp"
 
 //----------------------------------------------------------------------------------------------------
 // WidgetSubsystem Implementation
 //----------------------------------------------------------------------------------------------------
 
-WidgetSubsystem::WidgetSubsystem()
+WidgetSubsystem::WidgetSubsystem(sWidgetSubsystemConfig const& config )
+    :m_config(config)
 {
-    m_widgets.reserve(64);
-    m_entityWidgets.reserve(32);
+    m_widgets.reserve(m_config.m_initialWidgetCapacity);
+    m_entityWidgets.reserve(m_config.m_initialOwnerCapacity);
 }
 
 WidgetSubsystem::~WidgetSubsystem()
@@ -63,7 +67,7 @@ void WidgetSubsystem::Update()
     }
 }
 
-void WidgetSubsystem::Render()
+void WidgetSubsystem::Render() const
 {
     // 按照 Z-Order 渲染所有 Widget
     for (auto& widget : m_widgets)
@@ -102,7 +106,7 @@ void WidgetSubsystem::AddWidget(WidgetPtr widget, int zOrder)
     m_bNeedsSorting = true;
 }
 
-void WidgetSubsystem::AddWidgetToEntity(WidgetPtr widget, Entity* entity, int zOrder)
+void WidgetSubsystem::AddWidgetToEntity(WidgetPtr widget,void* entity, int zOrder)
 {
     if (!widget || !entity) return;
 
@@ -126,7 +130,7 @@ void WidgetSubsystem::RemoveWidget(WidgetPtr widget)
     }
 
     // 從 Entity 映射中移除
-    Entity* owner = widget->GetOwner();
+    void* owner = widget->GetOwner();
     if (owner && m_entityWidgets.find(owner) != m_entityWidgets.end())
     {
         auto& entityWidgets = m_entityWidgets[owner];
@@ -144,7 +148,7 @@ void WidgetSubsystem::RemoveWidget(WidgetPtr widget)
     }
 }
 
-void WidgetSubsystem::RemoveAllWidgetsFromEntity(Entity* entity)
+void WidgetSubsystem::RemoveAllWidgetsFromEntity(void* entity)
 {
     if (!entity) return;
 
@@ -184,7 +188,7 @@ WidgetPtr WidgetSubsystem::FindWidgetByName(const String& name) const
     return nullptr;
 }
 
-std::vector<WidgetPtr> WidgetSubsystem::GetWidgetsByEntity(Entity* entity) const
+std::vector<WidgetPtr> WidgetSubsystem::GetWidgetsByEntity(void* entity) const
 {
     auto it = m_entityWidgets.find(entity);
     if (it != m_entityWidgets.end())

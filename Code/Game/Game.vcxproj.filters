@@ -61,6 +61,9 @@
     <ClCompile Include="Subsystem\Widget\IWidget.cpp">
       <Filter>Subsystem\Widget</Filter>
     </ClCompile>
+    <ClCompile Include="Subsystem\Widget\ButtonWidget.cpp">
+      <Filter>Subsystem\Widget</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineBuildPreferences.hpp">
@@ -100,6 +103,9 @@
       <Filter>Gameplay</Filter>
     </ClInclude>
     <ClInclude Include="Subsystem\Widget\IWidget.hpp">
+      <Filter>Subsystem\Widget</Filter>
+    </ClInclude>
+    <ClInclude Include="Subsystem\Widget\ButtonWidget.hpp">
       <Filter>Subsystem\Widget</Filter>
     </ClInclude>
   </ItemGroup>
