@@ -71,10 +71,10 @@ void Player::UpdateFromInput()
     if (g_theInput->IsKeyDown(KEYCODE_S)) m_position.y -= 10.f;
     if (g_theInput->IsKeyDown(KEYCODE_D)) m_position.x += 10.f;
 
-    if (g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
-    {
-        FireBullet();
-    }
+    // if (g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
+    // {
+    //     FireBullet();
+    // }
 
     // 連發射擊（持續按住）
     if (g_theInput->IsKeyDown(KEYCODE_LEFT_MOUSE))
