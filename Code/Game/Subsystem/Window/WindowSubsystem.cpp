@@ -76,7 +76,7 @@ void WindowSubsystem::ShutDown()
 // 核心視窗管理功能
 //----------------------------------------------------------------------------------------------------
 
-WindowID WindowSubsystem::CreateChildWindow(const std::vector<ActorID>& owners, const std::string& name)
+WindowID WindowSubsystem::CreateChildWindow( std::vector<EntityID> const& owners,  std::string const& name)
 {
     if (owners.empty())
     {
@@ -85,7 +85,7 @@ WindowID WindowSubsystem::CreateChildWindow(const std::vector<ActorID>& owners, 
     }
 
     // 檢查是否有actor已經在其他視窗中
-    for (ActorID actorId : owners)
+    for (EntityID actorId : owners)
     {
         auto it = m_actorToWindow.find(actorId);
         if (it != m_actorToWindow.end())
@@ -105,12 +105,13 @@ WindowID WindowSubsystem::CreateChildWindow(const std::vector<ActorID>& owners, 
     return CreateWindowInternal(owners, windowName, x, y, 400, 300);
 }
 
-WindowID WindowSubsystem::CreateChildWindow(ActorID owner, const std::string& name)
+WindowID WindowSubsystem::CreateChildWindow(EntityID const owner,
+                                            String const&  name)
 {
-    return CreateChildWindow(std::vector<ActorID>{owner}, name);
+    return CreateChildWindow(std::vector<EntityID>{owner}, name);
 }
 
-bool WindowSubsystem::AddActorToWindow(WindowID windowId, ActorID actorId)
+bool WindowSubsystem::AddActorToWindow(WindowID windowId, EntityID actorId)
 {
     // 檢查視窗是否存在
     auto windowIt = m_windows.find(windowId);
@@ -145,7 +146,7 @@ bool WindowSubsystem::AddActorToWindow(WindowID windowId, ActorID actorId)
     return true;
 }
 
-bool WindowSubsystem::RemoveActorFromWindow(WindowID windowId, ActorID actorId)
+bool WindowSubsystem::RemoveActorFromWindow(WindowID windowId, EntityID actorId)
 {
     // 檢查視窗是否存在
     auto windowIt = m_windows.find(windowId);
@@ -192,7 +193,7 @@ void WindowSubsystem::DestroyWindow(WindowID windowId)
     }
 
     // 移除所有相關的actor映射
-    for (ActorID actorId : windowIt->second.owners)
+    for (EntityID actorId : windowIt->second.owners)
     {
         m_actorToWindow.erase(actorId);
     }
@@ -241,19 +242,19 @@ WindowData* WindowSubsystem::GetWindowData(WindowID windowId)
     return (it != m_windows.end()) ? &it->second : nullptr;
 }
 
-WindowID WindowSubsystem::FindWindowByActor(ActorID actorId)
+WindowID WindowSubsystem::FindWindowByActor(EntityID actorId)
 {
     auto it = m_actorToWindow.find(actorId);
     return (it != m_actorToWindow.end()) ? it->second : 0;
 }
 
-std::vector<ActorID> WindowSubsystem::GetWindowOwners(WindowID windowId)
+std::vector<EntityID> WindowSubsystem::GetWindowOwners(WindowID windowId)
 {
-    std::vector<ActorID> result;
-    auto                 it = m_windows.find(windowId);
+    std::vector<EntityID> result;
+    auto                  it = m_windows.find(windowId);
     if (it != m_windows.end())
     {
-        for (ActorID actorId : it->second.owners)
+        for (EntityID actorId : it->second.owners)
         {
             result.push_back(actorId);
         }
@@ -261,7 +262,7 @@ std::vector<ActorID> WindowSubsystem::GetWindowOwners(WindowID windowId)
     return result;
 }
 
-std::vector<WindowID> WindowSubsystem::GetActorWindows(ActorID actorId)
+std::vector<WindowID> WindowSubsystem::GetActorWindows(EntityID actorId)
 {
     std::vector<WindowID> result;
     auto                  it = m_actorToWindow.find(actorId);
@@ -282,7 +283,7 @@ std::vector<WindowID> WindowSubsystem::GetAllWindowIDs()
     return result;
 }
 
-bool WindowSubsystem::IsActorInWindow(WindowID windowId, ActorID actorId)
+bool WindowSubsystem::IsActorInWindow(WindowID windowId, EntityID actorId)
 {
     auto it = m_windows.find(windowId);
     if (it != m_windows.end())
@@ -307,6 +308,24 @@ void WindowSubsystem::UpdateWindowPosition(WindowID windowId)
     if (it != m_windows.end() && it->second.window)
     {
         it->second.window->UpdatePosition();
+    }
+    else
+    {
+        DebuggerPrintf("UpdateWindowPosition: Window %d not found.\n", windowId);
+    }
+}
+
+void WindowSubsystem::UpdateWindowPosition(WindowID windowId, Vec2 const& newPosition)
+{
+    auto it = m_windows.find(windowId);
+    if (it != m_windows.end() && it->second.window)
+    {
+        // it->second.window->SetWindowPosition(it->second.window->GetWindowPosition()+newPosition);
+        Vec2 totalPosition                        = it->second.window->GetWindowPosition()+newPosition;
+        it->second.window->UpdatePosition(totalPosition);
+        it->second.window->m_shouldUpdatePosition = true;
+        DebuggerPrintf("(NewPosition: %f, %f)\n", newPosition.x, newPosition.y);
+        DebuggerPrintf("(it->second.window->GetWindowPosition(): %f, %f)\n", it->second.window->GetWindowPosition().x, it->second.window->GetWindowPosition().y);
     }
     else
     {
@@ -378,7 +397,7 @@ size_t WindowSubsystem::GetActiveWindowCount() const
 // 批量操作
 //----------------------------------------------------------------------------------------------------
 
-void WindowSubsystem::CreateMultipleWindows(const std::vector<std::vector<ActorID>>& ownerGroups)
+void WindowSubsystem::CreateMultipleWindows(std::vector<std::vector<EntityID>> const& ownerGroups)
 {
     for (size_t i = 0; i < ownerGroups.size(); ++i)
     {
@@ -401,10 +420,13 @@ void WindowSubsystem::CreateMultipleWindows(const std::vector<std::vector<ActorI
 }
 
 //----------------------------------------------------------------------------------------------------
-// 內部輔助函數
-//----------------------------------------------------------------------------------------------------
+size_t WindowSubsystem::GetWindowCount() const
+{
+    return m_windows.size();
+}
 
-WindowID WindowSubsystem::CreateWindowInternal(const std::vector<ActorID>& owners, const std::string& name, int x, int y, int width, int height)
+//----------------------------------------------------------------------------------------------------
+WindowID WindowSubsystem::CreateWindowInternal(std::vector<EntityID> const& owners, String const& name, int x, int y, int width, int height)
 {
     // 轉換名稱為寬字符
     std::wstring wTitle;
@@ -441,11 +463,11 @@ WindowID WindowSubsystem::CreateWindowInternal(const std::vector<ActorID>& owner
     newWindow->m_shouldUpdatePosition = true;
 
     // 創建 WindowData 並添加到容器
-    std::unordered_set<ActorID> ownerSet(owners.begin(), owners.end());
+    std::unordered_set<EntityID> ownerSet(owners.begin(), owners.end());
     m_windows.emplace(newId, WindowData(std::move(newWindow), ownerSet, name));
 
     // 建立actor到視窗的映射
-    for (ActorID owner : owners)
+    for (EntityID owner : owners)
     {
         m_actorToWindow[owner] = newId;
     }
@@ -462,7 +484,7 @@ WindowID WindowSubsystem::CreateWindowInternal(const std::vector<ActorID>& owner
     return newId;
 }
 
-void WindowSubsystem::RemoveActorFromMappings(ActorID actorId)
+void WindowSubsystem::RemoveActorFromMappings(EntityID actorId)
 {
     auto it = m_actorToWindow.find(actorId);
     if (it != m_actorToWindow.end())
@@ -516,7 +538,7 @@ HWND WindowSubsystem::CreateOSWindow(std::wstring const& title,
     return hwnd;
 }
 
-std::string WindowSubsystem::GenerateDefaultWindowName(const std::vector<ActorID>& owners)
+std::string WindowSubsystem::GenerateDefaultWindowName(const std::vector<EntityID>& owners)
 {
     if (owners.empty())
     {

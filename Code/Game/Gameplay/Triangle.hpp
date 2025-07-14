@@ -11,7 +11,7 @@
 class Triangle : public Entity
 {
 public:
-    explicit Triangle(ActorID actorID, Vec2 const& position, float orientationDegrees, Rgba8 const& color);
+    explicit Triangle(EntityID actorID, Vec2 const& position, float orientationDegrees, Rgba8 const& color);
     void     UpdateWindowFocus();
     void     Update(float deltaSeconds) override;
     void     Render() const override;

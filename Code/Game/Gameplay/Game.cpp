@@ -41,7 +41,7 @@ Game::Game()
     // auto test2 = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, "test2", 300, 200, 500, 500, Rgba8::WHITE);
     // g_theWidgetSubsystem->AddWidget(test2, 10);
 
-    g_theWindowSubsystem->CreateChildWindow(-1, "Background Window");
+    // g_theWindowSubsystem->CreateChildWindow(-1, "Background Window");
 }
 
 Game::~Game()
@@ -138,6 +138,15 @@ void Game::UpdateFromInput()
 {
     if (m_gameState == eGameState::ATTRACT)
     {
+if (g_theInput->IsKeyDown(KEYCODE_I))
+{
+    g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowByActor(0), Vec2::ONE*(float)m_gameClock->GetDeltaSeconds());
+}
+        if (g_theInput->IsKeyDown(KEYCODE_K))
+        {
+            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowByActor(1), Vec2::ONE*(float)m_gameClock->GetDeltaSeconds());
+        }
+
         if (g_theInput->WasKeyJustPressed(KEYCODE_Q))
         {
             g_theWindowSubsystem->RemoveActorFromMappings(0);
@@ -153,7 +162,7 @@ void Game::UpdateFromInput()
             // ChangeGameState(eGameState::GAME);
             SoundID const clickSound = g_theAudio->CreateOrGetSound("Data/Audio/TestSound.mp3", eAudioSystemSoundDimension::Sound2D);
             g_theAudio->StartSound(clickSound, false, 1.f, 0.f, 0.5f);
-            g_theWindowSubsystem->CreateChildWindow(ActorID(1), "HELLO");
+            g_theWindowSubsystem->CreateChildWindow(EntityID(1), "HELLO");
         }
     }
     else if (m_gameState == eGameState::GAME)
@@ -176,6 +185,8 @@ void Game::HandleEntityCollision()
 
         for (int j = 0; j < m_entities.size(); ++j)
         {
+            if (i == j) continue;
+
             Entity* entityB = m_entities[j];
             if (entityB->IsDead()) continue;
             // 檢查兩個實體是否發生碰撞
@@ -190,8 +201,8 @@ void Game::HandleEntityCollision()
                 if (bulletA != nullptr && triangle != nullptr)
                 {
                     // entityA 是 Bullet 類別
-                    bulletA->TakeDamage(1);
-                    triangle->TakeDamage(1);
+                    bulletA->DecreaseHealth(1);
+                    triangle->DecreaseHealth(1);
                 }
             }
         }

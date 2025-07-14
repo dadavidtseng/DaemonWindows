@@ -12,7 +12,7 @@
 class Player : public Entity
 {
 public:
-    explicit Player(ActorID actorID,Vec2 const& position, float orientationDegrees, Rgba8 const& color);
+    explicit Player(EntityID actorID,Vec2 const& position, float orientationDegrees, Rgba8 const& color);
     void     UpdateWindowFocus();
     void     Update(float deltaSeconds) override;
     void     Render() const override;

@@ -4,11 +4,13 @@
 
 #include "Game/Gameplay/Entity.hpp"
 
+#include "Engine/Core/ErrorWarningAssert.hpp"
+
 //----------------------------------------------------------------------------------------------------
 Entity::Entity(Vec2 const& position, float const orientationDegrees, Rgba8 const& color)
     : m_position(position),
-      m_orientationDegrees(orientationDegrees),
-      m_color(color)
+      m_color(color),
+      m_orientationDegrees(orientationDegrees)
 {
 }
 
@@ -37,7 +39,7 @@ bool Entity::IsGarbage() const
     return m_isGarbage;
 }
 
-void Entity::TakeDamage(int damage)
+void Entity::DecreaseHealth(int damage)
 {
     m_health -= damage;
 }

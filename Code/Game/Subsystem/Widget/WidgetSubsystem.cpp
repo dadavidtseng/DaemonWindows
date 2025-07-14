@@ -10,16 +10,14 @@
 #include "Game/Subsystem/Widget/IWidget.hpp"
 
 //----------------------------------------------------------------------------------------------------
-// WidgetSubsystem Implementation
-//----------------------------------------------------------------------------------------------------
-
-WidgetSubsystem::WidgetSubsystem(sWidgetSubsystemConfig const& config )
-    :m_config(config)
+WidgetSubsystem::WidgetSubsystem(sWidgetSubsystemConfig const& config)
+    : m_config(config)
 {
     m_widgets.reserve(m_config.m_initialWidgetCapacity);
     m_entityWidgets.reserve(m_config.m_initialOwnerCapacity);
 }
 
+//----------------------------------------------------------------------------------------------------
 WidgetSubsystem::~WidgetSubsystem()
 {
 }
@@ -97,7 +95,8 @@ void WidgetSubsystem::ShutDown()
     m_viewportWidget = nullptr;
 }
 
-void WidgetSubsystem::AddWidget(WidgetPtr widget, int zOrder)
+void WidgetSubsystem::AddWidget(WidgetPtr const& widget,
+                                int const        zOrder)
 {
     if (!widget) return;
 
@@ -106,7 +105,9 @@ void WidgetSubsystem::AddWidget(WidgetPtr widget, int zOrder)
     m_bNeedsSorting = true;
 }
 
-void WidgetSubsystem::AddWidgetToEntity(WidgetPtr widget,void* entity, int zOrder)
+void WidgetSubsystem::AddWidgetToEntity(WidgetPtr const& widget,
+                                        void*            entity,
+                                        int const        zOrder)
 {
     if (!widget || !entity) return;
 
@@ -118,7 +119,7 @@ void WidgetSubsystem::AddWidgetToEntity(WidgetPtr widget,void* entity, int zOrde
     m_bNeedsSorting = true;
 }
 
-void WidgetSubsystem::RemoveWidget(WidgetPtr widget)
+void WidgetSubsystem::RemoveWidget(WidgetPtr const& widget)
 {
     if (!widget) return;
 
@@ -176,7 +177,7 @@ void WidgetSubsystem::RemoveAllWidgets()
     m_entityWidgets.clear();
 }
 
-WidgetPtr WidgetSubsystem::FindWidgetByName(const String& name) const
+WidgetPtr WidgetSubsystem::FindWidgetByName(String const& name) const
 {
     for (auto& widget : m_widgets)
     {
@@ -188,13 +189,15 @@ WidgetPtr WidgetSubsystem::FindWidgetByName(const String& name) const
     return nullptr;
 }
 
-std::vector<WidgetPtr> WidgetSubsystem::GetWidgetsByEntity(void* entity) const
+std::vector<WidgetPtr> WidgetSubsystem::GetWidgetsByOwner(void* owner) const
 {
-    auto it = m_entityWidgets.find(entity);
+    auto const it = m_entityWidgets.find(owner);
+
     if (it != m_entityWidgets.end())
     {
         return it->second;
     }
+
     return {};
 }
 
@@ -203,7 +206,7 @@ std::vector<WidgetPtr> WidgetSubsystem::GetAllWidgets() const
     return m_widgets;
 }
 
-void WidgetSubsystem::SetViewportWidget(WidgetPtr widget)
+void WidgetSubsystem::SetViewportWidget(WidgetPtr const& widget)
 {
     m_viewportWidget = widget;
 }

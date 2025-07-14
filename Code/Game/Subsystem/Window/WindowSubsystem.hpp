@@ -15,14 +15,14 @@
 //----------------------------------------------------------------------------------------------------
 struct WindowData
 {
-    std::unique_ptr<Window>     window;
-    std::unordered_set<ActorID> owners;
-    std::string                 name;
-    bool                        isActive = true;
+    std::unique_ptr<Window>      window;
+    std::unordered_set<EntityID> owners;
+    std::string                  name;
+    bool                         isActive = true;
 
     WindowData() = default;
 
-    WindowData(std::unique_ptr<Window> win, const std::unordered_set<ActorID>& ownerSet, const std::string& windowName)
+    WindowData(std::unique_ptr<Window> win, const std::unordered_set<EntityID>& ownerSet, const std::string& windowName)
         : window(std::move(win)), owners(ownerSet), name(windowName)
     {
     }
@@ -40,34 +40,35 @@ public:
     void ShutDown();
 
     // 核心視窗管理功能
-    WindowID CreateChildWindow(const std::vector<ActorID>& owners, const std::string& name = "");
-    WindowID CreateChildWindow(ActorID owner, const std::string& name = "");
-    bool     AddActorToWindow(WindowID windowId, ActorID actorId);
-    bool     RemoveActorFromWindow(WindowID windowId, ActorID actorId);
-    void     RemoveActorFromMappings(ActorID actorId);
+    WindowID CreateChildWindow(std::vector<EntityID> const& owners, String const& name = "");
+    WindowID CreateChildWindow(EntityID owner, String const& name = "");
+    bool     AddActorToWindow(WindowID windowId, EntityID actorId);
+    bool     RemoveActorFromWindow(WindowID windowId, EntityID actorId);
+    void     RemoveActorFromMappings(EntityID actorId);
     void     DestroyWindow(WindowID windowId);
     void     DestroyAllWindows();
 
     // 查詢功能
     Window*               GetWindow(WindowID windowId);
     WindowData*           GetWindowData(WindowID windowId);
-    WindowID              FindWindowByActor(ActorID actorId);
-    std::vector<ActorID>  GetWindowOwners(WindowID windowId);
-    std::vector<WindowID> GetActorWindows(ActorID actorId);
+    WindowID              FindWindowByActor(EntityID actorId);
+    std::vector<EntityID> GetWindowOwners(WindowID windowId);
+    std::vector<WindowID> GetActorWindows(EntityID actorId);
     std::vector<WindowID> GetAllWindowIDs();
-    bool                  IsActorInWindow(WindowID windowId, ActorID actorId);
+    bool                  IsActorInWindow(WindowID windowId, EntityID actorId);
     bool                  WindowExists(WindowID windowId);
 
     // 視窗操作
     void        UpdateWindowPosition(WindowID windowId);
+    void        UpdateWindowPosition(WindowID windowId, Vec2 const& newPosition);
     void        UpdateWindowDimension(WindowID windowId);
     void        SetWindowActive(WindowID windowId, bool active);
     void        SetWindowName(WindowID windowId, const std::string& name);
     std::string GetWindowName(WindowID windowId);
 
     // 批量操作
-    void   CreateMultipleWindows(const std::vector<std::vector<ActorID>>& ownerGroups);
-    size_t GetWindowCount() const { return m_windows.size(); }
+    void   CreateMultipleWindows(std::vector<std::vector<EntityID>> const& ownerGroups);
+    size_t GetWindowCount() const;
     size_t GetActiveWindowCount() const;
 
 private:
@@ -75,13 +76,13 @@ private:
     std::unordered_map<WindowID, WindowData> m_windows;
 
     // 快速查找：ActorID -> WindowID (一個actor只能在一個視窗)
-    std::unordered_map<ActorID, WindowID> m_actorToWindow;
+    std::unordered_map<EntityID, WindowID> m_actorToWindow;
 
     WindowID m_nextWindowID = 1; // 從1開始，0保留為無效ID
 
     // 內部輔助函數
-    WindowID CreateWindowInternal(std::vector<ActorID> const& owners, String const& name, int x, int y, int width, int height);
+    WindowID CreateWindowInternal(std::vector<EntityID> const& owners, String const& name, int x, int y, int width, int height);
 
     HWND        CreateOSWindow(std::wstring const& title, int x, int y, int width, int height);
-    std::string GenerateDefaultWindowName(const std::vector<ActorID>& owners);
+    std::string GenerateDefaultWindowName(const std::vector<EntityID>& owners);
 };

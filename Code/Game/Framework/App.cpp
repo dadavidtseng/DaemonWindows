@@ -115,7 +115,7 @@ void App::Startup()
     //-End-of-WindowSubsystem-------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
     //-Start-of-WindowSubsystem-----------------------------------------------------------------------
-    sWidgetSubsystemConfig widgetConfig;
+    sWidgetSubsystemConfig constexpr widgetConfig;
     g_theWidgetSubsystem = new WidgetSubsystem(widgetConfig);
 
     //-End-of-WindowSubsystem-------------------------------------------------------------------------

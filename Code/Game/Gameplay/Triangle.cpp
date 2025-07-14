@@ -5,7 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Triangle.hpp"
 
-Triangle::Triangle(ActorID const actorID, Vec2 const& position, float const orientationDegrees, Rgba8 const& color)
+Triangle::Triangle(EntityID const actorID, Vec2 const& position, float const orientationDegrees, Rgba8 const& color)
     : Entity(position, orientationDegrees, color)
 {
     m_actorID        = actorID;

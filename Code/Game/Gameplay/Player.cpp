@@ -12,7 +12,7 @@
 #include "Game/Gameplay/Bullet.hpp"
 #include "Game/Gameplay/Game.hpp"
 
-Player::Player(ActorID const actorID, Vec2 const& position, float const orientationDegrees, Rgba8 const& color)
+Player::Player(EntityID const actorID, Vec2 const& position, float const orientationDegrees, Rgba8 const& color)
     : Entity(position, orientationDegrees, color),
       m_bulletFireTimer(0.5f)
 {

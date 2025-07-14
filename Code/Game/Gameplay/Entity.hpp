@@ -12,9 +12,9 @@
 class Entity
 {
 public:
-    Entity(Vec2 const& position, float orientationDegrees, Rgba8 const& color);
+    explicit Entity(Vec2 const& position, float orientationDegrees, Rgba8 const& color);
     virtual  ~Entity() = default;
-    ActorID  m_actorID            = 0;
+    EntityID  m_actorID            = 0;
     WindowID m_windowID           = 0;
     String   m_name               = "DEFAULT";
     Vec2     m_position           = Vec2::ZERO;
@@ -36,9 +36,7 @@ public:
     virtual bool IsDead() const;
     virtual bool IsGarbage() const;
 
-    // 共同邏輯放在基類
-    void TakeDamage(int damage);
-    void Move(Vec2 direction, float speed);
+    void DecreaseHealth(int damage);
 
 protected:
     float m_speed     = 100.f;
