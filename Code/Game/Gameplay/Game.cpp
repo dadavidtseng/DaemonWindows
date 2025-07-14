@@ -5,11 +5,14 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Game.hpp"
 
+#include "Bullet.hpp"
+#include "Triangle.hpp"
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Input/InputSystem.hpp"
+#include "Engine/Math/Triangle2.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Game/Framework/App.hpp"
@@ -30,12 +33,15 @@ Game::Game()
     m_screenCamera->SetNormalizedViewport(AABB2::ZERO_TO_ONE);
 
     m_gameClock = new Clock(Clock::GetSystemClock());
-    m_entities.push_back(new Player(0, Window::s_mainWindow->GetScreenDimensions() * 0.5f, 0.f));
+    m_entities.push_back(new Player(0, Window::s_mainWindow->GetScreenDimensions() * 0.5f, 0.f, Rgba8::YELLOW));
+    m_entities.push_back(new Triangle(1, Window::s_mainWindow->GetScreenDimensions() * 0.5f, 0.f, Rgba8::BLUE));
 
-    auto test1 = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, "test1", 0, 0, 300, 300, Rgba8::BLUE);
-    g_theWidgetSubsystem->AddWidget(test1, 100);
-    auto test2 = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, "test2", 300, 200, 500, 500, Rgba8::WHITE);
-    g_theWidgetSubsystem->AddWidget(test2, 10);
+    // auto test1 = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, "test1", 0, 0, 300, 300, Rgba8::BLUE);
+    // g_theWidgetSubsystem->AddWidget(test1, 100);
+    // auto test2 = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, "test2", 300, 200, 500, 500, Rgba8::WHITE);
+    // g_theWidgetSubsystem->AddWidget(test2, 10);
+
+    g_theWindowSubsystem->CreateChildWindow(-1, "Background Window");
 }
 
 Game::~Game()
@@ -50,12 +56,13 @@ void Game::Update()
 
     UpdateFromInput();
     AdjustForPauseAndTimeDistortion();
+    HandleEntityCollision();
     for (size_t i = 0; i < m_entities.size(); ++i)
     {
         Entity* entity = m_entities[i];
         if (entity != nullptr)  // 先檢查指標
         {
-            if (entity->IsAlive())  // 再檢查是否存活
+            if (!entity->IsDead())  // 再檢查是否存活
             {
                 entity->Update(gameDeltaSeconds);
             }
@@ -160,6 +167,38 @@ void Game::UpdateFromInput()
     }
 }
 
+void Game::HandleEntityCollision()
+{
+    for (int i = 0; i < m_entities.size(); ++i)
+    {
+        Entity* entityA = m_entities[i];
+        if (entityA->IsDead()) continue;
+
+        for (int j = 0; j < m_entities.size(); ++j)
+        {
+            Entity* entityB = m_entities[j];
+            if (entityB->IsDead()) continue;
+            // 檢查兩個實體是否發生碰撞
+            if (DoDiscsOverlap2D(entityA->m_position, entityA->m_physicRadius, entityB->m_position, entityB->m_physicRadius))
+            {
+                // 處理碰撞反應
+                // entityA->m_color = entityB->m_color;
+
+                // 方法1: 使用 dynamic_cast (如果有繼承關係和虛擬函式)
+                Bullet*   bulletA  = dynamic_cast<Bullet*>(entityA);
+                Triangle* triangle = dynamic_cast<Triangle*>(entityB);
+                if (bulletA != nullptr && triangle != nullptr)
+                {
+                    // entityA 是 Bullet 類別
+                    bulletA->TakeDamage(1);
+                    triangle->TakeDamage(1);
+                }
+            }
+        }
+    }
+}
+
+
 //----------------------------------------------------------------------------------------------------
 void Game::AdjustForPauseAndTimeDistortion() const
 {
@@ -212,7 +251,7 @@ void Game::RenderAttractMode() const
 
     for (Entity* entity : m_entities)
     {
-        if (entity && entity->IsAlive())
+        if (entity && !entity->IsDead())
         {
             entity->Render();
         }

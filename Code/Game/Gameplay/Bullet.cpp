@@ -5,8 +5,8 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Bullet.hpp"
 
-Bullet::Bullet(Vec2 const& position, float const orientationDegrees)
-    : Entity(position, orientationDegrees)
+Bullet::Bullet(Vec2 const& position, float const orientationDegrees, Rgba8 const& color)
+    : Entity(position, orientationDegrees, color)
 {
     // 明確初始化所有重要成員
     m_name   = "BULLET";
@@ -14,8 +14,9 @@ Bullet::Bullet(Vec2 const& position, float const orientationDegrees)
     m_health = 1;  // 子彈通常一擊就消失
 }
 
-void Bullet::Update(float deltaSeconds)
+void Bullet::Update(float const deltaSeconds)
 {
+    Entity::Update(deltaSeconds);
     UpdateFromInput();
     m_position.x += m_velocity.x * deltaSeconds * m_speed;
     m_position.y += m_velocity.y * deltaSeconds * m_speed;
@@ -24,7 +25,7 @@ void Bullet::Update(float deltaSeconds)
 void Bullet::Render() const
 {
     VertexList_PCU verts2;
-    AddVertsForDisc2D(verts2, m_position, 10.f, Rgba8::GREEN);
+    AddVertsForDisc2D(verts2, m_position, 10.f, m_color);
     g_theRenderer->SetModelConstants();
     g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
     g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);

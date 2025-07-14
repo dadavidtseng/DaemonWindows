@@ -37,6 +37,7 @@ public:
     std::vector<Entity*> m_entities;
 private:
     void UpdateFromInput();
+    void HandleEntityCollision();
     void AdjustForPauseAndTimeDistortion() const;
     void RenderAttractMode() const;
     void RenderGame() const;

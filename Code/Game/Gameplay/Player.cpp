@@ -12,8 +12,8 @@
 #include "Game/Gameplay/Bullet.hpp"
 #include "Game/Gameplay/Game.hpp"
 
-Player::Player(ActorID actorID, Vec2 const& position, float const orientationDegrees)
-    : Entity(position, orientationDegrees),
+Player::Player(ActorID const actorID, Vec2 const& position, float const orientationDegrees, Rgba8 const& color)
+    : Entity(position, orientationDegrees, color),
       m_bulletFireTimer(0.5f)
 {
     m_actorID        = actorID;
@@ -23,6 +23,7 @@ Player::Player(ActorID actorID, Vec2 const& position, float const orientationDeg
 
     g_theWindowSubsystem->CreateChildWindow(m_actorID, "Player Window");
 }
+
 void Player::UpdateWindowFocus()
 {
     WindowID    windowID   = g_theWindowSubsystem->FindWindowByActor(m_actorID);
@@ -40,8 +41,10 @@ void Player::UpdateWindowFocus()
         }
     }
 }
-void Player::Update(float deltaSeconds)
+
+void Player::Update(float const deltaSeconds)
 {
+    Entity::Update(deltaSeconds);
     UpdateFromInput();
     BounceOfWindow();
     UpdateWindowFocus();
@@ -100,7 +103,7 @@ void Player::UpdateFromInput()
 
 void Player::FireBullet()
 {
-    Bullet* bullet     = new Bullet(m_position, 0.f);
+    Bullet* bullet     = new Bullet(m_position, 0.f, Rgba8::GREEN);
     int     id         = g_theRNG->RollRandomIntInRange(100, 1000);
     bullet->m_actorID  = id;
     bullet->m_windowID = 10;
@@ -118,7 +121,7 @@ void Player::BounceOfWindow()
     WindowID    windowID   = g_theWindowSubsystem->FindWindowByActor(m_actorID);
     WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
 
-    if (windowData== nullptr)return;
+    if (windowData == nullptr) return;
 
     WindowRect rect = windowData->window->lastRect;
     // 取得視窗的邊界
