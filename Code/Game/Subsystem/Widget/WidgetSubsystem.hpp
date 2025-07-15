@@ -60,7 +60,7 @@ private:
     void                                              CleanupGarbageWidgets();
     sWidgetSubsystemConfig                            m_config;
     std::vector<WidgetPtr>                            m_widgets;
-    std::unordered_map<void*, std::vector<WidgetPtr>> m_entityWidgets;
+    std::unordered_map<void*, std::vector<WidgetPtr>> m_ownerWidgetsMapping;
     WidgetPtr                                         m_viewportWidget = nullptr;
 };
 

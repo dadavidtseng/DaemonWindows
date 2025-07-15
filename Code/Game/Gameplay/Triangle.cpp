@@ -16,6 +16,11 @@ Triangle::Triangle(EntityID const actorID, Vec2 const& position, float const ori
     g_theWindowSubsystem->CreateChildWindow(m_actorID, "Enemy Window");
 }
 
+Triangle::~Triangle()
+{
+    g_theWindowSubsystem->RemoveActorFromMappings(m_actorID);
+}
+
 void Triangle::UpdateWindowFocus()
 {
     WindowID    windowID   = g_theWindowSubsystem->FindWindowByActor(m_actorID);
@@ -38,6 +43,7 @@ void Triangle::Update(float const deltaSeconds)
 {
     Entity::Update(deltaSeconds);
     BounceOfWindow();
+    UpdateWindowFocus();
 }
 
 void Triangle::Render() const

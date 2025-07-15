@@ -4,6 +4,7 @@
 
 #include "Game/Gameplay/Entity.hpp"
 
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 
 //----------------------------------------------------------------------------------------------------
@@ -14,8 +15,13 @@ Entity::Entity(Vec2 const& position, float const orientationDegrees, Rgba8 const
 {
 }
 
-void Entity::Update(float deltaSeconds)
+Entity::~Entity()
 {
+}
+
+void Entity::Update(float const deltaSeconds)
+{
+    UNUSED(deltaSeconds)
     if (m_health <= 0) MarkAsDead();
 }
 
@@ -39,7 +45,7 @@ bool Entity::IsGarbage() const
     return m_isGarbage;
 }
 
-void Entity::DecreaseHealth(int damage)
+void Entity::DecreaseHealth(int const damage)
 {
     m_health -= damage;
 }

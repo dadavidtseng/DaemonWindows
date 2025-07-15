@@ -42,28 +42,28 @@ public:
     // 核心視窗管理功能
     WindowID CreateChildWindow(std::vector<EntityID> const& owners, String const& name = "");
     WindowID CreateChildWindow(EntityID owner, String const& name = "");
-    bool     AddActorToWindow(WindowID windowId, EntityID actorId);
-    bool     RemoveActorFromWindow(WindowID windowId, EntityID actorId);
-    void     RemoveActorFromMappings(EntityID actorId);
-    void     DestroyWindow(WindowID windowId);
+    bool     AddActorToWindow(WindowID windowID, EntityID entityID);
+    bool     RemoveActorFromWindow(WindowID windowID, EntityID entityID);
+    void     RemoveActorFromMappings(EntityID entityID);
+    void     DestroyWindow(WindowID windowID);
     void     DestroyAllWindows();
 
     // 查詢功能
-    Window*               GetWindow(WindowID windowId);
-    WindowData*           GetWindowData(WindowID windowId);
-    WindowID              FindWindowByActor(EntityID actorId);
-    std::vector<EntityID> GetWindowOwners(WindowID windowId);
-    std::vector<WindowID> GetActorWindows(EntityID actorId);
+    Window*               GetWindow(WindowID windowID);
+    WindowData*           GetWindowData(WindowID windowID);
+    WindowID              FindWindowByActor(EntityID entityID);
+    std::vector<EntityID> GetWindowOwners(WindowID windowID);
+    std::vector<WindowID> GetActorWindows(EntityID entityID);
     std::vector<WindowID> GetAllWindowIDs();
-    bool                  IsActorInWindow(WindowID windowId, EntityID actorId);
-    bool                  WindowExists(WindowID windowId);
+    bool                  IsActorInWindow(WindowID windowID, EntityID entityID);
+    bool                  WindowExists(WindowID windowID);
 
     // 視窗操作
-    void        UpdateWindowPosition(WindowID windowId);
-    void        UpdateWindowPosition(WindowID windowId, Vec2 const& newPosition);
-    void        UpdateWindowDimension(WindowID windowId);
-    void        SetWindowActive(WindowID windowId, bool active);
-    void        SetWindowName(WindowID windowId, const std::string& name);
+    void        UpdateWindowPosition(WindowID windowID);
+    void        UpdateWindowPosition(WindowID windowID, Vec2 const& newPosition);
+    void        UpdateWindowDimension(WindowID windowID);
+    void        SetWindowActive(WindowID windowID, bool active);
+    void        SetWindowName(WindowID windowId, String const& name);
     std::string GetWindowName(WindowID windowId);
 
     // 批量操作
@@ -84,5 +84,5 @@ private:
     WindowID CreateWindowInternal(std::vector<EntityID> const& owners, String const& name, int x, int y, int width, int height);
 
     HWND        CreateOSWindow(std::wstring const& title, int x, int y, int width, int height);
-    std::string GenerateDefaultWindowName(const std::vector<EntityID>& owners);
+    std::string GenerateDefaultWindowName(std::vector<EntityID> const& owners);
 };

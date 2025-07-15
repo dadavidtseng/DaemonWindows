@@ -14,7 +14,7 @@ WidgetSubsystem::WidgetSubsystem(sWidgetSubsystemConfig const& config)
     : m_config(config)
 {
     m_widgets.reserve(m_config.m_initialWidgetCapacity);
-    m_entityWidgets.reserve(m_config.m_initialOwnerCapacity);
+    m_ownerWidgetsMapping.reserve(m_config.m_initialOwnerCapacity);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -26,7 +26,7 @@ void WidgetSubsystem::StartUp()
 {
     // 清空所有容器
     m_widgets.clear();
-    m_entityWidgets.clear();
+    m_ownerWidgetsMapping.clear();
     m_viewportWidget = nullptr;
     m_bNeedsSorting  = false;
 }
@@ -115,7 +115,7 @@ void WidgetSubsystem::AddWidgetToEntity(WidgetPtr const& widget,
     widget->SetZOrder(zOrder);
 
     m_widgets.push_back(widget);
-    m_entityWidgets[entity].push_back(widget);
+    m_ownerWidgetsMapping[entity].push_back(widget);
     m_bNeedsSorting = true;
 }
 
@@ -132,9 +132,9 @@ void WidgetSubsystem::RemoveWidget(WidgetPtr const& widget)
 
     // 從 Entity 映射中移除
     void* owner = widget->GetOwner();
-    if (owner && m_entityWidgets.find(owner) != m_entityWidgets.end())
+    if (owner && m_ownerWidgetsMapping.find(owner) != m_ownerWidgetsMapping.end())
     {
-        auto& entityWidgets = m_entityWidgets[owner];
+        auto& entityWidgets = m_ownerWidgetsMapping[owner];
         auto  entityIt      = std::find(entityWidgets.begin(), entityWidgets.end(), widget);
         if (entityIt != entityWidgets.end())
         {
@@ -144,7 +144,7 @@ void WidgetSubsystem::RemoveWidget(WidgetPtr const& widget)
         // 如果這個 Entity 沒有 Widget 了，移除整個條目
         if (entityWidgets.empty())
         {
-            m_entityWidgets.erase(owner);
+            m_ownerWidgetsMapping.erase(owner);
         }
     }
 }
@@ -153,8 +153,8 @@ void WidgetSubsystem::RemoveAllWidgetsFromEntity(void* entity)
 {
     if (!entity) return;
 
-    auto it = m_entityWidgets.find(entity);
-    if (it != m_entityWidgets.end())
+    auto it = m_ownerWidgetsMapping.find(entity);
+    if (it != m_ownerWidgetsMapping.end())
     {
         // 從主要列表中移除所有屬於這個 Entity 的 Widget
         for (auto& widget : it->second)
@@ -167,14 +167,14 @@ void WidgetSubsystem::RemoveAllWidgetsFromEntity(void* entity)
         }
 
         // 從 Entity 映射中移除
-        m_entityWidgets.erase(it);
+        m_ownerWidgetsMapping.erase(it);
     }
 }
 
 void WidgetSubsystem::RemoveAllWidgets()
 {
     m_widgets.clear();
-    m_entityWidgets.clear();
+    m_ownerWidgetsMapping.clear();
 }
 
 WidgetPtr WidgetSubsystem::FindWidgetByName(String const& name) const
@@ -191,9 +191,9 @@ WidgetPtr WidgetSubsystem::FindWidgetByName(String const& name) const
 
 std::vector<WidgetPtr> WidgetSubsystem::GetWidgetsByOwner(void* owner) const
 {
-    auto const it = m_entityWidgets.find(owner);
+    auto const it = m_ownerWidgetsMapping.find(owner);
 
-    if (it != m_entityWidgets.end())
+    if (it != m_ownerWidgetsMapping.end())
     {
         return it->second;
     }
@@ -237,7 +237,7 @@ void WidgetSubsystem::CleanupGarbageWidgets()
         m_widgets.end());
 
     // 清理 Entity 映射中的垃圾 Widget
-    for (auto& pair : m_entityWidgets)
+    for (auto& pair : m_ownerWidgetsMapping)
     {
         auto& widgets = pair.second;
         widgets.erase(
@@ -249,11 +249,11 @@ void WidgetSubsystem::CleanupGarbageWidgets()
     }
 
     // 移除空的 Entity 條目
-    for (auto it = m_entityWidgets.begin(); it != m_entityWidgets.end();)
+    for (auto it = m_ownerWidgetsMapping.begin(); it != m_ownerWidgetsMapping.end();)
     {
         if (it->second.empty())
         {
-            it = m_entityWidgets.erase(it);
+            it = m_ownerWidgetsMapping.erase(it);
         }
         else
         {

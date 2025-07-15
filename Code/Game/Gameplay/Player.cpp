@@ -52,12 +52,14 @@ void Player::Update(float const deltaSeconds)
     UpdateFromInput();
     BounceOfWindow();
     UpdateWindowFocus();
+
+    m_textWidget->SetPosition(g_theWindowSubsystem->GetWindow(g_theWindowSubsystem->FindWindowByActor(m_actorID))->GetWindowPosition());
 }
 
 void Player::Render() const
 {
     VertexList_PCU verts2;
-    AddVertsForDisc2D(verts2, m_position, m_physicRadius, m_thickness, Rgba8::YELLOW);
+    AddVertsForDisc2D(verts2, m_position, m_physicRadius, m_thickness, m_color);
     g_theRenderer->SetModelConstants();
     g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
     g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);

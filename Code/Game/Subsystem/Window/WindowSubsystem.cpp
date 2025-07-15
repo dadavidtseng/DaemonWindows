@@ -76,7 +76,7 @@ void WindowSubsystem::ShutDown()
 // 核心視窗管理功能
 //----------------------------------------------------------------------------------------------------
 
-WindowID WindowSubsystem::CreateChildWindow( std::vector<EntityID> const& owners,  std::string const& name)
+WindowID WindowSubsystem::CreateChildWindow(std::vector<EntityID> const& owners, std::string const& name)
 {
     if (owners.empty())
     {
@@ -111,84 +111,84 @@ WindowID WindowSubsystem::CreateChildWindow(EntityID const owner,
     return CreateChildWindow(std::vector<EntityID>{owner}, name);
 }
 
-bool WindowSubsystem::AddActorToWindow(WindowID windowId, EntityID actorId)
+bool WindowSubsystem::AddActorToWindow(WindowID windowID, EntityID entityID)
 {
     // 檢查視窗是否存在
-    auto windowIt = m_windows.find(windowId);
+    auto windowIt = m_windows.find(windowID);
     if (windowIt == m_windows.end())
     {
-        DebuggerPrintf("AddActorToWindow: Window %d not found.\n", windowId);
+        DebuggerPrintf("AddActorToWindow: Window %d not found.\n", windowID);
         return false;
     }
 
     // 檢查actor是否已經在其他視窗中
-    auto actorIt = m_actorToWindow.find(actorId);
+    auto actorIt = m_actorToWindow.find(entityID);
     if (actorIt != m_actorToWindow.end())
     {
-        if (actorIt->second == windowId)
+        if (actorIt->second == windowID)
         {
-            DebuggerPrintf("AddActorToWindow: Actor %d already in window %d.\n", actorId, windowId);
+            DebuggerPrintf("AddActorToWindow: Actor %d already in window %d.\n", entityID, windowID);
             return true; // 已經在該視窗中
         }
         else
         {
             DebuggerPrintf("AddActorToWindow: Actor %d already in window %d, cannot add to window %d.\n",
-                           actorId, actorIt->second, windowId);
+                           entityID, actorIt->second, windowID);
             return false;
         }
     }
 
     // 添加映射關係
-    windowIt->second.owners.insert(actorId);
-    m_actorToWindow[actorId] = windowId;
+    windowIt->second.owners.insert(entityID);
+    m_actorToWindow[entityID] = windowID;
 
-    DebuggerPrintf("AddActorToWindow: Added Actor %d to Window %d.\n", actorId, windowId);
+    DebuggerPrintf("AddActorToWindow: Added Actor %d to Window %d.\n", entityID, windowID);
     return true;
 }
 
-bool WindowSubsystem::RemoveActorFromWindow(WindowID windowId, EntityID actorId)
+bool WindowSubsystem::RemoveActorFromWindow(WindowID windowID, EntityID entityID)
 {
     // 檢查視窗是否存在
-    auto windowIt = m_windows.find(windowId);
+    auto windowIt = m_windows.find(windowID);
     if (windowIt == m_windows.end())
     {
-        DebuggerPrintf("RemoveActorFromWindow: Window %d not found.\n", windowId);
+        DebuggerPrintf("RemoveActorFromWindow: Window %d not found.\n", windowID);
         return false;
     }
 
     // 檢查actor是否在該視窗中
     auto& owners  = windowIt->second.owners;
-    auto  actorIt = owners.find(actorId);
+    auto  actorIt = owners.find(entityID);
     if (actorIt == owners.end())
     {
-        DebuggerPrintf("RemoveActorFromWindow: Actor %d not in window %d.\n", actorId, windowId);
+        DebuggerPrintf("RemoveActorFromWindow: Actor %d not in window %d.\n", entityID, windowID);
         return false;
     }
 
     // 移除映射關係
     owners.erase(actorIt);
-    m_actorToWindow.erase(actorId);
+    m_actorToWindow.erase(entityID);
 
     // 如果視窗沒有任何owner了，自動銷毀視窗
     if (owners.empty())
     {
-        DebuggerPrintf("RemoveActorFromWindow: Window %d now empty, destroying.\n", windowId);
-        DestroyWindow(windowId);
+        DebuggerPrintf("RemoveActorFromWindow: Window %d now empty, destroying.\n", windowID);
+        DestroyWindow(windowID);
     }
     else
     {
-        DebuggerPrintf("RemoveActorFromWindow: Removed Actor %d from Window %d.\n", actorId, windowId);
+        DebuggerPrintf("RemoveActorFromWindow: Removed Actor %d from Window %d.\n", entityID, windowID);
     }
 
     return true;
 }
 
-void WindowSubsystem::DestroyWindow(WindowID windowId)
+void WindowSubsystem::DestroyWindow(WindowID windowID)
 {
-    auto windowIt = m_windows.find(windowId);
+    auto windowIt = m_windows.find(windowID);
     if (windowIt == m_windows.end())
     {
-        DebuggerPrintf("DestroyWindow: Window %d not found.\n", windowId);
+        DebuggerPrintf("DestroyWindow: Window %d not found.\n", windowID);
         return;
     }
 
@@ -207,7 +207,7 @@ void WindowSubsystem::DestroyWindow(WindowID windowId)
     // 移除視窗資料
     m_windows.erase(windowIt);
 
-    DebuggerPrintf("DestroyWindow: Window %d destroyed.\n", windowId);
+    DebuggerPrintf("DestroyWindow: Window %d destroyed.\n", windowID);
 }
 
 void WindowSubsystem::DestroyAllWindows()
@@ -230,28 +230,28 @@ void WindowSubsystem::DestroyAllWindows()
 // 查詢功能
 //----------------------------------------------------------------------------------------------------
 
-Window* WindowSubsystem::GetWindow(WindowID windowId)
+Window* WindowSubsystem::GetWindow(WindowID windowID)
 {
-    auto it = m_windows.find(windowId);
+    auto it = m_windows.find(windowID);
     return (it != m_windows.end() && it->second.window) ? it->second.window.get() : nullptr;
 }
 
-WindowData* WindowSubsystem::GetWindowData(WindowID windowId)
+WindowData* WindowSubsystem::GetWindowData(WindowID const windowID)
 {
-    auto it = m_windows.find(windowId);
+    auto it = m_windows.find(windowID);
     return (it != m_windows.end()) ? &it->second : nullptr;
 }
 
-WindowID WindowSubsystem::FindWindowByActor(EntityID actorId)
+WindowID WindowSubsystem::FindWindowByActor(EntityID const entityID)
 {
-    auto it = m_actorToWindow.find(actorId);
+    auto it = m_actorToWindow.find(entityID);
     return (it != m_actorToWindow.end()) ? it->second : 0;
 }
 
-std::vector<EntityID> WindowSubsystem::GetWindowOwners(WindowID windowId)
+std::vector<EntityID> WindowSubsystem::GetWindowOwners(WindowID const windowID)
 {
     std::vector<EntityID> result;
-    auto                  it = m_windows.find(windowId);
+    auto                  it = m_windows.find(windowID);
     if (it != m_windows.end())
     {
         for (EntityID actorId : it->second.owners)
@@ -262,10 +262,10 @@ std::vector<EntityID> WindowSubsystem::GetWindowOwners(WindowID windowId)
     return result;
 }
 
-std::vector<WindowID> WindowSubsystem::GetActorWindows(EntityID actorId)
+std::vector<WindowID> WindowSubsystem::GetActorWindows(EntityID const entityID)
 {
     std::vector<WindowID> result;
-    auto                  it = m_actorToWindow.find(actorId);
+    auto                  it = m_actorToWindow.find(entityID);
     if (it != m_actorToWindow.end())
     {
         result.push_back(it->second);
@@ -283,80 +283,81 @@ std::vector<WindowID> WindowSubsystem::GetAllWindowIDs()
     return result;
 }
 
-bool WindowSubsystem::IsActorInWindow(WindowID windowId, EntityID actorId)
+bool WindowSubsystem::IsActorInWindow(WindowID const windowID, EntityID const entityID)
 {
-    auto it = m_windows.find(windowId);
+    auto it = m_windows.find(windowID);
     if (it != m_windows.end())
     {
-        return it->second.owners.find(actorId) != it->second.owners.end();
+        return it->second.owners.find(entityID) != it->second.owners.end();
     }
     return false;
 }
 
-bool WindowSubsystem::WindowExists(WindowID windowId)
+bool WindowSubsystem::WindowExists(WindowID const windowID)
 {
-    return m_windows.find(windowId) != m_windows.end();
+    return m_windows.find(windowID) != m_windows.end();
 }
 
 //----------------------------------------------------------------------------------------------------
 // 視窗操作
 //----------------------------------------------------------------------------------------------------
 
-void WindowSubsystem::UpdateWindowPosition(WindowID windowId)
+void WindowSubsystem::UpdateWindowPosition(WindowID const windowID)
 {
-    auto it = m_windows.find(windowId);
+    auto it = m_windows.find(windowID);
     if (it != m_windows.end() && it->second.window)
     {
         it->second.window->UpdatePosition();
     }
     else
     {
-        DebuggerPrintf("UpdateWindowPosition: Window %d not found.\n", windowId);
+        DebuggerPrintf("UpdateWindowPosition: Window %d not found.\n", windowID);
     }
 }
 
-void WindowSubsystem::UpdateWindowPosition(WindowID windowId, Vec2 const& newPosition)
+void WindowSubsystem::UpdateWindowPosition(WindowID const windowID,
+                                           Vec2 const&    newPosition)
 {
-    auto it = m_windows.find(windowId);
+    auto it = m_windows.find(windowID);
     if (it != m_windows.end() && it->second.window)
     {
         // it->second.window->SetWindowPosition(it->second.window->GetWindowPosition()+newPosition);
-        Vec2 totalPosition                        = it->second.window->GetWindowPosition()+newPosition;
-        it->second.window->UpdatePosition(totalPosition);
+        Vec2 totalPosition = it->second.window->GetWindowPosition() + newPosition;
+        it->second.window->UpdatePosition(newPosition);
         it->second.window->m_shouldUpdatePosition = true;
         DebuggerPrintf("(NewPosition: %f, %f)\n", newPosition.x, newPosition.y);
         DebuggerPrintf("(it->second.window->GetWindowPosition(): %f, %f)\n", it->second.window->GetWindowPosition().x, it->second.window->GetWindowPosition().y);
     }
     else
     {
-        DebuggerPrintf("UpdateWindowPosition: Window %d not found.\n", windowId);
+        DebuggerPrintf("UpdateWindowPosition: Window %d not found.\n", windowID);
     }
 }
 
-void WindowSubsystem::UpdateWindowDimension(WindowID windowId)
+void WindowSubsystem::UpdateWindowDimension(WindowID windowID)
 {
-    auto it = m_windows.find(windowId);
+    auto it = m_windows.find(windowID);
     if (it != m_windows.end() && it->second.window)
     {
         it->second.window->UpdateDimension();
     }
     else
     {
-        DebuggerPrintf("UpdateWindowDimension: Window %d not found.\n", windowId);
+        DebuggerPrintf("UpdateWindowDimension: Window %d not found.\n", windowID);
     }
 }
 
-void WindowSubsystem::SetWindowActive(WindowID windowId, bool active)
+void WindowSubsystem::SetWindowActive(WindowID windowID, bool active)
 {
-    auto it = m_windows.find(windowId);
+    auto it = m_windows.find(windowID);
     if (it != m_windows.end())
     {
         it->second.isActive = active;
-        DebuggerPrintf("SetWindowActive: Window %d set to %s.\n", windowId, active ? "active" : "inactive");
+        DebuggerPrintf("SetWindowActive: Window %d set to %s.\n", windowID, active ? "active" : "inactive");
     }
     else
     {
-        DebuggerPrintf("SetWindowActive: Window %d not found.\n", windowId);
+        DebuggerPrintf("SetWindowActive: Window %d not found.\n", windowID);
     }
 }
 
@@ -484,13 +485,13 @@ WindowID WindowSubsystem::CreateWindowInternal(std::vector<EntityID> const& owne
     return newId;
 }
 
-void WindowSubsystem::RemoveActorFromMappings(EntityID actorId)
+void WindowSubsystem::RemoveActorFromMappings(EntityID entityID)
 {
-    auto it = m_actorToWindow.find(actorId);
+    auto it = m_actorToWindow.find(entityID);
     if (it != m_actorToWindow.end())
     {
         WindowID windowId = it->second;
-        RemoveActorFromWindow(windowId, actorId);
+        RemoveActorFromWindow(windowId, entityID);
     }
 }
 

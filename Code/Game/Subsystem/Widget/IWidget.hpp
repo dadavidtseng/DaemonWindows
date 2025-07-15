@@ -25,17 +25,17 @@ public:
     virtual void EndFrame();
 
     /// Getter
-    virtual void* GetOwner() const;
-    virtual int     GetZOrder() const;
-    virtual String  GetName() const;
-    virtual bool    IsVisible() const;
-    virtual bool    IsTick() const;
-    virtual bool    IsGarbage() const;
+    virtual void*  GetOwner() const;
+    virtual int    GetZOrder() const;
+    virtual String GetName() const;
+    virtual bool   IsVisible() const;
+    virtual bool   IsTick() const;
+    virtual bool   IsGarbage() const;
 
     /// Setter
     virtual void SetOwner(void* owner);
     virtual void SetZOrder(int zOrder);
-    virtual void SetName(const String& name);
+    virtual void SetName(String const& name);
     virtual void SetVisible(bool visible);
     virtual void SetTick(bool tick);
 
@@ -48,12 +48,11 @@ public:
     virtual void MarkForDestroy();
 
 protected:
-    void* m_owner      = nullptr;
+    void* m_owner = nullptr;
     // Entity*          m_entity     = nullptr; // 擁有此 Widget 的 Entity
-    int              m_zOrder     = 0;       // 渲染順序，數字越大越在前面
-    bool             m_bIsTick    = true;    // 是否需要 Update
-    String           m_name       = "DEFAULT";
-    bool             m_bIsVisible = true;    // 是否可見
-    bool             m_bIsGarbage = false;   // 是否標記為垃圾回收
+    int    m_zOrder     = 0;       // 渲染順序，數字越大越在前面
+    bool   m_bIsTick    = true;    // 是否需要 Update
+    String m_name       = "DEFAULT";
+    bool   m_bIsVisible = true;    // 是否可見
+    bool   m_bIsGarbage = false;   // 是否標記為垃圾回收
 };
-

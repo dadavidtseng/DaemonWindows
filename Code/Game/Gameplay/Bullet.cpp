@@ -9,9 +9,10 @@ Bullet::Bullet(Vec2 const& position, float const orientationDegrees, Rgba8 const
     : Entity(position, orientationDegrees, color)
 {
     // 明確初始化所有重要成員
-    m_name   = "BULLET";
-    m_speed  = 100.0f;
-    m_health = 1;  // 子彈通常一擊就消失
+    m_name         = "BULLET";
+    m_physicRadius = 10.f;
+    m_speed        = 500.0f;
+    m_health       = 1;  // 子彈通常一擊就消失
 }
 
 void Bullet::Update(float const deltaSeconds)
@@ -24,8 +25,8 @@ void Bullet::Update(float const deltaSeconds)
 
 void Bullet::Render() const
 {
-    VertexList_PCU verts2;
-    AddVertsForDisc2D(verts2, m_position, 10.f, m_color);
+    VertexList_PCU verts;
+    AddVertsForDisc2D(verts, m_position, m_physicRadius, m_color);
     g_theRenderer->SetModelConstants();
     g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
     g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
@@ -33,7 +34,7 @@ void Bullet::Render() const
     g_theRenderer->SetDepthMode(eDepthMode::DISABLED);
     g_theRenderer->BindTexture(nullptr);
     g_theRenderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
-    g_theRenderer->DrawVertexArray(verts2);
+    g_theRenderer->DrawVertexArray(verts);
 }
 
 void Bullet::UpdateFromInput()

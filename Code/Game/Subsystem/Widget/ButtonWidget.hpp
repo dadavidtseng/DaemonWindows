@@ -4,15 +4,12 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
+#include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/StringUtils.hpp"
-#include "Engine/Core/VertexUtils.hpp"
-#include "Engine/Renderer/Renderer.hpp"
 #include "Game/Framework/GameCommon.hpp"
 #include "Game/Subsystem/Widget/IWidget.hpp"
 
-//-Forward-Declaration--------------------------------------------------------------------------------
-class Entity;
-
+//----------------------------------------------------------------------------------------------------
 class ButtonWidget : public IWidget
 {
 public:
@@ -23,6 +20,7 @@ public:
 
     void   SetText(String const& text);
     String GetText() const;
+    void SetPosition(Vec2 const& newPosition);
 
 private:
     String m_text;

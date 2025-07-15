@@ -13,7 +13,7 @@ class Entity
 {
 public:
     explicit Entity(Vec2 const& position, float orientationDegrees, Rgba8 const& color);
-    virtual  ~Entity() = default;
+    virtual  ~Entity();
     EntityID  m_actorID            = 0;
     WindowID m_windowID           = 0;
     String   m_name               = "DEFAULT";

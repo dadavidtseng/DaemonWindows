@@ -138,18 +138,13 @@ void Game::UpdateFromInput()
 {
     if (m_gameState == eGameState::ATTRACT)
     {
-if (g_theInput->IsKeyDown(KEYCODE_I))
-{
-    g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowByActor(0), Vec2::ONE*(float)m_gameClock->GetDeltaSeconds());
-}
+        if (g_theInput->IsKeyDown(KEYCODE_I))
+        {
+            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowByActor(0), Vec2::ONE);
+        }
         if (g_theInput->IsKeyDown(KEYCODE_K))
         {
-            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowByActor(1), Vec2::ONE*(float)m_gameClock->GetDeltaSeconds());
-        }
-
-        if (g_theInput->WasKeyJustPressed(KEYCODE_Q))
-        {
-            g_theWindowSubsystem->RemoveActorFromMappings(0);
+            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowByActor(1), Vec2::ONE);
         }
 
         if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
@@ -273,7 +268,7 @@ void Game::RenderAttractMode() const
 void Game::RenderGame() const
 {
     VertexList_PCU verts1;
-    AddVertsForAABB2D(verts1, AABB2(Vec2::ZERO, Vec2(1920.0f, 1080.0f)));
+    AddVertsForAABB2D(verts1, AABB2(Vec2::ZERO, Window::s_mainWindow->GetScreenDimensions()));
     g_theRenderer->SetModelConstants();
     g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
     g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
