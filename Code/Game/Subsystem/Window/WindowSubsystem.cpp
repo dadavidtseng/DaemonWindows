@@ -58,6 +58,7 @@ void WindowSubsystem::Render()
 
         if (windowData.window->m_shouldUpdatePosition)
         {
+            // g_theRenderer->RenderViewportToWindow(*windowData.window);
             g_theRenderer->RenderViewportToWindowDX11(*windowData.window);
         }
     }
@@ -321,10 +322,10 @@ void WindowSubsystem::UpdateWindowPosition(WindowID const windowID,
     auto it = m_windows.find(windowID);
     if (it != m_windows.end() && it->second.window)
     {
-        it->second.window->SetWindowPosition(it->second.window->GetWindowPosition()+newPosition);
+        it->second.window->SetWindowPosition(it->second.window->GetWindowPosition() + newPosition);
         Vec2 totalPosition = it->second.window->GetWindowPosition() + newPosition;
         // it->second.window->UpdatePosition(newPosition);
-        it->second.window->m_shouldUpdatePosition = true;
+        // it->second.window->m_shouldUpdatePosition = true;
         DebuggerPrintf("(NewPosition: %f, %f)\n", newPosition.x, newPosition.y);
         DebuggerPrintf("(it->second.window->GetWindowPosition(): %f, %f)\n", it->second.window->GetWindowPosition().x, it->second.window->GetWindowPosition().y);
     }
@@ -452,11 +453,11 @@ WindowID WindowSubsystem::CreateWindowInternal(std::vector<EntityID> const& owne
     config.m_windowTitle = name;
 
     // 創建 Window 物件
-    auto newWindow = std::make_unique<Window>(config);
+    std::unique_ptr<Window> newWindow = std::make_unique<Window>(config);
 
     // 設定 HWND 和 Display Context
-    newWindow->m_windowHandle   = hwnd;
-    newWindow->m_displayContext = GetDC(hwnd);
+    newWindow->SetWindowHandle(hwnd);
+    newWindow->SetDisplayContext(GetDC(hwnd));
 
     // 設定視窗位置和大小追蹤
     newWindow->SetWindowPosition(Vec2(static_cast<float>(x), static_cast<float>(y)));
