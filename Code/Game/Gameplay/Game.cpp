@@ -178,7 +178,7 @@ void Game::UpdateFromInput()
 
         if (g_theInput->WasKeyJustPressed(KEYCODE_SPACE))
         {
-            // ChangeGameState(eGameState::GAME);
+            ChangeGameState(eGameState::GAME);
             SoundID const clickSound = g_theAudio->CreateOrGetSound("Data/Audio/TestSound.mp3", eAudioSystemSoundDimension::Sound2D);
             g_theAudio->StartSound(clickSound, false, 1.f, 0.f, 0.5f);
             g_theWindowSubsystem->CreateChildWindow(EntityID(1), "HELLO");

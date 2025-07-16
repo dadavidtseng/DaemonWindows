@@ -5,6 +5,9 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Bullet.hpp"
 
+#include "Game.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
+
 Bullet::Bullet(Vec2 const& position, float const orientationDegrees, Rgba8 const& color)
     : Entity(position, orientationDegrees, color)
 {
@@ -21,6 +24,14 @@ void Bullet::Update(float const deltaSeconds)
     UpdateFromInput();
     m_position.x += m_velocity.x * deltaSeconds * m_speed;
     m_position.y += m_velocity.y * deltaSeconds * m_speed;
+
+    Window* window = g_theWindowSubsystem->GetWindow(g_theWindowSubsystem->FindWindowByActor(g_theGame->m_entities[0]->m_actorID));
+    if (m_position.x>window->GetWindowPosition().x+window->GetWindowDimensions().x)
+    {
+        Vec2 dimensions = window->GetWindowDimensions();
+        window->SetWindowDimensions(dimensions+Vec2(100,0));
+        m_health-=1;
+    }
 }
 
 void Bullet::Render() const
