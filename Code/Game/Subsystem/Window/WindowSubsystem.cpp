@@ -460,8 +460,8 @@ WindowID WindowSubsystem::CreateWindowInternal(std::vector<EntityID> const& owne
     newWindow->SetDisplayContext(GetDC(hwnd));
 
     // 設定視窗位置和大小追蹤
-    newWindow->SetWindowPosition(Vec2(static_cast<float>(x), static_cast<float>(y)));
     newWindow->SetWindowDimensions(Vec2(static_cast<float>(width), static_cast<float>(height)));
+    newWindow->SetWindowPosition(Vec2(static_cast<float>(x), static_cast<float>(y)));
     newWindow->m_shouldUpdatePosition = true;
 
     // 創建 WindowData 並添加到容器

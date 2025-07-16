@@ -140,11 +140,35 @@ void Game::UpdateFromInput()
     {
         if (g_theInput->IsKeyDown(KEYCODE_I))
         {
-            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowByActor(0), Vec2::ONE);
+            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowByActor(0), Vec2(0, 10));
         }
         if (g_theInput->IsKeyDown(KEYCODE_K))
         {
-            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowByActor(1), Vec2::ONE);
+            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowByActor(0), Vec2(0, -10));
+        }
+        if (g_theInput->IsKeyDown(KEYCODE_J))
+        {
+            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowByActor(0), Vec2(-10, 0));
+        }
+        if (g_theInput->IsKeyDown(KEYCODE_L))
+        {
+            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowByActor(0), Vec2(10, 0));
+        }
+        if (g_theInput->IsKeyDown(KEYCODE_UPARROW))
+        {
+            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowByActor(1), Vec2(0, 10));
+        }
+        if (g_theInput->IsKeyDown(KEYCODE_DOWNARROW))
+        {
+            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowByActor(1), Vec2(0, -10));
+        }
+        if (g_theInput->IsKeyDown(KEYCODE_LEFTARROW))
+        {
+            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowByActor(1), Vec2(-10, 0));
+        }
+        if (g_theInput->IsKeyDown(KEYCODE_RIGHTARROW))
+        {
+            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowByActor(1), Vec2(10, 0));
         }
 
         if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))

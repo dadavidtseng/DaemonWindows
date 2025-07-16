@@ -51,9 +51,12 @@ void Player::Update(float const deltaSeconds)
     Entity::Update(deltaSeconds);
     UpdateFromInput();
     BounceOfWindow();
-    UpdateWindowFocus();
-
-    m_textWidget->SetPosition(g_theWindowSubsystem->GetWindow(g_theWindowSubsystem->FindWindowByActor(m_actorID))->GetWindowPosition());
+    // UpdateWindowFocus();
+    WindowID   windowID = g_theWindowSubsystem->FindWindowByActor(m_actorID);
+    WindowRect rect     = g_theWindowSubsystem->GetWindowData(windowID)->window->lastRect;
+    DebugAddScreenText(Stringf("Player Window Position(top:%ld, bottom:%ld, left:%ld, right:%ld)", rect.top, rect.bottom, rect.left, rect.right), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 20.f), 20.f, Vec2::ZERO, 0.f);
+    DebugAddScreenText(Stringf("Player Position(%.1f, %.1f)", m_position.x, m_position.y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 40.f), 20.f, Vec2::ZERO, 0.f);
+    m_textWidget->SetPosition(g_theWindowSubsystem->GetWindow(g_theWindowSubsystem->FindWindowByActor(m_actorID))->GetClientPosition());
 }
 
 void Player::Render() const
@@ -77,7 +80,7 @@ void Player::UpdateFromInput()
     if (g_theInput->IsKeyDown(KEYCODE_S)) m_position.y -= 10.f;
     if (g_theInput->IsKeyDown(KEYCODE_D)) m_position.x += 10.f;
 
-    if (g_theInput->WasKeyJustPressed(KEYCODE_L))
+    if (g_theInput->WasKeyJustPressed(KEYCODE_P))
     {
         m_coin += 1;
         m_textWidget->SetText(Stringf("%d", m_coin));
@@ -141,8 +144,6 @@ void Player::BounceOfWindow()
     float windowTop    = Window::s_mainWindow->GetScreenDimensions().y - (float)rect.top;
     float windowRight  = static_cast<float>(rect.right);
     float windowBottom = Window::s_mainWindow->GetScreenDimensions().y - static_cast<float>(rect.bottom);
-    DebugAddScreenText(Stringf("Player Window Position(top:%.1f, bottom:%.1f, left:%.1f, right:%.1f)", windowTop, windowBottom, windowLeft, windowRight), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 20.f), 20.f, Vec2::ZERO, 0.f);
-    DebugAddScreenText(Stringf("Player Position(%.1f, %.1f)", m_position.x, m_position.y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 40.f), 20.f, Vec2::ZERO, 0.f);
 
 
     float clampedX = GetClamped(m_position.x,
