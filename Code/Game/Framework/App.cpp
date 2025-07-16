@@ -99,6 +99,11 @@ void App::Startup()
     devConsoleConfig.m_defaultCamera   = m_devConsoleCamera;
     g_theDevConsole                    = new DevConsole(devConsoleConfig);
 
+    g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, "Controls");
+    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(LMB)   Shoot Bullet");
+    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(W/S)   Up/Down");
+    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(A/D)   Left/Right");
+
     //-End-of-DevConsole------------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
     //-Start-of-AudioSystem---------------------------------------------------------------------------

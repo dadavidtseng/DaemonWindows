@@ -321,9 +321,9 @@ void WindowSubsystem::UpdateWindowPosition(WindowID const windowID,
     auto it = m_windows.find(windowID);
     if (it != m_windows.end() && it->second.window)
     {
-        // it->second.window->SetWindowPosition(it->second.window->GetWindowPosition()+newPosition);
+        it->second.window->SetWindowPosition(it->second.window->GetWindowPosition()+newPosition);
         Vec2 totalPosition = it->second.window->GetWindowPosition() + newPosition;
-        it->second.window->UpdatePosition(newPosition);
+        // it->second.window->UpdatePosition(newPosition);
         it->second.window->m_shouldUpdatePosition = true;
         DebuggerPrintf("(NewPosition: %f, %f)\n", newPosition.x, newPosition.y);
         DebuggerPrintf("(it->second.window->GetWindowPosition(): %f, %f)\n", it->second.window->GetWindowPosition().x, it->second.window->GetWindowPosition().y);
