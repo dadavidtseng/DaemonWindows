@@ -7,7 +7,9 @@
 
 #include <dxgi1_2.h>
 
+#include "Engine/Core/Clock.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Game/Gameplay/Game.hpp"
 
 void WindowSubsystem::StartUp()
 {
@@ -31,7 +33,7 @@ void WindowSubsystem::Update()
     for (auto& [windowId, windowData] : m_windows)
     {
         if (!windowData.isActive || !windowData.window) continue;
-
+        windowData.window->UpdateAnimations(Clock::GetSystemClock().GetDeltaSeconds());
         windowData.window->UpdatePosition();
         windowData.window->UpdateDimension();
 
