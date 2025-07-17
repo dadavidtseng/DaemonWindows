@@ -30,10 +30,15 @@ void WindowSubsystem::BeginFrame()
 
 void WindowSubsystem::Update()
 {
-    for (auto& [windowId, windowData] : m_windows)
+    float deltaSeconds = (float)Clock::GetSystemClock().GetDeltaSeconds();
+
+    // 更新動畫
+    UpdateWindowAnimations(deltaSeconds);
+
+    for (auto& [windowId, windowData] : m_windowList)
     {
         if (!windowData.isActive || !windowData.window) continue;
-        windowData.window->UpdateAnimations(Clock::GetSystemClock().GetDeltaSeconds());
+        // windowData.window->UpdateAnimations((float)Clock::GetSystemClock().GetDeltaSeconds());
         windowData.window->UpdatePosition();
         windowData.window->UpdateDimension();
 
@@ -54,7 +59,7 @@ void WindowSubsystem::Render()
 {
     g_theRenderer->ReadStagingTextureToPixelData();
 
-    for (auto& [windowId, windowData] : m_windows)
+    for (auto& [windowId, windowData] : m_windowList)
     {
         if (!windowData.isActive || !windowData.window) continue;
 
@@ -101,7 +106,7 @@ WindowID WindowSubsystem::CreateChildWindow(std::vector<EntityID> const& owners,
     std::string windowName = name.empty() ? GenerateDefaultWindowName(owners) : name;
 
     // 計算視窗位置（簡單的網格佈局）
-    int windowIndex = static_cast<int>(m_windows.size());
+    int windowIndex = static_cast<int>(m_windowList.size());
     int x           = 100 + (windowIndex % 3) * 450;
     int y           = 100 + (windowIndex / 3) * 350;
 
@@ -117,8 +122,8 @@ WindowID WindowSubsystem::CreateChildWindow(EntityID const owner,
 bool WindowSubsystem::AddActorToWindow(WindowID windowID, EntityID entityID)
 {
     // 檢查視窗是否存在
-    auto windowIt = m_windows.find(windowID);
-    if (windowIt == m_windows.end())
+    auto windowIt = m_windowList.find(windowID);
+    if (windowIt == m_windowList.end())
     {
         DebuggerPrintf("AddActorToWindow: Window %d not found.\n", windowID);
         return false;
@@ -152,8 +157,8 @@ bool WindowSubsystem::AddActorToWindow(WindowID windowID, EntityID entityID)
 bool WindowSubsystem::RemoveActorFromWindow(WindowID windowID, EntityID entityID)
 {
     // 檢查視窗是否存在
-    auto windowIt = m_windows.find(windowID);
-    if (windowIt == m_windows.end())
+    auto windowIt = m_windowList.find(windowID);
+    if (windowIt == m_windowList.end())
     {
         DebuggerPrintf("RemoveActorFromWindow: Window %d not found.\n", windowID);
         return false;
@@ -188,8 +193,8 @@ bool WindowSubsystem::RemoveActorFromWindow(WindowID windowID, EntityID entityID
 
 void WindowSubsystem::DestroyWindow(WindowID windowID)
 {
-    auto windowIt = m_windows.find(windowID);
-    if (windowIt == m_windows.end())
+    auto windowIt = m_windowList.find(windowID);
+    if (windowIt == m_windowList.end())
     {
         DebuggerPrintf("DestroyWindow: Window %d not found.\n", windowID);
         return;
@@ -208,14 +213,14 @@ void WindowSubsystem::DestroyWindow(WindowID windowID)
     }
 
     // 移除視窗資料
-    m_windows.erase(windowIt);
+    m_windowList.erase(windowIt);
 
     DebuggerPrintf("DestroyWindow: Window %d destroyed.\n", windowID);
 }
 
 void WindowSubsystem::DestroyAllWindows()
 {
-    for (auto& [windowId, windowData] : m_windows)
+    for (auto& [windowId, windowData] : m_windowList)
     {
         if (windowData.window)
         {
@@ -223,7 +228,7 @@ void WindowSubsystem::DestroyAllWindows()
         }
     }
 
-    m_windows.clear();
+    m_windowList.clear();
     m_actorToWindow.clear();
 
     DebuggerPrintf("DestroyAllWindows: All windows destroyed.\n");
@@ -235,14 +240,14 @@ void WindowSubsystem::DestroyAllWindows()
 
 Window* WindowSubsystem::GetWindow(WindowID windowID)
 {
-    auto it = m_windows.find(windowID);
-    return (it != m_windows.end() && it->second.window) ? it->second.window.get() : nullptr;
+    auto it = m_windowList.find(windowID);
+    return (it != m_windowList.end() && it->second.window) ? it->second.window.get() : nullptr;
 }
 
 WindowData* WindowSubsystem::GetWindowData(WindowID const windowID)
 {
-    auto it = m_windows.find(windowID);
-    return (it != m_windows.end()) ? &it->second : nullptr;
+    auto it = m_windowList.find(windowID);
+    return (it != m_windowList.end()) ? &it->second : nullptr;
 }
 
 WindowID WindowSubsystem::FindWindowByActor(EntityID const entityID)
@@ -254,8 +259,8 @@ WindowID WindowSubsystem::FindWindowByActor(EntityID const entityID)
 std::vector<EntityID> WindowSubsystem::GetWindowOwners(WindowID const windowID)
 {
     std::vector<EntityID> result;
-    auto                  it = m_windows.find(windowID);
-    if (it != m_windows.end())
+    auto                  it = m_windowList.find(windowID);
+    if (it != m_windowList.end())
     {
         for (EntityID actorId : it->second.owners)
         {
@@ -279,7 +284,7 @@ std::vector<WindowID> WindowSubsystem::GetActorWindows(EntityID const entityID)
 std::vector<WindowID> WindowSubsystem::GetAllWindowIDs()
 {
     std::vector<WindowID> result;
-    for (const auto& [windowId, windowData] : m_windows)
+    for (const auto& [windowId, windowData] : m_windowList)
     {
         result.push_back(windowId);
     }
@@ -288,8 +293,8 @@ std::vector<WindowID> WindowSubsystem::GetAllWindowIDs()
 
 bool WindowSubsystem::IsActorInWindow(WindowID const windowID, EntityID const entityID)
 {
-    auto it = m_windows.find(windowID);
-    if (it != m_windows.end())
+    auto it = m_windowList.find(windowID);
+    if (it != m_windowList.end())
     {
         return it->second.owners.find(entityID) != it->second.owners.end();
     }
@@ -298,7 +303,7 @@ bool WindowSubsystem::IsActorInWindow(WindowID const windowID, EntityID const en
 
 bool WindowSubsystem::WindowExists(WindowID const windowID)
 {
-    return m_windows.find(windowID) != m_windows.end();
+    return m_windowList.find(windowID) != m_windowList.end();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -307,8 +312,8 @@ bool WindowSubsystem::WindowExists(WindowID const windowID)
 
 void WindowSubsystem::UpdateWindowPosition(WindowID const windowID)
 {
-    auto it = m_windows.find(windowID);
-    if (it != m_windows.end() && it->second.window)
+    auto it = m_windowList.find(windowID);
+    if (it != m_windowList.end() && it->second.window)
     {
         it->second.window->UpdatePosition();
     }
@@ -321,8 +326,8 @@ void WindowSubsystem::UpdateWindowPosition(WindowID const windowID)
 void WindowSubsystem::UpdateWindowPosition(WindowID const windowID,
                                            Vec2 const&    newPosition)
 {
-    auto it = m_windows.find(windowID);
-    if (it != m_windows.end() && it->second.window)
+    auto it = m_windowList.find(windowID);
+    if (it != m_windowList.end() && it->second.window)
     {
         it->second.window->SetWindowPosition(it->second.window->GetWindowPosition() + newPosition);
         Vec2 totalPosition = it->second.window->GetWindowPosition() + newPosition;
@@ -339,8 +344,8 @@ void WindowSubsystem::UpdateWindowPosition(WindowID const windowID,
 
 void WindowSubsystem::UpdateWindowDimension(WindowID windowID)
 {
-    auto it = m_windows.find(windowID);
-    if (it != m_windows.end() && it->second.window)
+    auto it = m_windowList.find(windowID);
+    if (it != m_windowList.end() && it->second.window)
     {
         it->second.window->UpdateDimension();
     }
@@ -352,8 +357,8 @@ void WindowSubsystem::UpdateWindowDimension(WindowID windowID)
 
 void WindowSubsystem::SetWindowActive(WindowID windowID, bool active)
 {
-    auto it = m_windows.find(windowID);
-    if (it != m_windows.end())
+    auto it = m_windowList.find(windowID);
+    if (it != m_windowList.end())
     {
         it->second.isActive = active;
         DebuggerPrintf("SetWindowActive: Window %d set to %s.\n", windowID, active ? "active" : "inactive");
@@ -366,10 +371,10 @@ void WindowSubsystem::SetWindowActive(WindowID windowID, bool active)
 
 void WindowSubsystem::SetWindowName(WindowID windowId, const std::string& name)
 {
-    auto it = m_windows.find(windowId);
-    if (it != m_windows.end())
+    auto it = m_windowList.find(windowId);
+    if (it != m_windowList.end())
     {
-        it->second.name = name;
+        it->second.m_name = name;
         DebuggerPrintf("SetWindowName: Window %d renamed to '%s'.\n", windowId, name.c_str());
     }
     else
@@ -380,14 +385,14 @@ void WindowSubsystem::SetWindowName(WindowID windowId, const std::string& name)
 
 std::string WindowSubsystem::GetWindowName(WindowID windowId)
 {
-    auto it = m_windows.find(windowId);
-    return (it != m_windows.end()) ? it->second.name : "";
+    auto it = m_windowList.find(windowId);
+    return (it != m_windowList.end()) ? it->second.m_name : "";
 }
 
 size_t WindowSubsystem::GetActiveWindowCount() const
 {
     size_t count = 0;
-    for (const auto& [windowId, windowData] : m_windows)
+    for (const auto& [windowId, windowData] : m_windowList)
     {
         if (windowData.isActive)
         {
@@ -426,7 +431,7 @@ void WindowSubsystem::CreateMultipleWindows(std::vector<std::vector<EntityID>> c
 //----------------------------------------------------------------------------------------------------
 size_t WindowSubsystem::GetWindowCount() const
 {
-    return m_windows.size();
+    return m_windowList.size();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -468,7 +473,7 @@ WindowID WindowSubsystem::CreateWindowInternal(std::vector<EntityID> const& owne
 
     // 創建 WindowData 並添加到容器
     std::unordered_set<EntityID> ownerSet(owners.begin(), owners.end());
-    m_windows.emplace(newId, WindowData(std::move(newWindow), ownerSet, name));
+    m_windowList.emplace(newId, WindowData(std::move(newWindow), ownerSet, name));
 
     // 建立actor到視窗的映射
     for (EntityID owner : owners)
@@ -479,7 +484,7 @@ WindowID WindowSubsystem::CreateWindowInternal(std::vector<EntityID> const& owne
     // 創建 SwapChain
     if (g_theRenderer)
     {
-        g_theRenderer->CreateWindowSwapChain(*m_windows[newId].window);
+        g_theRenderer->CreateWindowSwapChain(*m_windowList[newId].window);
     }
 
     ShowWindow(hwnd, SW_SHOW);
@@ -563,4 +568,105 @@ std::string WindowSubsystem::GenerateDefaultWindowName(const std::vector<EntityI
     name += ")";
 
     return name;
+}
+
+void WindowSubsystem::AnimateWindowDimensions(WindowID id, Vec2 const& targetDimensions, float duration)
+{
+    auto windowIt = m_windowList.find(id);
+    if (windowIt == m_windowList.end()) return;
+
+    Window* window = windowIt->second.window.get();
+    if (targetDimensions == window->GetWindowDimensions()) return;
+
+    WindowAnimationData& animData = m_windowAnimations[id];
+    animData.m_startWindowDimensions = window->GetWindowDimensions();
+    animData.m_targetWindowDimensions = targetDimensions;
+    animData.m_animationDuration = duration;
+    animData.m_animationTimer = 0.0f;
+    animData.m_isAnimatingSize = true;
+}
+
+void WindowSubsystem::AnimateWindowPosition(WindowID id, Vec2 const& targetPosition, float duration)
+{
+    auto windowIt = m_windowList.find(id);
+    if (windowIt == m_windowList.end()) return;
+
+    Window* window = windowIt->second.window.get();
+    if (targetPosition == window->GetWindowPosition()) return;
+
+    WindowAnimationData& animData = m_windowAnimations[id];
+    animData.m_startWindowPosition = window->GetWindowPosition();
+    animData.m_targetWindowPosition = targetPosition;
+    animData.m_animationDuration = duration;
+    animData.m_animationTimer = 0.0f;
+    animData.m_isAnimatingPosition = true;
+}
+
+void WindowSubsystem::AnimateWindowPositionAndDimensions(WindowID id, Vec2 const& targetPosition, Vec2 const& targetDimensions, float duration)
+{
+    auto windowIt = m_windowList.find(id);
+    if (windowIt == m_windowList.end()) return;
+
+    Window* window = windowIt->second.window.get();
+
+    WindowAnimationData& animData = m_windowAnimations[id];
+    animData.m_startWindowPosition = window->GetWindowPosition();
+    animData.m_targetWindowPosition = targetPosition;
+    animData.m_startWindowDimensions = window->GetWindowDimensions();
+    animData.m_targetWindowDimensions = targetDimensions;
+    animData.m_animationDuration = duration;
+    animData.m_animationTimer = 0.0f;
+    animData.m_isAnimatingSize = true;
+    animData.m_isAnimatingPosition = true;
+}
+
+bool WindowSubsystem::IsWindowAnimating(WindowID id) const
+{
+    auto it = m_windowAnimations.find(id);
+    return (it != m_windowAnimations.end()) && it->second.IsAnimating();
+}
+
+void WindowSubsystem::UpdateWindowAnimations(float deltaSeconds)
+{
+    for (auto& [windowId, animData] : m_windowAnimations)
+    {
+        if (animData.IsAnimating())
+        {
+            UpdateSingleWindowAnimation(windowId, animData, deltaSeconds);
+        }
+    }
+}
+
+void WindowSubsystem::UpdateSingleWindowAnimation(WindowID id, WindowAnimationData& animData, float deltaSeconds)
+{
+    auto windowIt = m_windowList.find(id);
+    if (windowIt == m_windowList.end()) return;
+
+    Window* window = windowIt->second.window.get();
+
+    animData.m_animationTimer += deltaSeconds;
+    float t = animData.m_animationTimer / animData.m_animationDuration;
+
+    if (t >= 1.0f)
+    {
+        // 動畫完成
+        t = 1.0f;
+        animData.m_isAnimatingSize = false;
+        animData.m_isAnimatingPosition = false;
+    }
+
+    // 使用 SmoothStep5 來創造平滑的動畫效果
+    float easedT = SmoothStep5(t);
+
+    if (animData.m_isAnimatingSize)
+    {
+        Vec2 currentDimensions = Interpolate(animData.m_startWindowDimensions, animData.m_targetWindowDimensions, easedT);
+        window->SetWindowDimensions(currentDimensions);
+    }
+
+    if (animData.m_isAnimatingPosition)
+    {
+        Vec2 currentPosition = Interpolate(animData.m_startWindowPosition, animData.m_targetWindowPosition, easedT);
+        window->SetWindowPosition(currentPosition);
+    }
 }

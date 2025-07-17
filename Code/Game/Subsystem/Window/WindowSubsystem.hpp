@@ -13,17 +13,34 @@
 #include "Game/Gameplay/Entity.hpp"
 
 //----------------------------------------------------------------------------------------------------
+struct WindowAnimationData
+{
+    bool m_isAnimatingSize = false;
+    bool m_isAnimatingPosition = false;
+
+    Vec2 m_targetWindowDimensions = Vec2::ZERO;
+    Vec2 m_startWindowDimensions = Vec2::ZERO;
+    Vec2 m_targetWindowPosition = Vec2::ZERO;
+    Vec2 m_startWindowPosition = Vec2::ZERO;
+
+    float m_animationDuration = 0.5f;
+    float m_animationTimer = 0.0f;
+
+    bool IsAnimating() const { return m_isAnimatingSize || m_isAnimatingPosition; }
+};
+
+//----------------------------------------------------------------------------------------------------
 struct WindowData
 {
     std::unique_ptr<Window>      window;
     std::unordered_set<EntityID> owners;
-    std::string                  name;
+    String                       m_name;
     bool                         isActive = true;
 
     WindowData() = default;
 
-    WindowData(std::unique_ptr<Window> win, const std::unordered_set<EntityID>& ownerSet, const std::string& windowName)
-        : window(std::move(win)), owners(ownerSet), name(windowName)
+    WindowData(std::unique_ptr<Window> win, std::unordered_set<EntityID> const& ownerSet, String windowName)
+        : window(std::move(win)), owners(ownerSet), m_name(std::move(windowName))
     {
     }
 };
@@ -59,25 +76,31 @@ public:
     bool                  WindowExists(WindowID windowID);
 
     // 視窗操作
-    void        UpdateWindowPosition(WindowID windowID);
-    void        UpdateWindowPosition(WindowID windowID, Vec2 const& newPosition);
-    void        UpdateWindowDimension(WindowID windowID);
-    void        SetWindowActive(WindowID windowID, bool active);
-    void        SetWindowName(WindowID windowId, String const& name);
-    std::string GetWindowName(WindowID windowId);
+    void   UpdateWindowPosition(WindowID windowID);
+    void   UpdateWindowPosition(WindowID windowID, Vec2 const& newPosition);
+    void   UpdateWindowDimension(WindowID windowID);
+    void   SetWindowActive(WindowID windowID, bool active);
+    void   SetWindowName(WindowID windowId, String const& name);
+    String GetWindowName(WindowID windowId);
 
     // 批量操作
     void   CreateMultipleWindows(std::vector<std::vector<EntityID>> const& ownerGroups);
     size_t GetWindowCount() const;
     size_t GetActiveWindowCount() const;
 
+    // Animations
+    void AnimateWindowDimensions(WindowID id, Vec2 const& targetDimensions, float duration = 0.5f);
+    void AnimateWindowPosition(WindowID id, Vec2 const& targetPosition, float duration = 0.5f);
+    void AnimateWindowPositionAndDimensions(WindowID id, Vec2 const& targetPosition, Vec2 const& targetDimensions, float duration = 0.5f);
+    bool IsWindowAnimating(WindowID id) const;
+
 private:
     // 主要資料結構：WindowID -> WindowData
-    std::unordered_map<WindowID, WindowData> m_windows;
+    std::unordered_map<WindowID, WindowData> m_windowList;
 
     // 快速查找：ActorID -> WindowID (一個actor只能在一個視窗)
     std::unordered_map<EntityID, WindowID> m_actorToWindow;
-
+    std::unordered_map<WindowID, WindowAnimationData> m_windowAnimations;
     WindowID m_nextWindowID = 1; // 從1開始，0保留為無效ID
 
     // 內部輔助函數
@@ -85,4 +108,7 @@ private:
 
     HWND        CreateOSWindow(std::wstring const& title, int x, int y, int width, int height);
     std::string GenerateDefaultWindowName(std::vector<EntityID> const& owners);
+    // 私有方法：動畫更新
+    void UpdateWindowAnimations(float deltaSeconds);
+    void UpdateSingleWindowAnimation(WindowID id, WindowAnimationData& animData, float deltaSeconds);
 };
