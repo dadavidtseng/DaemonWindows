@@ -4,6 +4,9 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Triangle.hpp"
+
+#include "Game.hpp"
+#include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Game/Subsystem/Widget/ButtonWidget.hpp"
 #include "Game/Subsystem/Widget/WidgetSubsystem.hpp"
 
@@ -38,9 +41,9 @@ void Triangle::UpdateWindowFocus()
     WindowID    windowID   = g_theWindowSubsystem->FindWindowByActor(m_actorID);
     WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
 
-    if (windowData && windowData->window && windowData->window->GetWindowHandle())
+    if (windowData && windowData->m_window && windowData->m_window->GetWindowHandle())
     {
-        HWND hwnd = (HWND)windowData->window->GetWindowHandle();
+        HWND hwnd = (HWND)windowData->m_window->GetWindowHandle();
 
         // 只有在視窗失去焦點時才重新設定
         if (GetForegroundWindow() != hwnd)
@@ -54,13 +57,31 @@ void Triangle::UpdateWindowFocus()
 void Triangle::Update(float const deltaSeconds)
 {
     Entity::Update(deltaSeconds);
-    BounceOfWindow();
+
     WindowID    windowID   = g_theWindowSubsystem->FindWindowByActor(m_actorID);
     WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
-    m_healthWidget->SetPosition(windowData->window->GetClientPosition());
-    m_healthWidget->SetDimensions(windowData->window->GetClientDimensions());
+    m_healthWidget->SetPosition(windowData->m_window->GetClientPosition());
+    m_healthWidget->SetDimensions(windowData->m_window->GetClientDimensions());
     m_healthWidget->SetText(Stringf("Health=%d", m_health));
-    // UpdateWindowFocus();
+
+    if (m_isDead) return;
+
+    // 追蹤玩家的邏輯
+    if (g_theGame->m_entities[0] && !g_theGame->m_entities[0]->IsDead())
+    {
+        Vec2 playerShipPos     = g_theGame->m_entities[0]->m_position;
+        Vec2 directionToPlayer = (playerShipPos - m_position).GetNormalized();
+        m_orientationDegrees   = directionToPlayer.GetOrientationDegrees();
+    }
+
+    m_velocity = Vec2::MakeFromPolarDegrees(m_orientationDegrees);
+    m_position += m_velocity * deltaSeconds * m_speed;
+
+    // 先限制Triangle位置在螢幕邊界內
+    BounceOfWindow();
+
+    // 然後用限制後的位置來設定視窗位置
+    windowData->m_window->SetClientPosition(m_position);
 }
 
 void Triangle::Render() const
@@ -82,34 +103,48 @@ void Triangle::Render() const
 
 void Triangle::BounceOfWindow()
 {
-    WindowID    windowID   = g_theWindowSubsystem->FindWindowByActor(m_actorID);
-    WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
+    // 使用螢幕邊界，而不是視窗邊界
+    Vec2 screenDimensions = Window::s_mainWindow->GetScreenDimensions();
 
-    if (windowData == nullptr) return;
+    float screenLeft   = 0.0f;
+    float screenBottom = 0.0f;
+    float screenTop    = screenDimensions.y;
+    float screenRight  = screenDimensions.x;
 
-    WindowRect rect = windowData->window->lastRect;
-    // 取得視窗的邊界
-    float windowLeft   = static_cast<float>(rect.left);
-    float windowTop    = Window::s_mainWindow->GetScreenDimensions().y - (float)rect.top;
-    float windowRight  = static_cast<float>(rect.right);
-    float windowBottom = Window::s_mainWindow->GetScreenDimensions().y - static_cast<float>(rect.bottom);
-    // DebugAddScreenText(Stringf("Player Window Position(top:%.1f, bottom:%.1f, left:%.1f, right:%.1f)", windowTop, windowBottom, windowLeft, windowRight), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 20.f), 20.f, Vec2::ZERO, 0.f);
-    // DebugAddScreenText(Stringf("Player Position(%.1f, %.1f)", m_position.x, m_position.y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 40.f), 20.f, Vec2::ZERO, 0.f);
-
-
+    // 限制Triangle在螢幕邊界內
     float clampedX = GetClamped(m_position.x,
-                                windowLeft + m_cosmeticRadius,   // 左邊界
-                                windowRight - m_cosmeticRadius); // 右邊界
+                                screenLeft + m_cosmeticRadius,   // 左邊界
+                                screenRight - m_cosmeticRadius); // 右邊界
 
     float clampedY = GetClamped(m_position.y,
-                                windowBottom + m_cosmeticRadius, // 下邊界（在遊戲座標系中較小）
-                                windowTop - m_cosmeticRadius);   // 上邊界（在遊戲座標系中較大）
+                                screenBottom + m_cosmeticRadius, // 下邊界
+                                screenTop - m_cosmeticRadius);   // 上邊界
 
-    // 更新 Player 的位置
+    // 更新Triangle的位置
     m_position.x = clampedX;
     m_position.y = clampedY;
 }
 
 void Triangle::UpdateFromInput()
 {
+}
+
+void Triangle::ShrinkWindow()
+{
+    WindowID windowID = g_theWindowSubsystem->FindWindowByActor(m_actorID);
+    Window*  window   = g_theWindowSubsystem->GetWindow(windowID);
+
+    if (!g_theWindowSubsystem->IsWindowAnimating(windowID))
+    {
+        Vec2 currentPos              = window->GetWindowPosition();
+        Vec2 currentSize             = window->GetWindowDimensions();
+        Vec2 currentClientDimensions = window->GetClientDimensions();
+        if (currentClientDimensions.x <= m_physicRadius * 2.5f || currentClientDimensions.y <= m_physicRadius * 2.5f) return;
+
+        // 右邊界：增加寬度
+        Vec2 newPos  = currentPos + Vec2(1, 1);
+        Vec2 newSize = currentSize + Vec2(-1, -1);
+        g_theWindowSubsystem->AnimateWindowPositionAndDimensions(windowID, newPos, newSize, 0.1f);
+        // g_theWindowSubsystem->AnimateWindowDimensions(windowID,  newSize, 0.1f);
+    }
 }

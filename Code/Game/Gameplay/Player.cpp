@@ -25,11 +25,11 @@ Player::Player(EntityID const actorID, Vec2 const& position, float const orienta
 
     g_theWindowSubsystem->CreateChildWindow(m_actorID, "You");
 
-    Window* window = g_theWindowSubsystem->GetWindow(g_theWindowSubsystem->FindWindowByActor(m_actorID));
-    Vec2 windowClientPosition = window->GetClientPosition();
-    Vec2 windowClientDimension = window->GetClientDimensions();
+    Window* window                = g_theWindowSubsystem->GetWindow(g_theWindowSubsystem->FindWindowByActor(m_actorID));
+    Vec2    windowClientPosition  = window->GetClientPosition();
+    Vec2    windowClientDimension = window->GetClientDimensions();
 
-    m_coinWidget = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("Coin=%d", m_coin), windowClientPosition.x, windowClientPosition.y, windowClientDimension.x, windowClientDimension.y, m_color);
+    m_coinWidget   = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("Coin=%d", m_coin), windowClientPosition.x, windowClientPosition.y, windowClientDimension.x, windowClientDimension.y, m_color);
     m_healthWidget = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("Health=%d", m_health), windowClientPosition.x, windowClientPosition.y, windowClientDimension.x, windowClientDimension.y, m_color);
 
     g_theWidgetSubsystem->AddWidget(m_coinWidget, 100);
@@ -41,9 +41,9 @@ void Player::UpdateWindowFocus()
     WindowID    windowID   = g_theWindowSubsystem->FindWindowByActor(m_actorID);
     WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
 
-    if (windowData && windowData->window && windowData->window->GetWindowHandle())
+    if (windowData && windowData->m_window && windowData->m_window->GetWindowHandle())
     {
-        HWND hwnd = (HWND)windowData->window->GetWindowHandle();
+        HWND hwnd = (HWND)windowData->m_window->GetWindowHandle();
 
         // 只有在視窗失去焦點時才重新設定
         if (GetForegroundWindow() != hwnd)
@@ -59,21 +59,22 @@ void Player::Update(float const deltaSeconds)
     Entity::Update(deltaSeconds);
     UpdateFromInput();
     BounceOfWindow();
+    ShrinkWindow();
     // UpdateWindowFocus();
     WindowID    windowID   = g_theWindowSubsystem->FindWindowByActor(m_actorID);
     WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
-    WindowRect  rect       = windowData->window->lastRect;
+    WindowRect  rect       = windowData->m_window->lastRect;
     DebugAddScreenText(Stringf("Player Window Position(top:%ld, bottom:%ld, left:%ld, right:%ld)", rect.top, rect.bottom, rect.left, rect.right), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 20.f), 20.f, Vec2::ZERO, 0.f);
-    DebugAddScreenText(Stringf("Player Window Dimensions(width:%.1f, height:%.1f)", windowData->window->GetWindowDimensions().x, windowData->window->GetWindowDimensions().y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 40.f), 20.f, Vec2::ZERO, 0.f);
-    DebugAddScreenText(Stringf("Player Client Dimensions(width:%.1f, height:%.1f)", windowData->window->GetClientDimensions().x, windowData->window->GetClientDimensions().y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 60.f), 20.f, Vec2::ZERO, 0.f);
-    DebugAddScreenText(Stringf("Player Window Position(width:%.1f, height:%.1f)", windowData->window->GetWindowPosition().x, windowData->window->GetWindowPosition().y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 80.f), 20.f, Vec2::ZERO, 0.f);
-    DebugAddScreenText(Stringf("Player Client Position(width:%.1f, height:%.1f)", windowData->window->GetClientPosition().x, windowData->window->GetClientPosition().y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 100.f), 20.f, Vec2::ZERO, 0.f);
+    DebugAddScreenText(Stringf("Player Window Dimensions(width:%.1f, height:%.1f)", windowData->m_window->GetWindowDimensions().x, windowData->m_window->GetWindowDimensions().y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 40.f), 20.f, Vec2::ZERO, 0.f);
+    DebugAddScreenText(Stringf("Player Client Dimensions(width:%.1f, height:%.1f)", windowData->m_window->GetClientDimensions().x, windowData->m_window->GetClientDimensions().y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 60.f), 20.f, Vec2::ZERO, 0.f);
+    DebugAddScreenText(Stringf("Player Window Position(width:%.1f, height:%.1f)", windowData->m_window->GetWindowPosition().x, windowData->m_window->GetWindowPosition().y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 80.f), 20.f, Vec2::ZERO, 0.f);
+    DebugAddScreenText(Stringf("Player Client Position(width:%.1f, height:%.1f)", windowData->m_window->GetClientPosition().x, windowData->m_window->GetClientPosition().y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 100.f), 20.f, Vec2::ZERO, 0.f);
     DebugAddScreenText(Stringf("Player Position(%.1f, %.1f)", m_position.x, m_position.y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 120.f), 20.f, Vec2::ZERO, 0.f);
 
-    m_coinWidget->SetPosition(windowData->window->GetClientPosition());
-    m_coinWidget->SetDimensions(windowData->window->GetClientDimensions());
-    m_healthWidget->SetPosition(windowData->window->GetClientPosition()+Vec2(0,20));
-    m_healthWidget->SetDimensions(windowData->window->GetClientDimensions());
+    m_coinWidget->SetPosition(windowData->m_window->GetClientPosition());
+    m_coinWidget->SetDimensions(windowData->m_window->GetClientDimensions());
+    m_healthWidget->SetPosition(windowData->m_window->GetClientPosition() + Vec2(0, 20));
+    m_healthWidget->SetDimensions(windowData->m_window->GetClientDimensions());
 }
 
 void Player::Render() const
@@ -103,11 +104,6 @@ void Player::UpdateFromInput()
         m_coinWidget->SetText(Stringf("%d", m_coin));
     }
 
-    // if (g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
-    // {
-    //     FireBullet();
-    // }
-
     // 連發射擊（持續按住）
     if (g_theInput->IsKeyDown(KEYCODE_LEFT_MOUSE))
     {
@@ -115,7 +111,7 @@ void Player::UpdateFromInput()
         if (m_bulletFireTimer.IsStopped() || m_bulletFireTimer.HasPeriodElapsed())
         {
             FireBullet();
-
+            m_isFiringBullet = true;
             // 重新啟動計時器
             m_bulletFireTimer.Start();
 
@@ -131,11 +127,16 @@ void Player::UpdateFromInput()
         // 當滑鼠鬆開時停止計時器
         m_bulletFireTimer.Stop();
     }
+
+    if (g_theInput->WasKeyJustReleased(KEYCODE_LEFT_MOUSE))
+    {m_isFiringBullet = false;
+
+    }
 }
 
 void Player::FireBullet()
 {
-    Bullet* bullet     = new Bullet(m_position, 0.f, Rgba8::GREEN);
+    Bullet* bullet     = new Bullet(m_position, 0.f, Rgba8::WHITE);
     int     id         = g_theRNG->RollRandomIntInRange(100, 1000);
     bullet->m_actorID  = id;
     bullet->m_windowID = 10;
@@ -155,12 +156,11 @@ void Player::BounceOfWindow()
 
     if (windowData == nullptr) return;
 
-    WindowRect rect = windowData->window->lastRect;
     // 取得視窗的邊界
-    float windowLeft   = windowData->window->GetClientPosition().x;
-    float windowBottom = windowData->window->GetClientPosition().y;
-    float windowTop    = windowData->window->GetClientPosition().y+windowData->window->GetClientDimensions().y;
-    float windowRight  = windowData->window->GetClientPosition().x+windowData->window->GetClientDimensions().x;
+    float windowLeft   = windowData->m_window->GetClientPosition().x;
+    float windowBottom = windowData->m_window->GetClientPosition().y;
+    float windowTop    = windowData->m_window->GetClientPosition().y + windowData->m_window->GetClientDimensions().y;
+    float windowRight  = windowData->m_window->GetClientPosition().x + windowData->m_window->GetClientDimensions().x;
 
 
     float clampedX = GetClamped(m_position.x,
@@ -174,4 +174,24 @@ void Player::BounceOfWindow()
     // 更新 Player 的位置
     m_position.x = clampedX;
     m_position.y = clampedY;
+}
+
+void Player::ShrinkWindow()
+{
+    WindowID windowID = g_theWindowSubsystem->FindWindowByActor(m_actorID);
+    Window*  window   = g_theWindowSubsystem->GetWindow(windowID);
+
+    if (!g_theWindowSubsystem->IsWindowAnimating(windowID)&& !m_isFiringBullet)
+    {
+        Vec2 currentPos  = window->GetWindowPosition();
+        Vec2 currentSize = window->GetWindowDimensions();
+        Vec2 currentClientDimensions = window->GetClientDimensions();
+if (currentClientDimensions.x<=m_physicRadius*2.5f||currentClientDimensions.y<=m_physicRadius*2.5f)return;
+
+        // 右邊界：增加寬度
+        Vec2 newPos  = currentPos + Vec2(1, 1);
+        Vec2 newSize = currentSize + Vec2(-1, -1);
+        g_theWindowSubsystem->AnimateWindowPositionAndDimensions(windowID, newPos, newSize, 0.1f);
+        // g_theWindowSubsystem->AnimateWindowDimensions(windowID,  newSize, 0.1f);
+    }
 }

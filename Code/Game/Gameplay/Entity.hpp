@@ -36,7 +36,8 @@ public:
     virtual bool IsDead() const;
     virtual bool IsGarbage() const;
 
-    void DecreaseHealth(int damage);
+    void IncreaseHealth(int amount);
+    void DecreaseHealth(int amount);
 
 protected:
     float m_speed     = 100.f;

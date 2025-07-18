@@ -21,9 +21,11 @@ public:
     void     UpdateFromInput() override;
     void     FireBullet();
     void     BounceOfWindow();
+    void     ShrinkWindow();
 
     Timer                         m_bulletFireTimer;
     std::shared_ptr<ButtonWidget> m_coinWidget;
     std::shared_ptr<ButtonWidget> m_healthWidget;
-    int                           m_coin = 0;
+    int                           m_coin           = 0;
+    bool                          m_isFiringBullet = false;
 };

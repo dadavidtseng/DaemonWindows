@@ -5,7 +5,6 @@
 #include "Game/Gameplay/Entity.hpp"
 
 #include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Core/ErrorWarningAssert.hpp"
 
 //----------------------------------------------------------------------------------------------------
 Entity::Entity(Vec2 const& position, float const orientationDegrees, Rgba8 const& color)
@@ -45,7 +44,12 @@ bool Entity::IsGarbage() const
     return m_isGarbage;
 }
 
-void Entity::DecreaseHealth(int const damage)
+void Entity::IncreaseHealth(int const amount)
 {
-    m_health -= damage;
+    m_health += amount;
+}
+
+void Entity::DecreaseHealth(int const amount)
+{
+    m_health -= amount;
 }

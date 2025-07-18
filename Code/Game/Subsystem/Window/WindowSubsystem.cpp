@@ -28,103 +28,25 @@ void WindowSubsystem::StartUp()
 void WindowSubsystem::BeginFrame()
 {
 }
-void WindowSubsystem::UpdateWindowInertia(float deltaTime)
-{
-    for (auto& [id, windowPtr] : m_windowList)
-    {
-        if (id!=1)continue;
-        // 確保慣性資料存在
-        if (m_windowInertiaData.find(id) == m_windowInertiaData.end())
-        {
-            // 初始化慣性資料
-            WindowInertiaData& inertiaData = m_windowInertiaData[id];
-            RECT windowRect;
-            GetWindowRect((HWND)windowPtr.window->GetWindowHandle(), &windowRect);
-            inertiaData.currentPosition = windowPtr.window->GetClientPosition()+windowPtr.window->GetClientDimensions()*0.5f;
-            inertiaData.originalSize = Vec2(static_cast<float>(windowRect.right - windowRect.left),
-                                           static_cast<float>(windowRect.bottom - windowRect.top));
-            inertiaData.currentScale = 1.0f;
-        }
 
-        WindowInertiaData& inertiaData = m_windowInertiaData[id];
-
-        // 計算到玩家的方向和距離
-        Vec2 toPlayer = m_playerPosition - inertiaData.currentPosition;
-        float distance = toPlayer.GetLength();
-
-        // 如果距離太近，停止移動
-        if (distance < MIN_DISTANCE)
-        {
-            inertiaData.velocity = Vec2::ZERO;
-            continue;
-        }
-
-        // 計算吸引力（方向朝向玩家）
-        Vec2 direction = toPlayer.GetNormalized();
-        Vec2 attractionForce = direction * ATTRACTION_FORCE;
-
-        // 更新速度（加上吸引力）
-        inertiaData.velocity += attractionForce * deltaTime;
-
-        // 應用阻尼
-        inertiaData.velocity *= INERTIA_DAMPING;
-
-        // 更新位置
-        inertiaData.currentPosition += inertiaData.velocity * deltaTime;
-
-        // 計算縮放（越接近玩家越小）
-        float normalizedDistance = GetClamped(distance / 1000.0f, 0.0f, 1.0f); // 1000 是最大距離
-        float targetScale = Interpolate(MIN_SCALE, 1.0f, normalizedDistance);
-
-        // 平滑過渡到目標縮放
-        inertiaData.currentScale = Interpolate(inertiaData.currentScale, targetScale, SCALE_SPEED * deltaTime);
-
-        // 應用位置和尺寸到實際視窗
-        HWND hwnd = (HWND)windowPtr.window->GetWindowHandle();
-        if (hwnd)
-        {
-            // 計算新的視窗尺寸
-            int newWidth = static_cast<int>(inertiaData.originalSize.x * inertiaData.currentScale);
-            int newHeight = static_cast<int>(inertiaData.originalSize.y * inertiaData.currentScale);
-
-DebuggerPrintf(Stringf("NewWidth,NetHeight=(%.d, %.d)\n", newWidth, newHeight).c_str());
-            // 設定視窗位置和大小
-            // SetWindowPos(hwnd, nullptr,
-            //             static_cast<int>(inertiaData.currentPosition.x),
-            //             static_cast<int>(inertiaData.currentPosition.y),
-            //             newWidth, newHeight,
-            //             SWP_NOZORDER | SWP_NOACTIVATE);
-
-            // 更新 Window 類別的內部狀態
-            Vec2 movement = inertiaData.currentPosition*0.5f;
-            windowPtr.window->SetWindowPosition(Vec2(movement.x, movement.y));
-            windowPtr.window->SetWindowDimensions(Vec2(static_cast<float>(newWidth),
-                                               static_cast<float>(newHeight)));
-
-            // 標記需要更新
-            // windowPtr.window->m_shouldUpdatePosition = true;
-            // windowPtr.window->m_shouldUpdateDimension = true;
-        }
-    }
-}
 void WindowSubsystem::Update()
 {
     float deltaSeconds = (float)Clock::GetSystemClock().GetDeltaSeconds();
     // 更新慣性移動
     UpdateWindowAnimations(deltaSeconds);
-    UpdateWindowInertia(deltaSeconds);    // 更新動畫
+    // UpdateWindowInertia(deltaSeconds);    // 更新動畫
 
     for (auto& [windowId, windowData] : m_windowList)
     {
-        if (!windowData.isActive || !windowData.window) continue;
+        if (!windowData.isActive || !windowData.m_window) continue;
 
-        windowData.window->UpdatePosition();
-        windowData.window->UpdateDimension();
+        windowData.m_window->UpdatePosition();
+        windowData.m_window->UpdateDimension();
 
-        if (windowData.window->m_shouldUpdateDimension)
+        if (windowData.m_window->m_shouldUpdateDimension)
         {
-            HRESULT const hr                           = g_theRenderer->ResizeWindowSwapChain(*windowData.window);
-            windowData.window->m_shouldUpdateDimension = false;
+            HRESULT const hr                           = g_theRenderer->ResizeWindowSwapChain(*windowData.m_window);
+            windowData.m_window->m_shouldUpdateDimension = false;
 
             if (FAILED(hr))
             {
@@ -140,12 +62,12 @@ void WindowSubsystem::Render()
 
     for (auto& [windowId, windowData] : m_windowList)
     {
-        if (!windowData.isActive || !windowData.window) continue;
+        if (!windowData.isActive || !windowData.m_window) continue;
 
-        if (windowData.window->m_shouldUpdatePosition)
+        if (windowData.m_window->m_shouldUpdatePosition)
         {
-            // g_theRenderer->RenderViewportToWindow(*windowData.window);
-            g_theRenderer->RenderViewportToWindowDX11(*windowData.window);
+            g_theRenderer->RenderViewportToWindow(*windowData.m_window);
+            // g_theRenderer->RenderViewportToWindowDX11(*windowData.m_window);
         }
     }
 }
@@ -282,9 +204,9 @@ void WindowSubsystem::DestroyWindow(WindowID windowID)
     }
 
     // 關閉視窗
-    if (windowIt->second.window)
+    if (windowIt->second.m_window)
     {
-        windowIt->second.window->Shutdown();
+        windowIt->second.m_window->Shutdown();
     }
 
     // 移除視窗資料
@@ -297,9 +219,9 @@ void WindowSubsystem::DestroyAllWindows()
 {
     for (auto& [windowId, windowData] : m_windowList)
     {
-        if (windowData.window)
+        if (windowData.m_window)
         {
-            windowData.window->Shutdown();
+            windowData.m_window->Shutdown();
         }
     }
 
@@ -316,7 +238,7 @@ void WindowSubsystem::DestroyAllWindows()
 Window* WindowSubsystem::GetWindow(WindowID windowID)
 {
     auto it = m_windowList.find(windowID);
-    return (it != m_windowList.end() && it->second.window) ? it->second.window.get() : nullptr;
+    return (it != m_windowList.end() && it->second.m_window) ? it->second.m_window.get() : nullptr;
 }
 
 WindowData* WindowSubsystem::GetWindowData(WindowID const windowID)
@@ -388,9 +310,9 @@ bool WindowSubsystem::WindowExists(WindowID const windowID)
 void WindowSubsystem::UpdateWindowPosition(WindowID const windowID)
 {
     auto it = m_windowList.find(windowID);
-    if (it != m_windowList.end() && it->second.window)
+    if (it != m_windowList.end() && it->second.m_window)
     {
-        it->second.window->UpdatePosition();
+        it->second.m_window->UpdatePosition();
     }
     else
     {
@@ -402,14 +324,14 @@ void WindowSubsystem::UpdateWindowPosition(WindowID const windowID,
                                            Vec2 const&    newPosition)
 {
     auto it = m_windowList.find(windowID);
-    if (it != m_windowList.end() && it->second.window)
+    if (it != m_windowList.end() && it->second.m_window)
     {
-        it->second.window->SetWindowPosition(it->second.window->GetWindowPosition() + newPosition);
-        Vec2 totalPosition = it->second.window->GetWindowPosition() + newPosition;
+        it->second.m_window->SetWindowPosition(it->second.m_window->GetWindowPosition() + newPosition);
+        Vec2 totalPosition = it->second.m_window->GetWindowPosition() + newPosition;
         // it->second.window->UpdatePosition(newPosition);
         // it->second.window->m_shouldUpdatePosition = true;
         DebuggerPrintf("(NewPosition: %f, %f)\n", newPosition.x, newPosition.y);
-        DebuggerPrintf("(it->second.window->GetWindowPosition(): %f, %f)\n", it->second.window->GetWindowPosition().x, it->second.window->GetWindowPosition().y);
+        DebuggerPrintf("(it->second.window->GetWindowPosition(): %f, %f)\n", it->second.m_window->GetWindowPosition().x, it->second.m_window->GetWindowPosition().y);
     }
     else
     {
@@ -420,9 +342,9 @@ void WindowSubsystem::UpdateWindowPosition(WindowID const windowID,
 void WindowSubsystem::UpdateWindowDimension(WindowID windowID)
 {
     auto it = m_windowList.find(windowID);
-    if (it != m_windowList.end() && it->second.window)
+    if (it != m_windowList.end() && it->second.m_window)
     {
-        it->second.window->UpdateDimension();
+        it->second.m_window->UpdateDimension();
     }
     else
     {
@@ -537,15 +459,7 @@ WindowID WindowSubsystem::CreateWindowInternal(std::vector<EntityID> const& owne
 
     // 創建 Window 物件
     std::unique_ptr<Window> newWindow = std::make_unique<Window>(config);
-    if (hwnd)
-    {
-        WindowID windowId = newId;
-        WindowInertiaData& inertiaData = m_windowInertiaData[windowId];
-        inertiaData.currentPosition = Vec2(static_cast<float>(x), static_cast<float>(y));
-        inertiaData.originalSize = Vec2(static_cast<float>(width), static_cast<float>(height));
-        inertiaData.currentScale = 1.0f;
-        inertiaData.velocity = Vec2::ZERO;
-    }
+
     // 設定 HWND 和 Display Context
     newWindow->SetWindowHandle(hwnd);
     newWindow->SetDisplayContext(GetDC(hwnd));
@@ -570,7 +484,7 @@ WindowID WindowSubsystem::CreateWindowInternal(std::vector<EntityID> const& owne
     // 創建 SwapChain
     if (g_theRenderer)
     {
-        g_theRenderer->CreateWindowSwapChain(*m_windowList[newId].window);
+        g_theRenderer->CreateWindowSwapChain(*m_windowList[newId].m_window);
     }
 
     ShowWindow(hwnd, SW_SHOW);
@@ -682,7 +596,7 @@ void WindowSubsystem::AnimateWindowDimensions(WindowID id, Vec2 const& targetDim
     auto windowIt = m_windowList.find(id);
     if (windowIt == m_windowList.end()) return;
 
-    Window* window = windowIt->second.window.get();
+    Window* window = windowIt->second.m_window.get();
     if (targetDimensions == window->GetWindowDimensions()) return;
 
     WindowAnimationData& animData     = m_windowAnimations[id];
@@ -698,7 +612,7 @@ void WindowSubsystem::AnimateWindowPosition(WindowID id, Vec2 const& targetPosit
     auto windowIt = m_windowList.find(id);
     if (windowIt == m_windowList.end()) return;
 
-    Window* window = windowIt->second.window.get();
+    Window* window = windowIt->second.m_window.get();
     if (targetPosition == window->GetWindowPosition()) return;
 
     WindowAnimationData& animData   = m_windowAnimations[id];
@@ -725,7 +639,7 @@ void WindowSubsystem::UpdateSingleWindowAnimation(WindowID id, WindowAnimationDa
     auto windowIt = m_windowList.find(id);
     if (windowIt == m_windowList.end()) return;
 
-    Window* window = windowIt->second.window.get();
+    Window* window = windowIt->second.m_window.get();
 
     animData.m_animationTimer += deltaSeconds;
     float t = animData.m_animationTimer / animData.m_animationDuration;
@@ -759,7 +673,7 @@ void WindowSubsystem::AnimateWindowPositionAndDimensions(WindowID id, Vec2 const
     auto windowIt = m_windowList.find(id);
     if (windowIt == m_windowList.end()) return;
 
-    Window* window = windowIt->second.window.get();
+    Window* window = windowIt->second.m_window.get();
 
     WindowAnimationData& animData     = m_windowAnimations[id];
     animData.m_startWindowPosition    = window->GetWindowPosition();

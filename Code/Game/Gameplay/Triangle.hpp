@@ -21,6 +21,7 @@ public:
     void Render() const override;
     void BounceOfWindow();
     void UpdateFromInput() override;
+    void ShrinkWindow();
 
     std::shared_ptr<ButtonWidget> m_healthWidget;
 };
