@@ -28,13 +28,91 @@ void WindowSubsystem::StartUp()
 void WindowSubsystem::BeginFrame()
 {
 }
+void WindowSubsystem::UpdateWindowInertia(float deltaTime)
+{
+    for (auto& [id, windowPtr] : m_windowList)
+    {
+        if (id!=1)continue;
+        // 確保慣性資料存在
+        if (m_windowInertiaData.find(id) == m_windowInertiaData.end())
+        {
+            // 初始化慣性資料
+            WindowInertiaData& inertiaData = m_windowInertiaData[id];
+            RECT windowRect;
+            GetWindowRect((HWND)windowPtr.window->GetWindowHandle(), &windowRect);
+            inertiaData.currentPosition = windowPtr.window->GetClientPosition()+windowPtr.window->GetClientDimensions()*0.5f;
+            inertiaData.originalSize = Vec2(static_cast<float>(windowRect.right - windowRect.left),
+                                           static_cast<float>(windowRect.bottom - windowRect.top));
+            inertiaData.currentScale = 1.0f;
+        }
 
+        WindowInertiaData& inertiaData = m_windowInertiaData[id];
+
+        // 計算到玩家的方向和距離
+        Vec2 toPlayer = m_playerPosition - inertiaData.currentPosition;
+        float distance = toPlayer.GetLength();
+
+        // 如果距離太近，停止移動
+        if (distance < MIN_DISTANCE)
+        {
+            inertiaData.velocity = Vec2::ZERO;
+            continue;
+        }
+
+        // 計算吸引力（方向朝向玩家）
+        Vec2 direction = toPlayer.GetNormalized();
+        Vec2 attractionForce = direction * ATTRACTION_FORCE;
+
+        // 更新速度（加上吸引力）
+        inertiaData.velocity += attractionForce * deltaTime;
+
+        // 應用阻尼
+        inertiaData.velocity *= INERTIA_DAMPING;
+
+        // 更新位置
+        inertiaData.currentPosition += inertiaData.velocity * deltaTime;
+
+        // 計算縮放（越接近玩家越小）
+        float normalizedDistance = GetClamped(distance / 1000.0f, 0.0f, 1.0f); // 1000 是最大距離
+        float targetScale = Interpolate(MIN_SCALE, 1.0f, normalizedDistance);
+
+        // 平滑過渡到目標縮放
+        inertiaData.currentScale = Interpolate(inertiaData.currentScale, targetScale, SCALE_SPEED * deltaTime);
+
+        // 應用位置和尺寸到實際視窗
+        HWND hwnd = (HWND)windowPtr.window->GetWindowHandle();
+        if (hwnd)
+        {
+            // 計算新的視窗尺寸
+            int newWidth = static_cast<int>(inertiaData.originalSize.x * inertiaData.currentScale);
+            int newHeight = static_cast<int>(inertiaData.originalSize.y * inertiaData.currentScale);
+
+DebuggerPrintf(Stringf("NewWidth,NetHeight=(%.d, %.d)\n", newWidth, newHeight).c_str());
+            // 設定視窗位置和大小
+            // SetWindowPos(hwnd, nullptr,
+            //             static_cast<int>(inertiaData.currentPosition.x),
+            //             static_cast<int>(inertiaData.currentPosition.y),
+            //             newWidth, newHeight,
+            //             SWP_NOZORDER | SWP_NOACTIVATE);
+
+            // 更新 Window 類別的內部狀態
+            Vec2 movement = inertiaData.currentPosition*0.5f;
+            windowPtr.window->SetWindowPosition(Vec2(movement.x, movement.y));
+            windowPtr.window->SetWindowDimensions(Vec2(static_cast<float>(newWidth),
+                                               static_cast<float>(newHeight)));
+
+            // 標記需要更新
+            // windowPtr.window->m_shouldUpdatePosition = true;
+            // windowPtr.window->m_shouldUpdateDimension = true;
+        }
+    }
+}
 void WindowSubsystem::Update()
 {
     float deltaSeconds = (float)Clock::GetSystemClock().GetDeltaSeconds();
-
-    // 更新動畫
+    // 更新慣性移動
     UpdateWindowAnimations(deltaSeconds);
+    UpdateWindowInertia(deltaSeconds);    // 更新動畫
 
     for (auto& [windowId, windowData] : m_windowList)
     {
@@ -441,6 +519,7 @@ WindowID WindowSubsystem::CreateWindowInternal(std::vector<EntityID> const& owne
 
     // 創建作業系統視窗
     HWND hwnd = CreateOSWindow(wTitle, x, y, width, height);
+
     if (!hwnd)
     {
         DebuggerPrintf("CreateWindowInternal: Failed to create OS window.\n");
@@ -458,7 +537,15 @@ WindowID WindowSubsystem::CreateWindowInternal(std::vector<EntityID> const& owne
 
     // 創建 Window 物件
     std::unique_ptr<Window> newWindow = std::make_unique<Window>(config);
-
+    if (hwnd)
+    {
+        WindowID windowId = newId;
+        WindowInertiaData& inertiaData = m_windowInertiaData[windowId];
+        inertiaData.currentPosition = Vec2(static_cast<float>(x), static_cast<float>(y));
+        inertiaData.originalSize = Vec2(static_cast<float>(width), static_cast<float>(height));
+        inertiaData.currentScale = 1.0f;
+        inertiaData.velocity = Vec2::ZERO;
+    }
     // 設定 HWND 和 Display Context
     newWindow->SetWindowHandle(hwnd);
     newWindow->SetDisplayContext(GetDC(hwnd));

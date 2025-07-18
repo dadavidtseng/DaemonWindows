@@ -75,6 +75,13 @@ void Game::Update()
             }
         }
     }
+    if (g_theWindowSubsystem)
+    {
+        // 假設 m_position 是玩家在遊戲世界中的位置
+        // 您可能需要將遊戲座標轉換為螢幕座標
+        // Vec2 screenPosition = ConvertGameToScreenPosition(m_position);
+        g_theWindowSubsystem->SetPlayerPosition(m_entities[0]->m_position);
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
