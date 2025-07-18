@@ -258,8 +258,8 @@ void Game::RenderAttractMode() const
 {
     VertexList_PCU verts1;
     AddVertsForAABB2D(verts1, AABB2(Vec2::ZERO, Window::s_mainWindow->GetScreenDimensions()));
-    g_theRenderer->SetModelConstants();
-    g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
+    g_theRenderer->SetModelConstants(Mat44{}, Rgba8(255, 255, 255, 100));
+    g_theRenderer->SetBlendMode(eBlendMode::ALPHA);
     g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
     g_theRenderer->SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
     g_theRenderer->SetDepthMode(eDepthMode::DISABLED);

@@ -93,8 +93,6 @@ public:
     void AnimateWindowPosition(WindowID id, Vec2 const& targetPosition, float duration = 0.5f);
     void AnimateWindowPositionAndDimensions(WindowID id, Vec2 const& targetPosition, Vec2 const& targetDimensions, float duration = 0.5f);
     bool IsWindowAnimating(WindowID id) const;
-    // void InstallGlobalMouseHook();
-    // void UninstallGlobalMouseHook();
 
 private:
     std::unordered_map<WindowID, WindowData>          m_windowList;// 主要資料結構：WindowID -> WindowData
@@ -111,13 +109,4 @@ private:
     // 私有方法：動畫更新
     void                    UpdateWindowAnimations(float deltaSeconds);
     void                    UpdateSingleWindowAnimation(WindowID id, WindowAnimationData& animData, float deltaSeconds);
-    // HHOOK                   m_globalMouseHook    = nullptr;
-    // HHOOK                   m_globalKeyboardHook = nullptr;
-    // void                    OnGlobalMouseEvent(int eventType, POINT mousePos);
-    // void                    OnGlobalKeyboardEvent(int eventType, DWORD vkCode);
-    // void                    HandleClickOutsideWindows(POINT mousePos);
-    // void                    InstallGlobalKeyboardHook();
-    // void                    UninstallGlobalKeyboardHook();
-    // static LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam);
-    // static LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam);  // 新增
 };

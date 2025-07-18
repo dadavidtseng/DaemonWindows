@@ -87,23 +87,23 @@ void App::Startup()
     //------------------------------------------------------------------------------------------------
     //-Start-of-DevConsole----------------------------------------------------------------------------
 
-    m_devConsoleCamera = new Camera();
-
-    Vec2 const bottomLeft     = Vec2::ZERO;
-    Vec2 const screenTopRight = Window::s_mainWindow->GetScreenDimensions();
-
-    m_devConsoleCamera->SetOrthoGraphicView(bottomLeft, screenTopRight);
-
-    sDevConsoleConfig devConsoleConfig;
-    devConsoleConfig.m_defaultRenderer = g_theRenderer;
-    devConsoleConfig.m_defaultFontName = "SquirrelFixedFont";
-    devConsoleConfig.m_defaultCamera   = m_devConsoleCamera;
-    g_theDevConsole                    = new DevConsole(devConsoleConfig);
-
-    g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, "Controls");
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(LMB)   Shoot Bullet");
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(W/S)   Up/Down");
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(A/D)   Left/Right");
+    // m_devConsoleCamera = new Camera();
+    //
+    // Vec2 const bottomLeft     = Vec2::ZERO;
+    // Vec2 const screenTopRight = Window::s_mainWindow->GetScreenDimensions();
+    //
+    // m_devConsoleCamera->SetOrthoGraphicView(bottomLeft, screenTopRight);
+    //
+    // sDevConsoleConfig devConsoleConfig;
+    // devConsoleConfig.m_defaultRenderer = g_theRenderer;
+    // devConsoleConfig.m_defaultFontName = "SquirrelFixedFont";
+    // devConsoleConfig.m_defaultCamera   = m_devConsoleCamera;
+    // g_theDevConsole                    = new DevConsole(devConsoleConfig);
+    //
+    // g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, "Controls");
+    // g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(LMB)   Shoot Bullet");
+    // g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(W/S)   Up/Down");
+    // g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(A/D)   Left/Right");
 
     //-End-of-DevConsole------------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
@@ -131,7 +131,7 @@ void App::Startup()
     g_theWindow->Startup();
     g_theRenderer->Startup();
     DebugRenderSystemStartup(debugConfig);
-    g_theDevConsole->StartUp();
+    // g_theDevConsole->StartUp();
     g_theInput->Startup();
     g_theAudio->Startup();
     g_theWindowSubsystem->StartUp();
@@ -156,7 +156,7 @@ void App::Shutdown()
     g_theWindowSubsystem->ShutDown();
     g_theAudio->Shutdown();
     g_theInput->Shutdown();
-    g_theDevConsole->Shutdown();
+    // g_theDevConsole->Shutdown();
 
     GAME_SAFE_RELEASE(m_devConsoleCamera);
 
@@ -216,7 +216,7 @@ void App::BeginFrame() const
     g_theWindow->BeginFrame();
     g_theRenderer->BeginFrame();
     DebugRenderBeginFrame();
-    g_theDevConsole->BeginFrame();
+    // g_theDevConsole->BeginFrame();
     g_theInput->BeginFrame();
     g_theAudio->BeginFrame();
     g_theWindowSubsystem->BeginFrame();
@@ -244,14 +244,14 @@ void App::Update()
 //
 void App::Render() const
 {
-    g_theRenderer->ClearScreen(Rgba8::BLUE);
+    // g_theRenderer->ClearScreen(Rgba8::BLUE);
     g_theGame->Render();
     g_theWidgetSubsystem->Render();
 
 
     AABB2 const box = AABB2(Vec2::ZERO, Vec2(1600.f, 30.f));
 
-    g_theDevConsole->Render(box);
+    // g_theDevConsole->Render(box);
     g_theWindowSubsystem->Render();
 }
 
@@ -262,7 +262,7 @@ void App::EndFrame() const
     g_theWindow->EndFrame();
     g_theRenderer->EndFrame();
     DebugRenderEndFrame();
-    g_theDevConsole->EndFrame();
+    // g_theDevConsole->EndFrame();
     g_theInput->EndFrame();
     g_theAudio->EndFrame();
     g_theWindowSubsystem->EndFrame();
@@ -274,7 +274,8 @@ void App::UpdateCursorMode()
 {
     bool const doesWindowHasFocus   = GetActiveWindow() == g_theWindow->GetWindowHandle();
     bool const isAttractState       = g_theGame->GetCurrentGameState() == eGameState::ATTRACT;
-    bool const shouldUsePointerMode = !doesWindowHasFocus || g_theDevConsole->IsOpen() || isAttractState;
+    // bool const shouldUsePointerMode = !doesWindowHasFocus || g_theDevConsole->IsOpen() || isAttractState;
+    bool const shouldUsePointerMode = !doesWindowHasFocus ||  isAttractState;
 
     if (shouldUsePointerMode == true)
     {
