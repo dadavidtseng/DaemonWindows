@@ -54,3 +54,10 @@ void ButtonWidget::SetPosition(Vec2 const& newPosition)
     m_x = newPosition.x;
     m_y = newPosition.y;
 }
+
+void ButtonWidget::SetDimensions(Vec2 const& newDimensions)
+{
+    m_width = newDimensions.x;
+    m_height = newDimensions.y;
+}
+

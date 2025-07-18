@@ -20,7 +20,8 @@ public:
 
     void   SetText(String const& text);
     String GetText() const;
-    void SetPosition(Vec2 const& newPosition);
+    void   SetPosition(Vec2 const& newPosition);
+    void   SetDimensions(Vec2 const& newDimensions);
 
 private:
     String m_text;
