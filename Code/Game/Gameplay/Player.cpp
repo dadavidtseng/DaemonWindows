@@ -75,6 +75,7 @@ void Player::Update(float const deltaSeconds)
     DebugAddScreenText(Stringf("Player Position(%.1f, %.1f)", m_position.x, m_position.y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 120.f), 20.f, Vec2::ZERO, 0.f);
     // m_textWidget->SetPosition(g_theWindowSubsystem->GetWindow(g_theWindowSubsystem->FindWindowByActor(m_actorID))->GetClientPosition());
     m_textWidget->SetPosition(windowData->window->GetClientPosition());
+    m_textWidget->SetDimensions(windowData->window->GetClientDimensions());
     // m_textWidget2->SetPosition(windowData->window->GetWindowPosition());
 }
 
@@ -159,19 +160,19 @@ void Player::BounceOfWindow()
 
     WindowRect rect = windowData->window->lastRect;
     // 取得視窗的邊界
-    float windowLeft   = static_cast<float>(rect.left);
-    float windowTop    = Window::s_mainWindow->GetScreenDimensions().y - (float)rect.top;
-    float windowRight  = static_cast<float>(rect.right);
-    float windowBottom = Window::s_mainWindow->GetScreenDimensions().y - static_cast<float>(rect.bottom);
+    float windowLeft   = windowData->window->GetClientPosition().x;
+    float windowBottom = windowData->window->GetClientPosition().y;
+    float windowTop    = windowData->window->GetClientPosition().y+windowData->window->GetClientDimensions().y;
+    float windowRight  = windowData->window->GetClientPosition().x+windowData->window->GetClientDimensions().x;
 
 
     float clampedX = GetClamped(m_position.x,
-                                windowLeft + m_cosmeticRadius,   // 左邊界
-                                windowRight - m_cosmeticRadius); // 右邊界
+                                windowLeft + m_physicRadius,   // 左邊界
+                                windowRight - m_physicRadius); // 右邊界
 
     float clampedY = GetClamped(m_position.y,
-                                windowBottom + m_cosmeticRadius, // 下邊界（在遊戲座標系中較小）
-                                windowTop - m_cosmeticRadius);   // 上邊界（在遊戲座標系中較大）
+                                windowBottom + m_physicRadius, // 下邊界（在遊戲座標系中較小）
+                                windowTop - m_physicRadius);   // 上邊界（在遊戲座標系中較大）
 
     // 更新 Player 的位置
     m_position.x = clampedX;
