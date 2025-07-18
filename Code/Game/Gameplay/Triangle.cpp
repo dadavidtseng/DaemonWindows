@@ -5,15 +5,17 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Triangle.hpp"
 
+//----------------------------------------------------------------------------------------------------
 Triangle::Triangle(EntityID const actorID, Vec2 const& position, float const orientationDegrees, Rgba8 const& color)
     : Entity(position, orientationDegrees, color)
 {
     m_actorID        = actorID;
+    m_name           = "Triangle";
     m_physicRadius   = 30.f;
     m_thickness      = 10.f;
     m_cosmeticRadius = m_physicRadius + m_thickness;
 
-    g_theWindowSubsystem->CreateChildWindow(m_actorID, "Enemy Window");
+    g_theWindowSubsystem->CreateChildWindow(m_actorID, m_name);
 }
 
 Triangle::~Triangle()
@@ -43,7 +45,7 @@ void Triangle::Update(float const deltaSeconds)
 {
     Entity::Update(deltaSeconds);
     BounceOfWindow();
-    UpdateWindowFocus();
+    // UpdateWindowFocus();
 }
 
 void Triangle::Render() const

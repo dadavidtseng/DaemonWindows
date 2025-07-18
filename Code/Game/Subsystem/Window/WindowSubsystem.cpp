@@ -9,6 +9,7 @@
 
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Input/InputSystem.hpp"
 #include "Game/Gameplay/Game.hpp"
 
 void WindowSubsystem::StartUp()
@@ -38,7 +39,7 @@ void WindowSubsystem::Update()
     for (auto& [windowId, windowData] : m_windowList)
     {
         if (!windowData.isActive || !windowData.window) continue;
-        // windowData.window->UpdateAnimations((float)Clock::GetSystemClock().GetDeltaSeconds());
+
         windowData.window->UpdatePosition();
         windowData.window->UpdateDimension();
 
@@ -79,10 +80,6 @@ void WindowSubsystem::ShutDown()
 {
     DestroyAllWindows();
 }
-
-//----------------------------------------------------------------------------------------------------
-// 核心視窗管理功能
-//----------------------------------------------------------------------------------------------------
 
 WindowID WindowSubsystem::CreateChildWindow(std::vector<EntityID> const& owners, std::string const& name)
 {
@@ -547,6 +544,27 @@ HWND WindowSubsystem::CreateOSWindow(std::wstring const& title,
     return hwnd;
 }
 
+void WindowSubsystem::SetupTransparentMainWindow()
+{
+    if (!Window::s_mainWindow) return;
+
+    HWND mainHwnd = static_cast<HWND>(Window::s_mainWindow->GetWindowHandle());
+
+    // 設置全螢幕透明主視窗
+    SetWindowLong(mainHwnd, GWL_EXSTYLE,
+                  GetWindowLong(mainHwnd, GWL_EXSTYLE) | WS_EX_LAYERED | WS_EX_TRANSPARENT);
+
+    // 完全透明，滑鼠穿透
+    SetLayeredWindowAttributes(mainHwnd, 0, 0, LWA_ALPHA);
+
+    // 設置為全螢幕覆蓋
+    int screenWidth  = GetSystemMetrics(SM_CXSCREEN);
+    int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+    SetWindowPos(mainHwnd, HWND_TOPMOST, 0, 0, screenWidth, screenHeight,
+                 SWP_SHOWWINDOW);
+}
+
 std::string WindowSubsystem::GenerateDefaultWindowName(const std::vector<EntityID>& owners)
 {
     if (owners.empty())
@@ -578,12 +596,12 @@ void WindowSubsystem::AnimateWindowDimensions(WindowID id, Vec2 const& targetDim
     Window* window = windowIt->second.window.get();
     if (targetDimensions == window->GetWindowDimensions()) return;
 
-    WindowAnimationData& animData = m_windowAnimations[id];
-    animData.m_startWindowDimensions = window->GetWindowDimensions();
+    WindowAnimationData& animData     = m_windowAnimations[id];
+    animData.m_startWindowDimensions  = window->GetWindowDimensions();
     animData.m_targetWindowDimensions = targetDimensions;
-    animData.m_animationDuration = duration;
-    animData.m_animationTimer = 0.0f;
-    animData.m_isAnimatingSize = true;
+    animData.m_animationDuration      = duration;
+    animData.m_animationTimer         = 0.0f;
+    animData.m_isAnimatingSize        = true;
 }
 
 void WindowSubsystem::AnimateWindowPosition(WindowID id, Vec2 const& targetPosition, float duration)
@@ -594,36 +612,12 @@ void WindowSubsystem::AnimateWindowPosition(WindowID id, Vec2 const& targetPosit
     Window* window = windowIt->second.window.get();
     if (targetPosition == window->GetWindowPosition()) return;
 
-    WindowAnimationData& animData = m_windowAnimations[id];
-    animData.m_startWindowPosition = window->GetWindowPosition();
+    WindowAnimationData& animData   = m_windowAnimations[id];
+    animData.m_startWindowPosition  = window->GetWindowPosition();
     animData.m_targetWindowPosition = targetPosition;
-    animData.m_animationDuration = duration;
-    animData.m_animationTimer = 0.0f;
-    animData.m_isAnimatingPosition = true;
-}
-
-void WindowSubsystem::AnimateWindowPositionAndDimensions(WindowID id, Vec2 const& targetPosition, Vec2 const& targetDimensions, float duration)
-{
-    auto windowIt = m_windowList.find(id);
-    if (windowIt == m_windowList.end()) return;
-
-    Window* window = windowIt->second.window.get();
-
-    WindowAnimationData& animData = m_windowAnimations[id];
-    animData.m_startWindowPosition = window->GetWindowPosition();
-    animData.m_targetWindowPosition = targetPosition;
-    animData.m_startWindowDimensions = window->GetWindowDimensions();
-    animData.m_targetWindowDimensions = targetDimensions;
-    animData.m_animationDuration = duration;
-    animData.m_animationTimer = 0.0f;
-    animData.m_isAnimatingSize = true;
-    animData.m_isAnimatingPosition = true;
-}
-
-bool WindowSubsystem::IsWindowAnimating(WindowID id) const
-{
-    auto it = m_windowAnimations.find(id);
-    return (it != m_windowAnimations.end()) && it->second.IsAnimating();
+    animData.m_animationDuration    = duration;
+    animData.m_animationTimer       = 0.0f;
+    animData.m_isAnimatingPosition  = true;
 }
 
 void WindowSubsystem::UpdateWindowAnimations(float deltaSeconds)
@@ -650,8 +644,8 @@ void WindowSubsystem::UpdateSingleWindowAnimation(WindowID id, WindowAnimationDa
     if (t >= 1.0f)
     {
         // 動畫完成
-        t = 1.0f;
-        animData.m_isAnimatingSize = false;
+        t                              = 1.0f;
+        animData.m_isAnimatingSize     = false;
         animData.m_isAnimatingPosition = false;
     }
 
@@ -669,4 +663,28 @@ void WindowSubsystem::UpdateSingleWindowAnimation(WindowID id, WindowAnimationDa
         Vec2 currentPosition = Interpolate(animData.m_startWindowPosition, animData.m_targetWindowPosition, easedT);
         window->SetWindowPosition(currentPosition);
     }
+}
+
+void WindowSubsystem::AnimateWindowPositionAndDimensions(WindowID id, Vec2 const& targetPosition, Vec2 const& targetDimensions, float duration)
+{
+    auto windowIt = m_windowList.find(id);
+    if (windowIt == m_windowList.end()) return;
+
+    Window* window = windowIt->second.window.get();
+
+    WindowAnimationData& animData     = m_windowAnimations[id];
+    animData.m_startWindowPosition    = window->GetWindowPosition();
+    animData.m_targetWindowPosition   = targetPosition;
+    animData.m_startWindowDimensions  = window->GetWindowDimensions();
+    animData.m_targetWindowDimensions = targetDimensions;
+    animData.m_animationDuration      = duration;
+    animData.m_animationTimer         = 0.0f;
+    animData.m_isAnimatingSize        = true;
+    animData.m_isAnimatingPosition    = true;
+}
+
+bool WindowSubsystem::IsWindowAnimating(WindowID id) const
+{
+    auto it = m_windowAnimations.find(id);
+    return (it != m_windowAnimations.end()) && it->second.IsAnimating();
 }

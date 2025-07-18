@@ -59,12 +59,13 @@ void App::Startup()
     //-Start-of-Window--------------------------------------------------------------------------------
 
     sWindowConfig windowConfig;
-    windowConfig.m_windowType   = eWindowType::FULLSCREEN_CROP;
-    windowConfig.m_aspectRatio  = 2.f;
-    windowConfig.m_inputSystem  = g_theInput;
-    windowConfig.m_windowTitle  = "WindowKills";
-    windowConfig.m_iconFilePath = L"C:/p4/Personal/SD/WindowKills/Run/Data/Images/windowIcon.ico";
-    g_theWindow                 = new Window(windowConfig);
+    windowConfig.m_windowType             = eWindowType::FULLSCREEN_CROP;
+    windowConfig.m_aspectRatio            = 2.f;
+    windowConfig.m_inputSystem            = g_theInput;
+    windowConfig.m_windowTitle            = "WindowKills";
+    windowConfig.m_iconFilePath           = L"C:/p4/Personal/SD/WindowKills/Run/Data/Images/windowIcon.ico";
+    windowConfig.m_supportMultipleWindows = true;
+    g_theWindow                           = new Window(windowConfig);
 
     //-End-of-Window----------------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
