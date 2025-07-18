@@ -24,8 +24,20 @@ Player::Player(EntityID const actorID, Vec2 const& position, float const orienta
     m_cosmeticRadius = m_physicRadius + m_thickness;
 
     g_theWindowSubsystem->CreateChildWindow(m_actorID, "Player Window");
-    // m_textWidget = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("%d", m_coin), 200, 200, 300, 300, Rgba8::BLUE);
-    // g_theWidgetSubsystem->AddWidget(m_textWidget, 100);
+    WindowID    windowID   = g_theWindowSubsystem->FindWindowByActor(m_actorID);
+    WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
+    Window* window = g_theWindowSubsystem->GetWindow(g_theWindowSubsystem->FindWindowByActor(m_actorID));
+    Vec2 windowClientPosition = windowData->window->GetClientPosition();
+    Vec2 windowClientDimension = windowData->window->GetClientDimensions();
+    Vec2 windowWindowPosition = windowData->window->GetWindowPosition();
+    Vec2 windowWindowDimension = windowData->window->GetWindowDimensions();
+    // m_textWidget = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("%d", m_coin), 100, 100, 100, 100, Rgba8::BLUE);
+    // BLUE -> Client
+    m_textWidget = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("%d", m_coin), windowClientPosition.x, windowClientPosition.y, windowClientDimension.x, windowClientDimension.y, Rgba8::BLUE);
+    // RED -> Window
+    // m_textWidget2 = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("%d", m_coin), windowWindowPosition.x, windowWindowPosition.y, windowWindowDimension.x, windowWindowDimension.y, Rgba8::RED);
+    g_theWidgetSubsystem->AddWidget(m_textWidget, 100);
+    // g_theWidgetSubsystem->AddWidget(m_textWidget2, 200);
 }
 
 void Player::UpdateWindowFocus()
@@ -58,8 +70,12 @@ void Player::Update(float const deltaSeconds)
     DebugAddScreenText(Stringf("Player Window Position(top:%ld, bottom:%ld, left:%ld, right:%ld)", rect.top, rect.bottom, rect.left, rect.right), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 20.f), 20.f, Vec2::ZERO, 0.f);
     DebugAddScreenText(Stringf("Player Window Dimensions(width:%.1f, height:%.1f)", windowData->window->GetWindowDimensions().x, windowData->window->GetWindowDimensions().y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 40.f), 20.f, Vec2::ZERO, 0.f);
     DebugAddScreenText(Stringf("Player Client Dimensions(width:%.1f, height:%.1f)", windowData->window->GetClientDimensions().x, windowData->window->GetClientDimensions().y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 60.f), 20.f, Vec2::ZERO, 0.f);
-    DebugAddScreenText(Stringf("Player Position(%.1f, %.1f)", m_position.x, m_position.y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 80.f), 20.f, Vec2::ZERO, 0.f);
+    DebugAddScreenText(Stringf("Player Window Position(width:%.1f, height:%.1f)", windowData->window->GetWindowPosition().x, windowData->window->GetWindowPosition().y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 80.f), 20.f, Vec2::ZERO, 0.f);
+    DebugAddScreenText(Stringf("Player Client Position(width:%.1f, height:%.1f)", windowData->window->GetClientPosition().x, windowData->window->GetClientPosition().y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 100.f), 20.f, Vec2::ZERO, 0.f);
+    DebugAddScreenText(Stringf("Player Position(%.1f, %.1f)", m_position.x, m_position.y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 120.f), 20.f, Vec2::ZERO, 0.f);
     // m_textWidget->SetPosition(g_theWindowSubsystem->GetWindow(g_theWindowSubsystem->FindWindowByActor(m_actorID))->GetClientPosition());
+    m_textWidget->SetPosition(windowData->window->GetClientPosition());
+    // m_textWidget2->SetPosition(windowData->window->GetWindowPosition());
 }
 
 void Player::Render() const

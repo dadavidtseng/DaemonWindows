@@ -286,6 +286,18 @@ void Game::RenderAttractMode() const
             entity->Render();
         }
     }
+
+    VertexList_PCU verts2;
+    // AddVertsForAABB2D(verts2, AABB2(Vec2(108,69),Vec2(108+384,69+261)));
+    // AddVertsForAABB2D(verts2, AABB2(Vec2(100,100),Vec2(100+400,100+300)));
+    g_theRenderer->SetModelConstants(Mat44{}, Rgba8(255, 255, 255, 100));
+    g_theRenderer->SetBlendMode(eBlendMode::ALPHA);
+    g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
+    g_theRenderer->SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
+    g_theRenderer->SetDepthMode(eDepthMode::DISABLED);
+    g_theRenderer->BindTexture(nullptr);
+    g_theRenderer->BindShader(nullptr);
+    g_theRenderer->DrawVertexArray(verts2);
 }
 
 //----------------------------------------------------------------------------------------------------

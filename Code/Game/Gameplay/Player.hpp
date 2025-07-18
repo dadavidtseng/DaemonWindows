@@ -24,5 +24,6 @@ public:
 
     Timer m_bulletFireTimer;
     std::shared_ptr<ButtonWidget> m_textWidget;
+    std::shared_ptr<ButtonWidget> m_textWidget2;
     int   m_coin = 0;
 };

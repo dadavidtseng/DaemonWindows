@@ -4,6 +4,8 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Triangle.hpp"
+#include "Game/Subsystem/Widget/ButtonWidget.hpp"
+#include "Game/Subsystem/Widget/WidgetSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
 Triangle::Triangle(EntityID const actorID, Vec2 const& position, float const orientationDegrees, Rgba8 const& color)
@@ -16,6 +18,19 @@ Triangle::Triangle(EntityID const actorID, Vec2 const& position, float const ori
     m_cosmeticRadius = m_physicRadius + m_thickness;
 
     g_theWindowSubsystem->CreateChildWindow(m_actorID, m_name);
+    WindowID    windowID   = g_theWindowSubsystem->FindWindowByActor(m_actorID);
+    WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
+    Window* window = g_theWindowSubsystem->GetWindow(g_theWindowSubsystem->FindWindowByActor(m_actorID));
+    Vec2 windowClientPosition = windowData->window->GetClientPosition();
+    Vec2 windowClientDimension = windowData->window->GetClientDimensions();
+    Vec2 windowWindowPosition = windowData->window->GetWindowPosition();
+    Vec2 windowWindowDimension = windowData->window->GetWindowDimensions();
+    // m_textWidget = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("%d", m_coin), 100, 100, 100, 100, Rgba8::BLUE);
+
+    // RED -> Window
+    m_textWidget2 = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("%d", m_health), windowWindowPosition.x, windowWindowPosition.y, windowWindowDimension.x, windowWindowDimension.y, Rgba8::RED);
+    g_theWidgetSubsystem->AddWidget(m_textWidget2, 200);
+    // g_theWidgetSubsystem->AddWidget(m_textWidget2, 200);
 }
 
 Triangle::~Triangle()
@@ -45,6 +60,9 @@ void Triangle::Update(float const deltaSeconds)
 {
     Entity::Update(deltaSeconds);
     BounceOfWindow();
+    WindowID    windowID   = g_theWindowSubsystem->FindWindowByActor(m_actorID);
+    WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
+    m_textWidget2->SetPosition(windowData->window->GetWindowPosition());
     // UpdateWindowFocus();
 }
 
