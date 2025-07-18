@@ -5,7 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #pragma once
 
-#include "Game/Subsystem/Widget/WidgetSubsystem.hpp"
+
 #include "Game/Subsystem/Window/WindowSubsystem.hpp"
 
 class ButtonWidget;
@@ -22,5 +22,5 @@ public:
     void BounceOfWindow();
     void UpdateFromInput() override;
 
-    std::shared_ptr<ButtonWidget> m_textWidget2;
+    std::shared_ptr<ButtonWidget> m_healthWidget;
 };

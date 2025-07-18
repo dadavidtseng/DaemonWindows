@@ -22,8 +22,8 @@ public:
     void     FireBullet();
     void     BounceOfWindow();
 
-    Timer m_bulletFireTimer;
-    std::shared_ptr<ButtonWidget> m_textWidget;
-    std::shared_ptr<ButtonWidget> m_textWidget2;
-    int   m_coin = 0;
+    Timer                         m_bulletFireTimer;
+    std::shared_ptr<ButtonWidget> m_coinWidget;
+    std::shared_ptr<ButtonWidget> m_healthWidget;
+    int                           m_coin = 0;
 };

@@ -23,21 +23,17 @@ Player::Player(EntityID const actorID, Vec2 const& position, float const orienta
     m_thickness      = 10.f;
     m_cosmeticRadius = m_physicRadius + m_thickness;
 
-    g_theWindowSubsystem->CreateChildWindow(m_actorID, "Player Window");
-    WindowID    windowID   = g_theWindowSubsystem->FindWindowByActor(m_actorID);
-    WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
+    g_theWindowSubsystem->CreateChildWindow(m_actorID, "You");
+
     Window* window = g_theWindowSubsystem->GetWindow(g_theWindowSubsystem->FindWindowByActor(m_actorID));
-    Vec2 windowClientPosition = windowData->window->GetClientPosition();
-    Vec2 windowClientDimension = windowData->window->GetClientDimensions();
-    Vec2 windowWindowPosition = windowData->window->GetWindowPosition();
-    Vec2 windowWindowDimension = windowData->window->GetWindowDimensions();
-    // m_textWidget = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("%d", m_coin), 100, 100, 100, 100, Rgba8::BLUE);
-    // BLUE -> Client
-    m_textWidget = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("%d", m_coin), windowClientPosition.x, windowClientPosition.y, windowClientDimension.x, windowClientDimension.y, Rgba8::BLUE);
-    // RED -> Window
-    // m_textWidget2 = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("%d", m_coin), windowWindowPosition.x, windowWindowPosition.y, windowWindowDimension.x, windowWindowDimension.y, Rgba8::RED);
-    g_theWidgetSubsystem->AddWidget(m_textWidget, 100);
-    // g_theWidgetSubsystem->AddWidget(m_textWidget2, 200);
+    Vec2 windowClientPosition = window->GetClientPosition();
+    Vec2 windowClientDimension = window->GetClientDimensions();
+
+    m_coinWidget = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("Coin=%d", m_coin), windowClientPosition.x, windowClientPosition.y, windowClientDimension.x, windowClientDimension.y, m_color);
+    m_healthWidget = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("Health=%d", m_health), windowClientPosition.x, windowClientPosition.y, windowClientDimension.x, windowClientDimension.y, m_color);
+
+    g_theWidgetSubsystem->AddWidget(m_coinWidget, 100);
+    g_theWidgetSubsystem->AddWidget(m_healthWidget, 200);
 }
 
 void Player::UpdateWindowFocus()
@@ -73,10 +69,11 @@ void Player::Update(float const deltaSeconds)
     DebugAddScreenText(Stringf("Player Window Position(width:%.1f, height:%.1f)", windowData->window->GetWindowPosition().x, windowData->window->GetWindowPosition().y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 80.f), 20.f, Vec2::ZERO, 0.f);
     DebugAddScreenText(Stringf("Player Client Position(width:%.1f, height:%.1f)", windowData->window->GetClientPosition().x, windowData->window->GetClientPosition().y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 100.f), 20.f, Vec2::ZERO, 0.f);
     DebugAddScreenText(Stringf("Player Position(%.1f, %.1f)", m_position.x, m_position.y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 120.f), 20.f, Vec2::ZERO, 0.f);
-    // m_textWidget->SetPosition(g_theWindowSubsystem->GetWindow(g_theWindowSubsystem->FindWindowByActor(m_actorID))->GetClientPosition());
-    m_textWidget->SetPosition(windowData->window->GetClientPosition());
-    m_textWidget->SetDimensions(windowData->window->GetClientDimensions());
-    // m_textWidget2->SetPosition(windowData->window->GetWindowPosition());
+
+    m_coinWidget->SetPosition(windowData->window->GetClientPosition());
+    m_coinWidget->SetDimensions(windowData->window->GetClientDimensions());
+    m_healthWidget->SetPosition(windowData->window->GetClientPosition()+Vec2(0,20));
+    m_healthWidget->SetDimensions(windowData->window->GetClientDimensions());
 }
 
 void Player::Render() const
@@ -103,7 +100,7 @@ void Player::UpdateFromInput()
     if (g_theInput->WasKeyJustPressed(KEYCODE_P))
     {
         m_coin += 1;
-        m_textWidget->SetText(Stringf("%d", m_coin));
+        m_coinWidget->SetText(Stringf("%d", m_coin));
     }
 
     // if (g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
