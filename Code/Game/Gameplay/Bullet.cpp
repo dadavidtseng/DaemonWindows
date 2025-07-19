@@ -25,11 +25,11 @@ void Bullet::Update(float const deltaSeconds)
     m_position.x += m_velocity.x * deltaSeconds * m_speed;
     m_position.y += m_velocity.y * deltaSeconds * m_speed;
 
-    WindowID windowID = g_theWindowSubsystem->FindWindowByActor(g_theGame->m_entities[0]->m_actorID);
+    WindowID windowID = g_theWindowSubsystem->FindWindowIDByEntityID(g_theGame->m_entities[0]->m_entityID);
     Window*  window   = g_theWindowSubsystem->GetWindow(windowID);
 
     // 檢查碰撞，但只在不在動畫中時才觸發新的動畫
-    if (!g_theWindowSubsystem->IsWindowAnimating(windowID))
+    // if (!g_theWindowSubsystem->IsWindowAnimating(windowID))
     {
         Vec2 currentPos  = window->GetWindowPosition();
         Vec2 currentSize = window->GetWindowDimensions();

@@ -14,15 +14,15 @@
 Triangle::Triangle(EntityID const actorID, Vec2 const& position, float const orientationDegrees, Rgba8 const& color)
     : Entity(position, orientationDegrees, color)
 {
-    m_actorID        = actorID;
+    m_entityID       = actorID;
     m_name           = "Triangle";
     m_physicRadius   = 30.f;
     m_thickness      = 10.f;
     m_cosmeticRadius = m_physicRadius + m_thickness;
 
-    g_theWindowSubsystem->CreateChildWindow(m_actorID, m_name);
+    g_theWindowSubsystem->CreateChildWindow(m_entityID, m_name, static_cast<int>(m_position.x), static_cast<int>(m_position.y), 200, 200);
 
-    Window* window                = g_theWindowSubsystem->GetWindow(g_theWindowSubsystem->FindWindowByActor(m_actorID));
+    Window* window                = g_theWindowSubsystem->GetWindow(g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID));
     Vec2    windowClientPosition  = window->GetClientPosition();
     Vec2    windowClientDimension = window->GetClientDimensions();
 
@@ -32,13 +32,13 @@ Triangle::Triangle(EntityID const actorID, Vec2 const& position, float const ori
 
 Triangle::~Triangle()
 {
-    g_theWindowSubsystem->RemoveActorFromMappings(m_actorID);
+    g_theWindowSubsystem->RemoveEntityFromMappings(m_entityID);
     m_healthWidget->MarkForDestroy();
 }
 
 void Triangle::UpdateWindowFocus()
 {
-    WindowID    windowID   = g_theWindowSubsystem->FindWindowByActor(m_actorID);
+    WindowID    windowID   = g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID);
     WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
 
     if (windowData && windowData->m_window && windowData->m_window->GetWindowHandle())
@@ -58,7 +58,7 @@ void Triangle::Update(float const deltaSeconds)
 {
     Entity::Update(deltaSeconds);
 
-    WindowID    windowID   = g_theWindowSubsystem->FindWindowByActor(m_actorID);
+    WindowID    windowID   = g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID);
     WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
     m_healthWidget->SetPosition(windowData->m_window->GetClientPosition());
     m_healthWidget->SetDimensions(windowData->m_window->GetClientDimensions());
@@ -78,10 +78,10 @@ void Triangle::Update(float const deltaSeconds)
     m_position += m_velocity * deltaSeconds * m_speed;
 
     // 先限制Triangle位置在螢幕邊界內
-    BounceOfWindow();
+    // BounceOfWindow();
 
     // 然後用限制後的位置來設定視窗位置
-    windowData->m_window->SetClientPosition(m_position);
+    windowData->m_window->SetClientPosition(m_position-windowData->m_window->GetClientDimensions()*0.5f);
 }
 
 void Triangle::Render() const
@@ -131,7 +131,7 @@ void Triangle::UpdateFromInput()
 
 void Triangle::ShrinkWindow()
 {
-    WindowID windowID = g_theWindowSubsystem->FindWindowByActor(m_actorID);
+    WindowID windowID = g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID);
     Window*  window   = g_theWindowSubsystem->GetWindow(windowID);
 
     if (!g_theWindowSubsystem->IsWindowAnimating(windowID))

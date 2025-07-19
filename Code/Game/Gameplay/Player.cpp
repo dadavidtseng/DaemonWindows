@@ -18,14 +18,14 @@ Player::Player(EntityID const actorID, Vec2 const& position, float const orienta
     : Entity(position, orientationDegrees, color),
       m_bulletFireTimer(0.5f)
 {
-    m_actorID        = actorID;
+    m_entityID       = actorID;
     m_physicRadius   = 30.f;
     m_thickness      = 10.f;
     m_cosmeticRadius = m_physicRadius + m_thickness;
 
-    g_theWindowSubsystem->CreateChildWindow(m_actorID, "You");
+    g_theWindowSubsystem->CreateChildWindow(m_entityID, "You", 100,100,300,300);
 
-    Window* window                = g_theWindowSubsystem->GetWindow(g_theWindowSubsystem->FindWindowByActor(m_actorID));
+    Window* window                = g_theWindowSubsystem->GetWindow(g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID));
     Vec2    windowClientPosition  = window->GetClientPosition();
     Vec2    windowClientDimension = window->GetClientDimensions();
 
@@ -38,7 +38,7 @@ Player::Player(EntityID const actorID, Vec2 const& position, float const orienta
 
 void Player::UpdateWindowFocus()
 {
-    WindowID    windowID   = g_theWindowSubsystem->FindWindowByActor(m_actorID);
+    WindowID    windowID   = g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID);
     WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
 
     if (windowData && windowData->m_window && windowData->m_window->GetWindowHandle())
@@ -61,7 +61,7 @@ void Player::Update(float const deltaSeconds)
     BounceOfWindow();
     ShrinkWindow();
     // UpdateWindowFocus();
-    WindowID    windowID   = g_theWindowSubsystem->FindWindowByActor(m_actorID);
+    WindowID    windowID   = g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID);
     WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
     WindowRect  rect       = windowData->m_window->lastRect;
     DebugAddScreenText(Stringf("Player Window Position(top:%ld, bottom:%ld, left:%ld, right:%ld)", rect.top, rect.bottom, rect.left, rect.right), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 20.f), 20.f, Vec2::ZERO, 0.f);
@@ -111,7 +111,7 @@ void Player::UpdateFromInput()
         if (m_bulletFireTimer.IsStopped() || m_bulletFireTimer.HasPeriodElapsed())
         {
             FireBullet();
-            m_isFiringBullet = true;
+            // m_isFiringBullet = true;
             // 重新啟動計時器
             m_bulletFireTimer.Start();
 
@@ -129,8 +129,8 @@ void Player::UpdateFromInput()
     }
 
     if (g_theInput->WasKeyJustReleased(KEYCODE_LEFT_MOUSE))
-    {m_isFiringBullet = false;
-
+    {
+        // m_isFiringBullet = false;
     }
 }
 
@@ -138,7 +138,7 @@ void Player::FireBullet()
 {
     Bullet* bullet     = new Bullet(m_position, 0.f, Rgba8::WHITE);
     int     id         = g_theRNG->RollRandomIntInRange(100, 1000);
-    bullet->m_actorID  = id;
+    bullet->m_entityID = id;
     bullet->m_windowID = 10;
     bullet->m_name     = "BULLET";
 
@@ -151,7 +151,7 @@ void Player::FireBullet()
 
 void Player::BounceOfWindow()
 {
-    WindowID    windowID   = g_theWindowSubsystem->FindWindowByActor(m_actorID);
+    WindowID    windowID   = g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID);
     WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
 
     if (windowData == nullptr) return;
@@ -178,15 +178,15 @@ void Player::BounceOfWindow()
 
 void Player::ShrinkWindow()
 {
-    WindowID windowID = g_theWindowSubsystem->FindWindowByActor(m_actorID);
+    WindowID windowID = g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID);
     Window*  window   = g_theWindowSubsystem->GetWindow(windowID);
 
-    if (!g_theWindowSubsystem->IsWindowAnimating(windowID)&& !m_isFiringBullet)
+    if (!g_theWindowSubsystem->IsWindowAnimating(windowID))
     {
-        Vec2 currentPos  = window->GetWindowPosition();
-        Vec2 currentSize = window->GetWindowDimensions();
+        Vec2 currentPos              = window->GetWindowPosition();
+        Vec2 currentSize             = window->GetWindowDimensions();
         Vec2 currentClientDimensions = window->GetClientDimensions();
-if (currentClientDimensions.x<=m_physicRadius*2.5f||currentClientDimensions.y<=m_physicRadius*2.5f)return;
+        if (currentClientDimensions.x <= m_physicRadius * 2.5f || currentClientDimensions.y <= m_physicRadius * 2.5f) return;
 
         // 右邊界：增加寬度
         Vec2 newPos  = currentPos + Vec2(1, 1);
@@ -194,4 +194,15 @@ if (currentClientDimensions.x<=m_physicRadius*2.5f||currentClientDimensions.y<=m
         g_theWindowSubsystem->AnimateWindowPositionAndDimensions(windowID, newPos, newSize, 0.1f);
         // g_theWindowSubsystem->AnimateWindowDimensions(windowID,  newSize, 0.1f);
     }
+}
+
+
+void Player::IncreaseCoin(int const amount)
+{
+    m_coin += amount;
+}
+
+void Player::DecreaseCoin(int const amount)
+{
+    m_coin -= amount;
 }

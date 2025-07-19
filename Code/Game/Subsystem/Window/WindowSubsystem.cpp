@@ -14,6 +14,7 @@
 
 void WindowSubsystem::StartUp()
 {
+
     // 創建一些測試視窗
     // std::vector<std::vector<ActorID>> ownerGroups = {
     //     {0},        // 視窗1: Actor 0
@@ -45,7 +46,7 @@ void WindowSubsystem::Update()
 
         if (windowData.m_window->m_shouldUpdateDimension)
         {
-            HRESULT const hr                           = g_theRenderer->ResizeWindowSwapChain(*windowData.m_window);
+            HRESULT const hr                             = g_theRenderer->ResizeWindowSwapChain(*windowData.m_window);
             windowData.m_window->m_shouldUpdateDimension = false;
 
             if (FAILED(hr))
@@ -66,8 +67,8 @@ void WindowSubsystem::Render()
 
         if (windowData.m_window->m_shouldUpdatePosition)
         {
-            g_theRenderer->RenderViewportToWindow(*windowData.m_window);
-            // g_theRenderer->RenderViewportToWindowDX11(*windowData.m_window);
+            // g_theRenderer->RenderViewportToWindow(*windowData.m_window);
+            g_theRenderer->RenderViewportToWindowDX11(*windowData.m_window);
         }
     }
 }
@@ -81,42 +82,63 @@ void WindowSubsystem::ShutDown()
     DestroyAllWindows();
 }
 
-WindowID WindowSubsystem::CreateChildWindow(std::vector<EntityID> const& owners, std::string const& name)
+WindowID WindowSubsystem::CreateChildWindow(EntityID const owner,
+                                            String const&  windowTitle,
+                                            int const      x,
+                                            int const      y,
+                                            int const      width,
+                                            int const      height)
 {
-    if (owners.empty())
+    // 創建作業系統視窗
+    HWND hwnd = CreateOSWindow(windowTitle, x, y, width, height);
+
+    if (!hwnd)
     {
-        DebuggerPrintf("CreateWindow: No owners provided.\n");
+        DebuggerPrintf("CreateWindowInternal: Failed to create OS window.\n");
         return 0;
     }
 
-    // 檢查是否有actor已經在其他視窗中
-    for (EntityID actorId : owners)
+    // 生成新的視窗ID
+    WindowID newId = m_nextWindowID++;
+
+    // 創建視窗配置
+    sWindowConfig config;
+    config.m_windowType  = eWindowType::WINDOWED;
+    config.m_aspectRatio = static_cast<float>(width) / static_cast<float>(height);
+    config.m_windowTitle = windowTitle;
+
+    // 創建 Window 物件
+    std::unique_ptr<Window> newWindow = std::make_unique<Window>(config);
+
+    // 設定 HWND 和 Display Context
+    newWindow->SetWindowHandle(hwnd);
+    newWindow->SetDisplayContext(GetDC(hwnd));
+
+    // 設定視窗位置和大小追蹤
+    newWindow->SetWindowDimensions(Vec2(width, height));
+    newWindow->SetWindowPosition(Vec2(x, y));
+    newWindow->m_shouldUpdatePosition = true;
+
+    // 創建 WindowData 並添加到容器
+    std::unordered_set const ownerSet = {owner};
+    m_windowList.emplace(newId, WindowData(std::move(newWindow), ownerSet, windowTitle));
+
+    // 建立actor到視窗的映射
+    m_actorToWindow[owner] = newId;
+
+    // 創建 SwapChain
+    if (g_theRenderer)
     {
-        auto it = m_actorToWindow.find(actorId);
-        if (it != m_actorToWindow.end())
-        {
-            DebuggerPrintf("CreateWindow: Actor %d already in window %d.\n", actorId, it->second);
-            return 0; // 創建失敗
-        }
+        g_theRenderer->CreateWindowSwapChain(*m_windowList[newId].m_window);
     }
 
-    std::string windowName = name.empty() ? GenerateDefaultWindowName(owners) : name;
+    ShowWindow(hwnd, SW_SHOW);
 
-    // 計算視窗位置（簡單的網格佈局）
-    int windowIndex = static_cast<int>(m_windowList.size());
-    int x           = 100 + (windowIndex % 3) * 450;
-    int y           = 100 + (windowIndex / 3) * 350;
-
-    return CreateWindowInternal(owners, windowName, x, y, 400, 300);
+    DebuggerPrintf("CreateWindowInternal: Created window %d '%s' for actor %llu.\n", newId, windowTitle.c_str(), static_cast<unsigned long long>(owner));
+    return newId;
 }
 
-WindowID WindowSubsystem::CreateChildWindow(EntityID const owner,
-                                            String const&  name)
-{
-    return CreateChildWindow(std::vector<EntityID>{owner}, name);
-}
-
-bool WindowSubsystem::AddActorToWindow(WindowID windowID, EntityID entityID)
+bool WindowSubsystem::AddEntityToWindow(WindowID windowID, EntityID entityID)
 {
     // 檢查視窗是否存在
     auto windowIt = m_windowList.find(windowID);
@@ -151,7 +173,7 @@ bool WindowSubsystem::AddActorToWindow(WindowID windowID, EntityID entityID)
     return true;
 }
 
-bool WindowSubsystem::RemoveActorFromWindow(WindowID windowID, EntityID entityID)
+bool WindowSubsystem::RemoveEntityFromWindow(WindowID windowID, EntityID entityID)
 {
     // 檢查視窗是否存在
     auto windowIt = m_windowList.find(windowID);
@@ -247,7 +269,7 @@ WindowData* WindowSubsystem::GetWindowData(WindowID const windowID)
     return (it != m_windowList.end()) ? &it->second : nullptr;
 }
 
-WindowID WindowSubsystem::FindWindowByActor(EntityID const entityID)
+WindowID WindowSubsystem::FindWindowIDByEntityID(EntityID const entityID)
 {
     auto it = m_actorToWindow.find(entityID);
     return (it != m_actorToWindow.end()) ? it->second : 0;
@@ -400,115 +422,33 @@ size_t WindowSubsystem::GetActiveWindowCount() const
 }
 
 //----------------------------------------------------------------------------------------------------
-// 批量操作
-//----------------------------------------------------------------------------------------------------
-
-void WindowSubsystem::CreateMultipleWindows(std::vector<std::vector<EntityID>> const& ownerGroups)
-{
-    for (size_t i = 0; i < ownerGroups.size(); ++i)
-    {
-        const auto& owners = ownerGroups[i];
-        if (!owners.empty())
-        {
-            std::string name     = "Window " + std::to_string(i + 1);
-            WindowID    windowId = CreateChildWindow(owners, name);
-
-            if (windowId != 0)
-            {
-                DebuggerPrintf("CreateMultipleWindows: Created window %d for %zu actors.\n", windowId, owners.size());
-            }
-            else
-            {
-                DebuggerPrintf("CreateMultipleWindows: Failed to create window for group %zu.\n", i);
-            }
-        }
-    }
-}
-
-//----------------------------------------------------------------------------------------------------
 size_t WindowSubsystem::GetWindowCount() const
 {
     return m_windowList.size();
 }
 
-//----------------------------------------------------------------------------------------------------
-WindowID WindowSubsystem::CreateWindowInternal(std::vector<EntityID> const& owners, String const& name, int x, int y, int width, int height)
-{
-    // 轉換名稱為寬字符
-    std::wstring wTitle;
-    wTitle.resize(name.size());
-    MultiByteToWideChar(CP_UTF8, 0, name.c_str(), static_cast<int>(name.size()), &wTitle[0], static_cast<int>(wTitle.size()));
 
-    // 創建作業系統視窗
-    HWND hwnd = CreateOSWindow(wTitle, x, y, width, height);
-
-    if (!hwnd)
-    {
-        DebuggerPrintf("CreateWindowInternal: Failed to create OS window.\n");
-        return 0;
-    }
-
-    // 生成新的視窗ID
-    WindowID newId = m_nextWindowID++;
-
-    // 創建視窗配置
-    sWindowConfig config;
-    config.m_windowType  = eWindowType::WINDOWED;
-    config.m_aspectRatio = static_cast<float>(width) / static_cast<float>(height);
-    config.m_windowTitle = name;
-
-    // 創建 Window 物件
-    std::unique_ptr<Window> newWindow = std::make_unique<Window>(config);
-
-    // 設定 HWND 和 Display Context
-    newWindow->SetWindowHandle(hwnd);
-    newWindow->SetDisplayContext(GetDC(hwnd));
-
-    // 設定視窗位置和大小追蹤
-    newWindow->SetWindowDimensions(Vec2(static_cast<float>(width), static_cast<float>(height)));
-    newWindow->SetWindowPosition(Vec2(static_cast<float>(x), static_cast<float>(y)));
-    // newWindow->SetClientDimensions(Vec2(static_cast<float>(width), static_cast<float>(height)));
-    // newWindow->SetClientPosition(Vec2(static_cast<float>(x), static_cast<float>(y)));
-    newWindow->m_shouldUpdatePosition = true;
-
-    // 創建 WindowData 並添加到容器
-    std::unordered_set<EntityID> ownerSet(owners.begin(), owners.end());
-    m_windowList.emplace(newId, WindowData(std::move(newWindow), ownerSet, name));
-
-    // 建立actor到視窗的映射
-    for (EntityID owner : owners)
-    {
-        m_actorToWindow[owner] = newId;
-    }
-
-    // 創建 SwapChain
-    if (g_theRenderer)
-    {
-        g_theRenderer->CreateWindowSwapChain(*m_windowList[newId].m_window);
-    }
-
-    ShowWindow(hwnd, SW_SHOW);
-
-    DebuggerPrintf("CreateWindowInternal: Created window %d '%s' for %zu actors.\n", newId, name.c_str(), owners.size());
-    return newId;
-}
-
-void WindowSubsystem::RemoveActorFromMappings(EntityID entityID)
+void WindowSubsystem::RemoveEntityFromMappings(EntityID entityID)
 {
     auto it = m_actorToWindow.find(entityID);
     if (it != m_actorToWindow.end())
     {
         WindowID windowId = it->second;
-        RemoveActorFromWindow(windowId, entityID);
+        RemoveEntityFromWindow(windowId, entityID);
     }
 }
 
-HWND WindowSubsystem::CreateOSWindow(std::wstring const& title,
-                                     int                 x,
-                                     int                 y,
-                                     int                 width,
-                                     int                 height)
+HWND WindowSubsystem::CreateOSWindow(String const& title,
+                                     int const     x,
+                                     int const     y,
+                                     int const     width,
+                                     int const     height)
 {
+    // 轉換名稱為寬字符
+    std::wstring wTitle;
+    wTitle.resize(title.size());
+    MultiByteToWideChar(CP_UTF8, 0, title.c_str(), static_cast<int>(title.size()), wTitle.data(), static_cast<int>(wTitle.size()));
+
     // 註冊視窗類別（只需要註冊一次）
     static bool classRegistered = false;
     if (!classRegistered)
@@ -516,7 +456,7 @@ HWND WindowSubsystem::CreateOSWindow(std::wstring const& title,
         WNDCLASS wc      = {};
         wc.lpfnWndProc   = (WNDPROC)GetWindowLongPtr((HWND)Window::s_mainWindow->GetWindowHandle(), GWLP_WNDPROC);
         wc.hInstance     = GetModuleHandle(nullptr);
-        wc.lpszClassName = L"GameWindow";
+        wc.lpszClassName = L"ChildWindow";
         wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
         wc.hCursor       = LoadCursor(nullptr, IDC_ARROW);
 
@@ -534,8 +474,8 @@ HWND WindowSubsystem::CreateOSWindow(std::wstring const& title,
     // 創建 Windows 視窗
     HWND hwnd = CreateWindowEx(
         0,
-        L"GameWindow",
-        title.c_str(),
+        L"ChildWindow",
+        wTitle.c_str(),
         WS_OVERLAPPEDWINDOW,
         x, y, adjustedWidth, adjustedHeight,
         nullptr,
@@ -568,12 +508,9 @@ void WindowSubsystem::SetupTransparentMainWindow()
                  SWP_SHOWWINDOW);
 }
 
-std::string WindowSubsystem::GenerateDefaultWindowName(const std::vector<EntityID>& owners)
+String WindowSubsystem::GenerateDefaultWindowName(std::vector<EntityID> const& owners) const
 {
-    if (owners.empty())
-    {
-        return "Empty Window";
-    }
+    if (owners.empty()) return Stringf("Empty Window");
 
     if (owners.size() == 1)
     {
@@ -681,7 +618,7 @@ void WindowSubsystem::AnimateWindowPositionAndDimensions(WindowID id, Vec2 const
     animData.m_startWindowDimensions  = window->GetWindowDimensions();
     animData.m_targetWindowDimensions = targetDimensions;
     animData.m_animationDuration      = duration;
-    animData.m_animationTimer         = 0.0f;
+    animData.m_animationTimer         = 0.f;
     animData.m_isAnimatingSize        = true;
     animData.m_isAnimatingPosition    = true;
 }

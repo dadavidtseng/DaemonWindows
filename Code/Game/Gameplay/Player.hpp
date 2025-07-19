@@ -23,6 +23,10 @@ public:
     void     BounceOfWindow();
     void     ShrinkWindow();
 
+private:
+    void IncreaseCoin(int amount);
+    void DecreaseCoin(int amount);
+
     Timer                         m_bulletFireTimer;
     std::shared_ptr<ButtonWidget> m_coinWidget;
     std::shared_ptr<ButtonWidget> m_healthWidget;

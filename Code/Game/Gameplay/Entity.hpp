@@ -14,7 +14,7 @@ class Entity
 public:
     explicit Entity(Vec2 const& position, float orientationDegrees, Rgba8 const& color);
     virtual  ~Entity();
-    EntityID  m_actorID            = 0;
+    EntityID m_entityID           = 0;
     WindowID m_windowID           = 0;
     String   m_name               = "DEFAULT";
     Vec2     m_position           = Vec2::ZERO;
@@ -38,6 +38,7 @@ public:
 
     void IncreaseHealth(int amount);
     void DecreaseHealth(int amount);
+
 
 protected:
     float m_speed     = 100.f;

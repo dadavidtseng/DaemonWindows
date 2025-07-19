@@ -12,6 +12,7 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Input/InputSystem.hpp"
+#include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Math/Triangle2.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
@@ -33,8 +34,11 @@ Game::Game()
     m_screenCamera->SetNormalizedViewport(AABB2::ZERO_TO_ONE);
 
     m_gameClock = new Clock(Clock::GetSystemClock());
+
     m_entities.push_back(new Player(0, Window::s_mainWindow->GetScreenDimensions() * 0.5f, 0.f, Rgba8::YELLOW));
-    m_entities.push_back(new Triangle(1, Window::s_mainWindow->GetScreenDimensions() * 0.5f, 0.f, Rgba8::BLUE));
+    m_entities.push_back(new Triangle(1, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y)), 0.f, Rgba8::BLUE));
+    m_entities.push_back(new Triangle(2, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y)), 0.f, Rgba8::BLUE));
+    m_entities.push_back(new Triangle(3, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y)), 0.f, Rgba8::BLUE));
 
     // auto test1 = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, "test1", 0, 0, 300, 300, Rgba8::BLUE);
     // g_theWidgetSubsystem->AddWidget(test1, 100);
@@ -140,35 +144,35 @@ void Game::UpdateFromInput()
     {
         if (g_theInput->IsKeyDown(KEYCODE_I))
         {
-            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowByActor(0), Vec2(0, 10));
+            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowIDByEntityID(0), Vec2(0, 10));
         }
         if (g_theInput->IsKeyDown(KEYCODE_K))
         {
-            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowByActor(0), Vec2(0, -10));
+            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowIDByEntityID(0), Vec2(0, -10));
         }
         if (g_theInput->IsKeyDown(KEYCODE_J))
         {
-            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowByActor(0), Vec2(-10, 0));
+            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowIDByEntityID(0), Vec2(-10, 0));
         }
         if (g_theInput->IsKeyDown(KEYCODE_L))
         {
-            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowByActor(0), Vec2(10, 0));
+            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowIDByEntityID(0), Vec2(10, 0));
         }
         if (g_theInput->IsKeyDown(KEYCODE_UPARROW))
         {
-            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowByActor(1), Vec2(0, 10));
+            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowIDByEntityID(1), Vec2(0, 10));
         }
         if (g_theInput->IsKeyDown(KEYCODE_DOWNARROW))
         {
-            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowByActor(1), Vec2(0, -10));
+            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowIDByEntityID(1), Vec2(0, -10));
         }
         if (g_theInput->IsKeyDown(KEYCODE_LEFTARROW))
         {
-            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowByActor(1), Vec2(-10, 0));
+            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowIDByEntityID(1), Vec2(-10, 0));
         }
         if (g_theInput->IsKeyDown(KEYCODE_RIGHTARROW))
         {
-            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowByActor(1), Vec2(10, 0));
+            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowIDByEntityID(1), Vec2(10, 0));
         }
 
         if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
@@ -181,7 +185,7 @@ void Game::UpdateFromInput()
             ChangeGameState(eGameState::GAME);
             SoundID const clickSound = g_theAudio->CreateOrGetSound("Data/Audio/TestSound.mp3", eAudioSystemSoundDimension::Sound2D);
             g_theAudio->StartSound(clickSound, false, 1.f, 0.f, 0.5f);
-            g_theWindowSubsystem->CreateChildWindow(EntityID(1), "HELLO");
+            // g_theWindowSubsystem->CreateChildWindow(EntityID(1), "HELLO");
         }
     }
     else if (m_gameState == eGameState::GAME)

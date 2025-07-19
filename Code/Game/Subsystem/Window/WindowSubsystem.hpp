@@ -39,8 +39,8 @@ struct WindowData
 
     WindowData() = default;
 
-    WindowData(std::unique_ptr<Window> win, std::unordered_set<EntityID> const& ownerSet, String windowName)
-        : m_window(std::move(win)), owners(ownerSet), m_name(std::move(windowName))
+    WindowData(std::unique_ptr<Window> window, std::unordered_set<EntityID> const& ownerSet, String windowName)
+        : m_window(std::move(window)), owners(ownerSet), m_name(std::move(windowName))
     {
     }
 };
@@ -57,18 +57,17 @@ public:
     void ShutDown();
 
     // 核心視窗管理功能
-    WindowID CreateChildWindow(std::vector<EntityID> const& owners, String const& name = "");
-    WindowID CreateChildWindow(EntityID owner, String const& name = "");
-    bool     AddActorToWindow(WindowID windowID, EntityID entityID);
-    bool     RemoveActorFromWindow(WindowID windowID, EntityID entityID);
-    void     RemoveActorFromMappings(EntityID entityID);
+    WindowID CreateChildWindow(EntityID owner, String const& windowTitle, int x, int y, int width, int height);
+    bool     AddEntityToWindow(WindowID windowID, EntityID entityID);
+    bool     RemoveEntityFromWindow(WindowID windowID, EntityID entityID);
+    void     RemoveEntityFromMappings(EntityID entityID);
     void     DestroyWindow(WindowID windowID);
     void     DestroyAllWindows();
 
     // 查詢功能
     Window*               GetWindow(WindowID windowID);
     WindowData*           GetWindowData(WindowID windowID);
-    WindowID              FindWindowByActor(EntityID entityID);
+    WindowID              FindWindowIDByEntityID(EntityID entityID);
     std::vector<EntityID> GetWindowOwners(WindowID windowID);
     std::vector<WindowID> GetActorWindows(EntityID entityID);
     std::vector<WindowID> GetAllWindowIDs();
@@ -83,8 +82,6 @@ public:
     void   SetWindowName(WindowID windowId, String const& name);
     String GetWindowName(WindowID windowId);
 
-    // 批量操作
-    void   CreateMultipleWindows(std::vector<std::vector<EntityID>> const& ownerGroups);
     size_t GetWindowCount() const;
     size_t GetActiveWindowCount() const;
 
@@ -100,13 +97,10 @@ private:
     std::unordered_map<WindowID, WindowAnimationData> m_windowAnimations;
     WindowID                                          m_nextWindowID = 1; // 從1開始，0保留為無效ID
 
-    // 內部輔助函數
-    WindowID CreateWindowInternal(std::vector<EntityID> const& owners, String const& name, int x, int y, int width, int height);
+    HWND   CreateOSWindow(String const& title, int x, int y, int width, int height);
+    void   SetupTransparentMainWindow();
+    String GenerateDefaultWindowName(std::vector<EntityID> const& owners) const;
 
-    HWND        CreateOSWindow(std::wstring const& title, int x, int y, int width, int height);
-    void        SetupTransparentMainWindow();
-    std::string GenerateDefaultWindowName(std::vector<EntityID> const& owners);
-    // 私有方法：動畫更新
-    void                    UpdateWindowAnimations(float deltaSeconds);
-    void                    UpdateSingleWindowAnimation(WindowID id, WindowAnimationData& animData, float deltaSeconds);
+    void UpdateWindowAnimations(float deltaSeconds);
+    void UpdateSingleWindowAnimation(WindowID id, WindowAnimationData& animData, float deltaSeconds);
 };
