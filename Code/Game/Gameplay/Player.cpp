@@ -19,11 +19,12 @@ Player::Player(EntityID const actorID, Vec2 const& position, float const orienta
       m_bulletFireTimer(0.5f)
 {
     m_entityID       = actorID;
+    m_health         = 10;
     m_physicRadius   = 30.f;
     m_thickness      = 10.f;
     m_cosmeticRadius = m_physicRadius + m_thickness;
 
-    g_theWindowSubsystem->CreateChildWindow(m_entityID, "You", 100,100,300,300);
+    g_theWindowSubsystem->CreateChildWindow(m_entityID, "You", 100, 100, 300, 300);
 
     Window* window                = g_theWindowSubsystem->GetWindow(g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID));
     Vec2    windowClientPosition  = window->GetClientPosition();

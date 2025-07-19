@@ -67,8 +67,8 @@ void WindowSubsystem::Render()
 
         if (windowData.m_window->m_shouldUpdatePosition)
         {
-            // g_theRenderer->RenderViewportToWindow(*windowData.m_window);
-            g_theRenderer->RenderViewportToWindowDX11(*windowData.m_window);
+            g_theRenderer->RenderViewportToWindow(*windowData.m_window);
+            // g_theRenderer->RenderViewportToWindowDX11(*windowData.m_window);
         }
     }
 }

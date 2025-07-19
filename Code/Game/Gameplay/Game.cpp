@@ -5,8 +5,6 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Game.hpp"
 
-#include "Bullet.hpp"
-#include "Triangle.hpp"
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/EngineCommon.hpp"
@@ -18,8 +16,12 @@
 #include "Engine/Renderer/Renderer.hpp"
 #include "Game/Framework/App.hpp"
 #include "Game/Framework/GameCommon.hpp"
+#include "Game/Gameplay/Bullet.hpp"
+#include "Game/Gameplay/Coin.hpp"
+#include "Game/Gameplay/Debris.hpp"
 #include "Game/Gameplay/Player.hpp"
-#include "Game/Subsystem/Widget/ButtonWidget.hpp"
+#include "Game/Gameplay/Shop.hpp"
+#include "Game/Gameplay/Triangle.hpp"
 #include "Game/Subsystem/Widget/WidgetSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
@@ -36,9 +38,11 @@ Game::Game()
     m_gameClock = new Clock(Clock::GetSystemClock());
 
     m_entities.push_back(new Player(0, Window::s_mainWindow->GetScreenDimensions() * 0.5f, 0.f, Rgba8::YELLOW));
-    m_entities.push_back(new Triangle(1, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y)), 0.f, Rgba8::BLUE));
-    m_entities.push_back(new Triangle(2, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y)), 0.f, Rgba8::BLUE));
-    m_entities.push_back(new Triangle(3, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y)), 0.f, Rgba8::BLUE));
+    m_entities.push_back(new Triangle(1, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x*0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y*0.5f)), 0.f, Rgba8::BLUE));
+    m_entities.push_back(new Triangle(2, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x*0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y*0.5f)), 0.f, Rgba8::BLUE));
+    m_entities.push_back(new Triangle(3, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x*0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y*0.5f)), 0.f, Rgba8::BLUE));
+    m_entities.push_back(new Coin(4, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x*0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y*0.5f)), 0.f, Rgba8::RED));
+    m_entities.push_back(new Debris(5, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x*0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y*0.5f)), 0.f, Rgba8::GREEN));
 
     // auto test1 = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, "test1", 0, 0, 300, 300, Rgba8::BLUE);
     // g_theWidgetSubsystem->AddWidget(test1, 100);
@@ -182,10 +186,11 @@ void Game::UpdateFromInput()
 
         if (g_theInput->WasKeyJustPressed(KEYCODE_SPACE))
         {
-            ChangeGameState(eGameState::GAME);
-            SoundID const clickSound = g_theAudio->CreateOrGetSound("Data/Audio/TestSound.mp3", eAudioSystemSoundDimension::Sound2D);
-            g_theAudio->StartSound(clickSound, false, 1.f, 0.f, 0.5f);
+            // ChangeGameState(eGameState::GAME);
+            // SoundID const clickSound = g_theAudio->CreateOrGetSound("Data/Audio/TestSound.mp3", eAudioSystemSoundDimension::Sound2D);
+            // g_theAudio->StartSound(clickSound, false, 1.f, 0.f, 0.5f);
             // g_theWindowSubsystem->CreateChildWindow(EntityID(1), "HELLO");
+            m_entities.push_back(new Shop(6, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x*0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y*0.5f)), 0.f, Rgba8::BLACK));
         }
     }
     else if (m_gameState == eGameState::GAME)

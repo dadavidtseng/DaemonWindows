@@ -20,7 +20,7 @@ public:
     Vec2     m_position           = Vec2::ZERO;
     Vec2     m_velocity           = Vec2::ZERO;
     Rgba8    m_color              = Rgba8::WHITE;
-    int      m_health             = 3;
+    int      m_health             = 0;
     float    m_orientationDegrees = 0.f;
     float    m_physicRadius       = 0.f;
     float    m_cosmeticRadius     = 0.f;
@@ -38,7 +38,6 @@ public:
 
     void IncreaseHealth(int amount);
     void DecreaseHealth(int amount);
-
 
 protected:
     float m_speed     = 100.f;

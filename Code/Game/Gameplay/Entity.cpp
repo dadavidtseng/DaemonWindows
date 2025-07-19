@@ -53,4 +53,3 @@ void Entity::DecreaseHealth(int const amount)
 {
     m_health -= amount;
 }
-

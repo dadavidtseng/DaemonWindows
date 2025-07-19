@@ -5,16 +5,17 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Triangle.hpp"
 
-#include "Game.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
+#include "Game/Gameplay/Game.hpp"
 #include "Game/Subsystem/Widget/ButtonWidget.hpp"
 #include "Game/Subsystem/Widget/WidgetSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
-Triangle::Triangle(EntityID const actorID, Vec2 const& position, float const orientationDegrees, Rgba8 const& color)
+Triangle::Triangle(EntityID const entityID, Vec2 const& position, float const orientationDegrees, Rgba8 const& color)
     : Entity(position, orientationDegrees, color)
 {
-    m_entityID       = actorID;
+    m_entityID       = entityID;
+    m_health         = g_theRNG->RollRandomIntInRange(1,5);
     m_name           = "Triangle";
     m_physicRadius   = 30.f;
     m_thickness      = 10.f;
@@ -81,7 +82,7 @@ void Triangle::Update(float const deltaSeconds)
     // BounceOfWindow();
 
     // 然後用限制後的位置來設定視窗位置
-    windowData->m_window->SetClientPosition(m_position-windowData->m_window->GetClientDimensions()*0.5f);
+    windowData->m_window->SetClientPosition(m_position - windowData->m_window->GetClientDimensions() * 0.5f);
 }
 
 void Triangle::Render() const

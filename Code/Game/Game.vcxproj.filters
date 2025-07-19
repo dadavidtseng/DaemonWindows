@@ -64,6 +64,15 @@
     <ClCompile Include="Subsystem\Widget\ButtonWidget.cpp">
       <Filter>Subsystem\Widget</Filter>
     </ClCompile>
+    <ClCompile Include="Gameplay\Coin.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="Gameplay\Debris.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="Gameplay\Shop.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineBuildPreferences.hpp">
@@ -107,6 +116,15 @@
     </ClInclude>
     <ClInclude Include="Subsystem\Widget\ButtonWidget.hpp">
       <Filter>Subsystem\Widget</Filter>
+    </ClInclude>
+    <ClInclude Include="Gameplay\Coin.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="Gameplay\Debris.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="Gameplay\Shop.hpp">
+      <Filter>Gameplay</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
