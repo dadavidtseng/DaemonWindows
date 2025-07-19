@@ -479,7 +479,6 @@ HWND WindowSubsystem::CreateOSWindow(String const& title,
     int adjustedWidth  = rect.right - rect.left;
     int adjustedHeight = rect.bottom - rect.top;
 
-    // 創建 Windows 視窗
     HWND hwnd = CreateWindowEx(
         0,
         L"ChildWindow",
