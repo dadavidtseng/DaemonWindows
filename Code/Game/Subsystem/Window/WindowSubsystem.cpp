@@ -12,18 +12,15 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "Game/Gameplay/Game.hpp"
 
+//----------------------------------------------------------------------------------------------------
+WindowSubsystem::WindowSubsystem(sWindowSubsystemConfig const& config)
+    : m_config(config)
+{
+}
+
 void WindowSubsystem::StartUp()
 {
-
-    // 創建一些測試視窗
-    // std::vector<std::vector<ActorID>> ownerGroups = {
-    //     {0},        // 視窗1: Actor 0
-    //     {1, 2},     // 視窗2: Actor 1和2共享
-    //     {3},        // 視窗3: Actor 3
-    //     {4, 5},     // 視窗4: Actor 4和5共享
-    // };
-    //
-    // CreateMultipleWindows(ownerGroups);
+    // potentially create some default windows.
 }
 
 void WindowSubsystem::BeginFrame()
@@ -32,14 +29,15 @@ void WindowSubsystem::BeginFrame()
 
 void WindowSubsystem::Update()
 {
-    float deltaSeconds = (float)Clock::GetSystemClock().GetDeltaSeconds();
-    // 更新慣性移動
+    if (g_theGame->GetCurrentGameState() == eGameState::SHOP || g_theGame->GetCurrentGameState() == eGameState::ATTRACT) return;
+    float const deltaSeconds = static_cast<float>(g_theGame->GetGameClock()->GetDeltaSeconds());
+
     UpdateWindowAnimations(deltaSeconds);
-    // UpdateWindowInertia(deltaSeconds);    // 更新動畫
+
 
     for (auto& [windowId, windowData] : m_windowList)
     {
-        if (!windowData.isActive || !windowData.m_window) continue;
+        if (!windowData.m_isActive || !windowData.m_window) continue;
 
         windowData.m_window->UpdatePosition();
         windowData.m_window->UpdateDimension();
@@ -63,7 +61,7 @@ void WindowSubsystem::Render()
 
     for (auto& [windowId, windowData] : m_windowList)
     {
-        if (!windowData.isActive || !windowData.m_window) continue;
+        if (!windowData.m_isActive || !windowData.m_window) continue;
 
         if (windowData.m_window->m_shouldUpdatePosition)
         {
@@ -121,7 +119,11 @@ WindowID WindowSubsystem::CreateChildWindow(EntityID const owner,
 
     // 創建 WindowData 並添加到容器
     std::unordered_set const ownerSet = {owner};
-    m_windowList.emplace(newId, WindowData(std::move(newWindow), ownerSet, windowTitle));
+    WindowData               windowData;
+    windowData.m_window = std::move(newWindow);
+    windowData.m_owners = ownerSet;
+    windowData.m_name   = windowTitle;
+    m_windowList.emplace(newId, std::move(windowData));
 
     // 建立actor到視窗的映射
     m_actorToWindow[owner] = newId;
@@ -166,7 +168,7 @@ bool WindowSubsystem::AddEntityToWindow(WindowID windowID, EntityID entityID)
     }
 
     // 添加映射關係
-    windowIt->second.owners.insert(entityID);
+    windowIt->second.m_owners.insert(entityID);
     m_actorToWindow[entityID] = windowID;
 
     DebuggerPrintf("AddActorToWindow: Added Actor %d to Window %d.\n", entityID, windowID);
@@ -184,7 +186,7 @@ bool WindowSubsystem::RemoveEntityFromWindow(WindowID windowID, EntityID entityI
     }
 
     // 檢查actor是否在該視窗中
-    auto& owners  = windowIt->second.owners;
+    auto& owners  = windowIt->second.m_owners;
     auto  actorIt = owners.find(entityID);
     if (actorIt == owners.end())
     {
@@ -220,7 +222,7 @@ void WindowSubsystem::DestroyWindow(WindowID windowID)
     }
 
     // 移除所有相關的actor映射
-    for (EntityID actorId : windowIt->second.owners)
+    for (EntityID actorId : windowIt->second.m_owners)
     {
         m_actorToWindow.erase(actorId);
     }
@@ -281,7 +283,7 @@ std::vector<EntityID> WindowSubsystem::GetWindowOwners(WindowID const windowID)
     auto                  it = m_windowList.find(windowID);
     if (it != m_windowList.end())
     {
-        for (EntityID actorId : it->second.owners)
+        for (EntityID actorId : it->second.m_owners)
         {
             result.push_back(actorId);
         }
@@ -315,7 +317,7 @@ bool WindowSubsystem::IsActorInWindow(WindowID const windowID, EntityID const en
     auto it = m_windowList.find(windowID);
     if (it != m_windowList.end())
     {
-        return it->second.owners.find(entityID) != it->second.owners.end();
+        return it->second.m_owners.find(entityID) != it->second.m_owners.end();
     }
     return false;
 }
@@ -379,7 +381,7 @@ void WindowSubsystem::SetWindowActive(WindowID windowID, bool active)
     auto it = m_windowList.find(windowID);
     if (it != m_windowList.end())
     {
-        it->second.isActive = active;
+        it->second.m_isActive = active;
         DebuggerPrintf("SetWindowActive: Window %d set to %s.\n", windowID, active ? "active" : "inactive");
     }
     else
@@ -413,7 +415,7 @@ size_t WindowSubsystem::GetActiveWindowCount() const
     size_t count = 0;
     for (const auto& [windowId, windowData] : m_windowList)
     {
-        if (windowData.isActive)
+        if (windowData.m_isActive)
         {
             count++;
         }
@@ -459,7 +461,13 @@ HWND WindowSubsystem::CreateOSWindow(String const& title,
         wc.lpszClassName = L"ChildWindow";
         wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
         wc.hCursor       = LoadCursor(nullptr, IDC_ARROW);
-
+        wc.hIcon         = (HICON)LoadImage(
+            NULL,
+            m_config.m_iconFilePath,
+            IMAGE_ICON,
+            32, 32,
+            LR_LOADFROMFILE
+        );
         RegisterClass(&wc);
         classRegistered = true;
     }
@@ -476,7 +484,7 @@ HWND WindowSubsystem::CreateOSWindow(String const& title,
         0,
         L"ChildWindow",
         wTitle.c_str(),
-        WS_OVERLAPPEDWINDOW,
+        WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
         x, y, adjustedWidth, adjustedHeight,
         nullptr,
         nullptr,

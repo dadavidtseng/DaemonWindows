@@ -24,7 +24,7 @@ Shop::Shop(EntityID const entityID, Vec2 const& position, float const orientatio
     Vec2    windowClientPosition  = window->GetClientPosition();
     Vec2    windowClientDimension = window->GetClientDimensions();
 
-    m_testWidget = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("TEST=%d", m_health), windowClientPosition.x, windowClientPosition.y, windowClientDimension.x, windowClientDimension.y, m_color);
+    m_testWidget = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("TEST=%d", m_health), (int)windowClientPosition.x, (int)windowClientPosition.y, (int)windowClientDimension.x, (int)windowClientDimension.y, m_color);
     g_theWidgetSubsystem->AddWidget(m_testWidget, 200);
 }
 

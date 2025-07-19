@@ -18,13 +18,15 @@ Player::Player(EntityID const actorID, Vec2 const& position, float const orienta
     : Entity(position, orientationDegrees, color),
       m_bulletFireTimer(0.5f)
 {
+    g_theEventSystem->SubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
     m_entityID       = actorID;
     m_health         = 10;
     m_physicRadius   = 30.f;
     m_thickness      = 10.f;
     m_cosmeticRadius = m_physicRadius + m_thickness;
+    m_name           = "You";
 
-    g_theWindowSubsystem->CreateChildWindow(m_entityID, "You", 100, 100, 300, 300);
+    g_theWindowSubsystem->CreateChildWindow(m_entityID, m_name, 100, 100, (int)(1445 * 0.6f), (int)(248));
 
     Window* window                = g_theWindowSubsystem->GetWindow(g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID));
     Vec2    windowClientPosition  = window->GetClientPosition();
@@ -35,6 +37,14 @@ Player::Player(EntityID const actorID, Vec2 const& position, float const orienta
 
     g_theWidgetSubsystem->AddWidget(m_coinWidget, 100);
     g_theWidgetSubsystem->AddWidget(m_healthWidget, 200);
+    m_coinWidget->SetVisible(false);
+    m_healthWidget->SetVisible(false);
+}
+
+Player::~Player()
+{
+    Entity::~Entity();
+    g_theEventSystem->UnsubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
 }
 
 void Player::UpdateWindowFocus()
@@ -59,8 +69,12 @@ void Player::Update(float const deltaSeconds)
 {
     Entity::Update(deltaSeconds);
     UpdateFromInput();
-    BounceOfWindow();
-    ShrinkWindow();
+    if (g_theGame->GetCurrentGameState() == eGameState::GAME)
+    {
+
+        BounceOfWindow();
+        ShrinkWindow();
+    }
     // UpdateWindowFocus();
     WindowID    windowID   = g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID);
     WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
@@ -76,6 +90,11 @@ void Player::Update(float const deltaSeconds)
     m_coinWidget->SetDimensions(windowData->m_window->GetClientDimensions());
     m_healthWidget->SetPosition(windowData->m_window->GetClientPosition() + Vec2(0, 20));
     m_healthWidget->SetDimensions(windowData->m_window->GetClientDimensions());
+
+    if (g_theGame->GetCurrentGameState() == eGameState::ATTRACT)
+    {
+        windowData->m_window->SetClientPosition(m_position - windowData->m_window->GetClientDimensions() * 0.5f);
+    }
 }
 
 void Player::Render() const
@@ -197,6 +216,23 @@ void Player::ShrinkWindow()
     }
 }
 
+bool Player::OnGameStateChanged(EventArgs& args)
+{
+    String const newGameState = args.GetValue("OnGameStateChanged", "DEFAULT");
+
+    if (newGameState == "ATTRACT")
+    {
+        g_theGame->GetPlayer()->m_coinWidget->SetVisible(false);
+        g_theGame->GetPlayer()->m_healthWidget->SetVisible(false);
+    }
+    if (newGameState == "GAME")
+    {
+        g_theGame->GetPlayer()->m_coinWidget->SetVisible(true);
+        g_theGame->GetPlayer()->m_healthWidget->SetVisible(true);
+    }
+
+    return false;
+}
 
 void Player::IncreaseCoin(int const amount)
 {

@@ -5,16 +5,16 @@
 //----------------------------------------------------------------------------------------------------
 #pragma once
 
-
 #include "Game/Subsystem/Window/WindowSubsystem.hpp"
 
+//-Forward-Declaration--------------------------------------------------------------------------------
 class ButtonWidget;
 
 //----------------------------------------------------------------------------------------------------
 class Triangle : public Entity
 {
 public:
-    explicit                  Triangle(EntityID entityID, Vec2 const& position, float orientationDegrees, Rgba8 const& color);
+    explicit Triangle(EntityID entityID, Vec2 const& position, float orientationDegrees, Rgba8 const& color);
     ~Triangle() override;
     void UpdateWindowFocus();
     void Update(float deltaSeconds) override;

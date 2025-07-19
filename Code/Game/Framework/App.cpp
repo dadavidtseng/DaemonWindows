@@ -64,7 +64,7 @@ void App::Startup()
     windowConfig.m_inputSystem            = g_theInput;
     windowConfig.m_windowTitle            = "WindowKills";
     windowConfig.m_iconFilePath           = L"C:/p4/Personal/SD/WindowKills/Run/Data/Images/windowIcon.ico";
-    windowConfig.m_supportMultipleWindows = true;
+    // windowConfig.m_supportMultipleWindows = true;
     g_theWindow                           = new Window(windowConfig);
 
     //-End-of-Window----------------------------------------------------------------------------------
@@ -116,11 +116,14 @@ void App::Startup()
     //------------------------------------------------------------------------------------------------
     //-Start-of-WindowSubsystem-----------------------------------------------------------------------
 
-    g_theWindowSubsystem = new WindowSubsystem();
+    sWindowSubsystemConfig  windowSubsystemConfig;
+    windowSubsystemConfig.m_iconFilePath           = L"C:/p4/Personal/SD/WindowKills/Run/Data/Images/windowIcon.ico";
+    g_theWindowSubsystem = new WindowSubsystem(windowSubsystemConfig);
 
     //-End-of-WindowSubsystem-------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
     //-Start-of-WindowSubsystem-----------------------------------------------------------------------
+
     sWidgetSubsystemConfig constexpr widgetConfig;
     g_theWidgetSubsystem = new WidgetSubsystem(widgetConfig);
 

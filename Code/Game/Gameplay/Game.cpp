@@ -8,10 +8,12 @@
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Math/Triangle2.hpp"
+#include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Game/Framework/App.hpp"
@@ -27,6 +29,8 @@
 //----------------------------------------------------------------------------------------------------
 Game::Game()
 {
+    g_theEventSystem->SubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
+
     m_screenCamera = new Camera();
 
     Vec2 const bottomLeft     = Vec2::ZERO;
@@ -36,31 +40,24 @@ Game::Game()
     m_screenCamera->SetNormalizedViewport(AABB2::ZERO_TO_ONE);
 
     m_gameClock = new Clock(Clock::GetSystemClock());
+    m_gameTimer = new Timer(60.f, m_gameClock);
 
     m_entities.push_back(new Player(0, Window::s_mainWindow->GetScreenDimensions() * 0.5f, 0.f, Rgba8::YELLOW));
-    m_entities.push_back(new Triangle(1, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x*0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y*0.5f)), 0.f, Rgba8::BLUE));
-    m_entities.push_back(new Triangle(2, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x*0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y*0.5f)), 0.f, Rgba8::BLUE));
-    m_entities.push_back(new Triangle(3, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x*0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y*0.5f)), 0.f, Rgba8::BLUE));
-    m_entities.push_back(new Coin(4, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x*0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y*0.5f)), 0.f, Rgba8::RED));
-    m_entities.push_back(new Debris(5, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x*0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y*0.5f)), 0.f, Rgba8::GREEN));
 
-    // auto test1 = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, "test1", 0, 0, 300, 300, Rgba8::BLUE);
-    // g_theWidgetSubsystem->AddWidget(test1, 100);
-    // auto test2 = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, "test2", 300, 200, 500, 500, Rgba8::WHITE);
-    // g_theWidgetSubsystem->AddWidget(test2, 10);
-
-    // g_theWindowSubsystem->CreateChildWindow(-1, "Background Window");
+    m_titlePosition = Vec2(300, 300);
+    // g_theWindowSubsystem->CreateChildWindow(-1, "WindowKills", (int)m_titlePosition.x, (int)m_titlePosition.y, (int)(1445 * 0.5f), (int)(248 ));
 }
 
 Game::~Game()
 {
+    g_theEventSystem->UnsubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
     GAME_SAFE_RELEASE(m_screenCamera);
 }
 
 //----------------------------------------------------------------------------------------------------
 void Game::Update()
 {
-    float gameDeltaSeconds = (float)m_gameClock->GetDeltaSeconds();
+    float const gameDeltaSeconds = static_cast<float>(m_gameClock->GetDeltaSeconds());
 
     UpdateFromInput();
     AdjustForPauseAndTimeDistortion();
@@ -83,6 +80,7 @@ void Game::Update()
             }
         }
     }
+
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -114,12 +112,12 @@ bool Game::OnGameStateChanged(EventArgs& args)
 {
     String const newGameState = args.GetValue("OnGameStateChanged", "DEFAULT");
 
-    if (newGameState == "ATTRACT")
+    if (newGameState == "GAME")
     {
-        App::RequestQuit();
+        g_theGame->SpawnEntity();
     }
 
-    return true;
+    return false;
 }
 
 eGameState Game::GetCurrentGameState() const
@@ -135,10 +133,24 @@ void Game::ChangeGameState(eGameState const newGameState)
 
     if (newGameState == eGameState::ATTRACT) args.SetValue("OnGameStateChanged", "ATTRACT");
     else if (newGameState == eGameState::GAME) args.SetValue("OnGameStateChanged", "GAME");
+    else if (newGameState == eGameState::SHOP) args.SetValue("OnGameStateChanged", "SHOP");
 
     m_gameState = newGameState;
 
     g_theEventSystem->FireEvent("OnGameStateChanged", args);
+}
+
+Clock* Game::GetGameClock() const
+{
+    if (m_gameClock != nullptr) return m_gameClock;
+    return nullptr;
+}
+
+Player* Game::GetPlayer() const
+{
+    Player* player = (Player*)m_entities[0];
+    if (player != nullptr) return player;
+    return nullptr;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -186,11 +198,11 @@ void Game::UpdateFromInput()
 
         if (g_theInput->WasKeyJustPressed(KEYCODE_SPACE))
         {
-            // ChangeGameState(eGameState::GAME);
-            // SoundID const clickSound = g_theAudio->CreateOrGetSound("Data/Audio/TestSound.mp3", eAudioSystemSoundDimension::Sound2D);
-            // g_theAudio->StartSound(clickSound, false, 1.f, 0.f, 0.5f);
+            ChangeGameState(eGameState::GAME);
+            SoundID const clickSound = g_theAudio->CreateOrGetSound("Data/Audio/TestSound.mp3", eAudioSystemSoundDimension::Sound2D);
+            g_theAudio->StartSound(clickSound, false, 1.f, 0.f, 0.5f);
             // g_theWindowSubsystem->CreateChildWindow(EntityID(1), "HELLO");
-            m_entities.push_back(new Shop(6, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x*0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y*0.5f)), 0.f, Rgba8::BLACK));
+            // m_entities.push_back(new Shop(6, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::BLACK));
         }
     }
     else if (m_gameState == eGameState::GAME)
@@ -198,6 +210,20 @@ void Game::UpdateFromInput()
         if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
         {
             ChangeGameState(eGameState::ATTRACT);
+            SoundID const clickSound = g_theAudio->CreateOrGetSound("Data/Audio/TestSound.mp3", eAudioSystemSoundDimension::Sound2D);
+            g_theAudio->StartSound(clickSound);
+        }
+        if (g_theInput->WasKeyJustPressed(KEYCODE_SPACE))
+        {
+            ChangeGameState(eGameState::SHOP);
+            m_entities.push_back(new Shop(6, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::BLACK));
+        }
+    }
+    else if (m_gameState == eGameState::SHOP)
+    {
+        if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
+        {
+            ChangeGameState(eGameState::GAME);
             SoundID const clickSound = g_theAudio->CreateOrGetSound("Data/Audio/TestSound.mp3", eAudioSystemSoundDimension::Sound2D);
             g_theAudio->StartSound(clickSound);
         }
@@ -272,7 +298,7 @@ void Game::RenderAttractMode() const
     g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
     g_theRenderer->SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
     g_theRenderer->SetDepthMode(eDepthMode::DISABLED);
-    g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Images/goop.png"));
+    g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Images/serenity.png"));
     g_theRenderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
     g_theRenderer->DrawVertexArray(verts1);
 
@@ -290,23 +316,36 @@ void Game::RenderAttractMode() const
 
     for (Entity* entity : m_entities)
     {
-        if (entity && !entity->IsDead())
+        if (entity && !entity->IsDead() && entity->m_name == "You")
         {
             entity->Render();
         }
     }
 
     VertexList_PCU verts2;
-    // AddVertsForAABB2D(verts2, AABB2(Vec2(108,69),Vec2(108+384,69+261)));
-    // AddVertsForAABB2D(verts2, AABB2(Vec2(100,100),Vec2(100+400,100+300)));
+    Vec2           offset = Vec2((1445 * 0.5f), (248 * 0.5f));
+    AddVertsForAABB2D(verts2, AABB2(Vec2(m_entities[0]->m_position - offset * 0.5f), Vec2(m_entities[0]->m_position + offset * 0.5f)));
     g_theRenderer->SetModelConstants(Mat44{}, Rgba8(255, 255, 255, 100));
     g_theRenderer->SetBlendMode(eBlendMode::ALPHA);
     g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
     g_theRenderer->SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
     g_theRenderer->SetDepthMode(eDepthMode::DISABLED);
-    g_theRenderer->BindTexture(nullptr);
+    g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Images/title.png"));
     g_theRenderer->BindShader(nullptr);
     g_theRenderer->DrawVertexArray(verts2);
+
+    VertexList_PCU verts3;
+    Vec2           offset2 = Vec2(0, -80);
+    // AddVertsForAABB2D(verts2, AABB2(Vec2(m_entities[0]->m_position-offset*0.5f), Vec2(m_entities[0]->m_position + offset*0.5f)));
+    g_theBitmapFont->AddVertsForTextInBox2D(verts3, Stringf("Press Space to Start"), AABB2(Vec2(m_entities[0]->m_position - offset * 0.5f) + offset2, Vec2(m_entities[0]->m_position + offset * 0.5f) + offset2), 20.f, Rgba8::WHITE, 1.f, Vec2(0.5, 0.5f), OVERRUN);
+    // g_theRenderer->SetModelConstants(Mat44{}, Rgba8(255, 255, 255, 100));
+    g_theRenderer->SetBlendMode(eBlendMode::ALPHA);
+    g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
+    g_theRenderer->SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
+    g_theRenderer->SetDepthMode(eDepthMode::DISABLED);
+    g_theRenderer->BindTexture(&g_theBitmapFont->GetTexture());
+    g_theRenderer->BindShader(nullptr);
+    g_theRenderer->DrawVertexArray(verts3);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -319,9 +358,17 @@ void Game::RenderGame() const
     g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
     g_theRenderer->SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
     g_theRenderer->SetDepthMode(eDepthMode::DISABLED);
-    g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Images/serenity.png"));
+    g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Images/ripple.png"));
     g_theRenderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
     g_theRenderer->DrawVertexArray(verts1);
+
+    for (Entity* entity : m_entities)
+    {
+        if (entity && !entity->IsDead())
+        {
+            entity->Render();
+        }
+    }
 
     VertexList_PCU verts2;
     Vec2 const     screenBottomLeft  = m_screenCamera->GetOrthographicBottomLeft();
@@ -341,4 +388,13 @@ void Game::RenderGame() const
 
     DebugAddScreenText(Stringf("Time: %.2f\nFPS: %.2f\nScale: %.1f", m_gameClock->GetTotalSeconds(), 1.f / m_gameClock->GetDeltaSeconds(), m_gameClock->GetTimeScale()), m_screenCamera->GetOrthographicTopRight() - Vec2(200.f, 60.f), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
     DebugAddScreenText(Stringf("Time: %.2f\nFPS: %.2f\nScale: %.1f", m_gameClock->GetTotalSeconds(), 1.f / m_gameClock->GetDeltaSeconds(), m_gameClock->GetTimeScale()), m_screenCamera->GetOrthographicBottomLeft(), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
+}
+
+void Game::SpawnEntity()
+{
+    m_entities.push_back(new Triangle(1, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::BLUE));
+    m_entities.push_back(new Triangle(2, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::BLUE));
+    m_entities.push_back(new Triangle(3, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::BLUE));
+    m_entities.push_back(new Coin(4, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::RED));
+    m_entities.push_back(new Debris(5, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::GREEN));
 }

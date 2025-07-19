@@ -33,28 +33,27 @@ struct WindowAnimationData
 struct WindowData
 {
     std::unique_ptr<Window>      m_window;
-    std::unordered_set<EntityID> owners;
+    std::unordered_set<EntityID> m_owners;
     String                       m_name;
-    bool                         isActive = true;
+    bool                         m_isActive = true;
+};
 
-    WindowData() = default;
-
-    WindowData(std::unique_ptr<Window> window, std::unordered_set<EntityID> const& ownerSet, String windowName)
-        : m_window(std::move(window)), owners(ownerSet), m_name(std::move(windowName))
-    {
-    }
+struct sWindowSubsystemConfig
+{
+    wchar_t const* m_iconFilePath = nullptr;
 };
 
 //----------------------------------------------------------------------------------------------------
 class WindowSubsystem
 {
 public:
-    void StartUp();
-    void BeginFrame();
-    void Update();
-    void Render();
-    void EndFrame();
-    void ShutDown();
+    explicit WindowSubsystem(sWindowSubsystemConfig const& config);
+    void     StartUp();
+    void     BeginFrame();
+    void     Update();
+    void     Render();
+    void     EndFrame();
+    void     ShutDown();
 
     // 核心視窗管理功能
     WindowID CreateChildWindow(EntityID owner, String const& windowTitle, int x, int y, int width, int height);
@@ -92,6 +91,7 @@ public:
     bool IsWindowAnimating(WindowID id) const;
 
 private:
+    sWindowSubsystemConfig                            m_config;
     std::unordered_map<WindowID, WindowData>          m_windowList;// 主要資料結構：WindowID -> WindowData
     std::unordered_map<EntityID, WindowID>            m_actorToWindow;// 快速查找：ActorID -> WindowID (一個actor只能在一個視窗)
     std::unordered_map<WindowID, WindowAnimationData> m_windowAnimations;

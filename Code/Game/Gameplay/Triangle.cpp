@@ -27,7 +27,7 @@ Triangle::Triangle(EntityID const entityID, Vec2 const& position, float const or
     Vec2    windowClientPosition  = window->GetClientPosition();
     Vec2    windowClientDimension = window->GetClientDimensions();
 
-    m_healthWidget = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("Health=%d", m_health), windowClientPosition.x, windowClientPosition.y, windowClientDimension.x, windowClientDimension.y, m_color);
+    m_healthWidget = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("Health=%d", m_health), (int)windowClientPosition.x, (int)windowClientPosition.y, (int)windowClientDimension.x, (int)windowClientDimension.y, m_color);
     g_theWidgetSubsystem->AddWidget(m_healthWidget, 200);
 }
 
@@ -57,6 +57,7 @@ void Triangle::UpdateWindowFocus()
 
 void Triangle::Update(float const deltaSeconds)
 {
+    if (g_theGame->GetCurrentGameState()==eGameState::SHOP||g_theGame->GetCurrentGameState()==eGameState::ATTRACT)return;
     Entity::Update(deltaSeconds);
 
     WindowID    windowID   = g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID);
