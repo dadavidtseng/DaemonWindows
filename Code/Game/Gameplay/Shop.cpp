@@ -9,7 +9,7 @@
 #include "Game/Subsystem/Widget/WidgetSubsystem.hpp"
 
 Shop::Shop(EntityID const entityID, Vec2 const& position, float const orientationDegrees, Rgba8 const& color)
-: Entity(position, orientationDegrees, color)
+    : Entity(position, orientationDegrees, color)
 {
     m_entityID       = entityID;
     m_name           = "Shop";
@@ -28,7 +28,14 @@ Shop::Shop(EntityID const entityID, Vec2 const& position, float const orientatio
     g_theWidgetSubsystem->AddWidget(m_testWidget, 200);
 }
 
-void Shop::Update(float deltaSeconds)
+//----------------------------------------------------------------------------------------------------
+Shop::~Shop()
+{
+    g_theWindowSubsystem->RemoveEntityFromMappings(m_entityID);
+    m_testWidget->MarkForDestroy();
+}
+
+void Shop::Update(float const deltaSeconds)
 {
     Entity::Update(deltaSeconds);
     WindowID    windowID   = g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID);

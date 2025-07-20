@@ -20,6 +20,12 @@ Debris::Debris(EntityID const entityID, Vec2 const& position, float const orient
 }
 
 //----------------------------------------------------------------------------------------------------
+Debris::~Debris()
+{
+    g_theWindowSubsystem->RemoveEntityFromMappings(m_entityID);
+}
+
+//----------------------------------------------------------------------------------------------------
 void Debris::Update(float const deltaSeconds)
 {
     Entity::Update(deltaSeconds);

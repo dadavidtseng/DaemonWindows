@@ -80,7 +80,6 @@ void Game::Update()
             }
         }
     }
-
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -110,11 +109,24 @@ void Game::Render() const
 
 bool Game::OnGameStateChanged(EventArgs& args)
 {
-    String const newGameState = args.GetValue("OnGameStateChanged", "DEFAULT");
+    String const preGameState = args.GetValue("preGameState", "DEFAULT");
+    String const curGameState = args.GetValue("curGameState", "DEFAULT");
 
-    if (newGameState == "GAME")
+    if (preGameState == "ATTRACT" && curGameState == "GAME")
     {
         g_theGame->SpawnEntity();
+    }
+    else if (preGameState == "GAME" && curGameState == "ATTRACT")
+    {
+        g_theGame->DestroyEntity();
+    }
+    else if (preGameState == "GAME" && curGameState == "SHOP")
+    {
+        g_theGame->SpawnShop();
+    }
+    else if (preGameState == "SHOP" && curGameState == "GAME")
+    {
+        g_theGame->DestroyShop();
     }
 
     return false;
@@ -131,9 +143,27 @@ void Game::ChangeGameState(eGameState const newGameState)
 
     EventArgs args;
 
-    if (newGameState == eGameState::ATTRACT) args.SetValue("OnGameStateChanged", "ATTRACT");
-    else if (newGameState == eGameState::GAME) args.SetValue("OnGameStateChanged", "GAME");
-    else if (newGameState == eGameState::SHOP) args.SetValue("OnGameStateChanged", "SHOP");
+    if (m_gameState == eGameState::GAME && newGameState == eGameState::ATTRACT)
+    {
+        args.SetValue("preGameState", "GAME");
+        args.SetValue("curGameState", "ATTRACT");
+    }
+
+    else if (m_gameState == eGameState::ATTRACT && newGameState == eGameState::GAME)
+    {
+        args.SetValue("preGameState", "ATTRACT");
+        args.SetValue("curGameState", "GAME");
+    }
+    else if (m_gameState == eGameState::GAME && newGameState == eGameState::SHOP)
+    {
+        args.SetValue("preGameState", "GAME");
+        args.SetValue("curGameState", "SHOP");
+    }
+    else if (m_gameState == eGameState::SHOP && newGameState == eGameState::GAME)
+    {
+        args.SetValue("preGameState", "SHOP");
+        args.SetValue("curGameState", "GAME");
+    }
 
     m_gameState = newGameState;
 
@@ -148,7 +178,7 @@ Clock* Game::GetGameClock() const
 
 Player* Game::GetPlayer() const
 {
-    Player* player = (Player*)m_entities[0];
+    Player* player = dynamic_cast<Player*>(m_entities[0]);
     if (player != nullptr) return player;
     return nullptr;
 }
@@ -216,7 +246,6 @@ void Game::UpdateFromInput()
         if (g_theInput->WasKeyJustPressed(KEYCODE_SPACE))
         {
             ChangeGameState(eGameState::SHOP);
-            m_entities.push_back(new Shop(6, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::BLACK));
         }
     }
     else if (m_gameState == eGameState::SHOP)
@@ -397,4 +426,23 @@ void Game::SpawnEntity()
     m_entities.push_back(new Triangle(3, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::BLUE));
     m_entities.push_back(new Coin(4, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::RED));
     m_entities.push_back(new Debris(5, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::GREEN));
+}
+
+void Game::DestroyEntity()
+{
+    m_entities[1]->MarkAsDead();
+    m_entities[2]->MarkAsDead();
+    m_entities[3]->MarkAsDead();
+    m_entities[4]->MarkAsDead();
+    m_entities[5]->MarkAsDead();
+}
+
+void Game::SpawnShop()
+{
+    m_entities.push_back(new Shop(6, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::BLACK));
+}
+
+void Game::DestroyShop()
+{
+    m_entities[6]->MarkAsDead();
 }

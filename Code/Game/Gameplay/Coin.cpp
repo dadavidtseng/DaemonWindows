@@ -20,6 +20,12 @@ Coin::Coin(EntityID const entityID, Vec2 const& position, float const orientatio
 }
 
 //----------------------------------------------------------------------------------------------------
+Coin::~Coin()
+{
+    g_theWindowSubsystem->RemoveEntityFromMappings(m_entityID);
+}
+
+//----------------------------------------------------------------------------------------------------
 void Coin::Update(float const deltaSeconds)
 {
     Entity::Update(deltaSeconds);

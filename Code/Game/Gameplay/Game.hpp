@@ -49,6 +49,9 @@ private:
     void RenderGame() const;
 
     void SpawnEntity();
+    void DestroyEntity();
+    void SpawnShop();
+    void DestroyShop();
 
     Camera*    m_screenCamera = nullptr;
     eGameState m_gameState    = eGameState::ATTRACT;
