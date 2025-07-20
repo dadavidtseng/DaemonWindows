@@ -71,7 +71,7 @@ void App::Startup()
     //------------------------------------------------------------------------------------------------
     //-Start-of-Renderer------------------------------------------------------------------------------
 
-    sRenderConfig renderConfig;
+    sRendererConfig renderConfig;
     renderConfig.m_window = g_theWindow;
     g_theRenderer         = new Renderer(renderConfig);
 
@@ -116,9 +116,9 @@ void App::Startup()
     //------------------------------------------------------------------------------------------------
     //-Start-of-WindowSubsystem-----------------------------------------------------------------------
 
-    sWindowSubsystemConfig  windowSubsystemConfig;
-    windowSubsystemConfig.m_iconFilePath           = L"C:/p4/Personal/SD/WindowKills/Run/Data/Images/windowIcon.ico";
-    g_theWindowSubsystem = new WindowSubsystem(windowSubsystemConfig);
+    sWindowSubsystemConfig windowSubsystemConfig;
+    windowSubsystemConfig.m_iconFilePath = L"C:/p4/Personal/SD/WindowKills/Run/Data/Images/windowIcon.ico";
+    g_theWindowSubsystem                 = new WindowSubsystem(windowSubsystemConfig);
 
     //-End-of-WindowSubsystem-------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
@@ -275,10 +275,10 @@ void App::EndFrame() const
 //----------------------------------------------------------------------------------------------------
 void App::UpdateCursorMode()
 {
-    bool const doesWindowHasFocus   = GetActiveWindow() == g_theWindow->GetWindowHandle();
-    bool const isAttractState       = g_theGame->GetCurrentGameState() == eGameState::ATTRACT;
+    bool const doesWindowHasFocus = GetActiveWindow() == g_theWindow->GetWindowHandle();
+    bool const isAttractState     = g_theGame->GetCurrentGameState() == eGameState::ATTRACT;
     // bool const shouldUsePointerMode = !doesWindowHasFocus || g_theDevConsole->IsOpen() || isAttractState;
-    bool const shouldUsePointerMode = !doesWindowHasFocus ||  isAttractState;
+    bool const shouldUsePointerMode = !doesWindowHasFocus || isAttractState;
 
     if (shouldUsePointerMode == true)
     {
