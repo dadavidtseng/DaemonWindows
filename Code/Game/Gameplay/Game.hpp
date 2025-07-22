@@ -7,6 +7,7 @@
 #include <cstdint>
 
 
+#include "Shop.hpp"
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Core/Timer.hpp"
 #include "Game/Gameplay/Entity.hpp"
@@ -38,6 +39,7 @@ public:
     void                 ChangeGameState(eGameState newGameState);
     Clock*               GetGameClock() const;
     Player*              GetPlayer() const;
+    Shop*                GetShop() const;
     std::vector<Entity*> m_entities;
 
 private:
