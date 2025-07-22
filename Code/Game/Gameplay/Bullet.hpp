@@ -11,7 +11,8 @@
 class Bullet : public Entity
 {
 public:
-    Bullet(Vec2 const& position, float orientationDegrees, Rgba8 const& color);
+    Bullet(EntityID const& entityID, Vec2 const& position, float orientationDegrees, Rgba8 const& color, bool isVisible, bool hasChildWindow);
+~Bullet() override;
     void Update(float deltaSeconds) override;
     void Render() const override;
     void UpdateFromInput() override;

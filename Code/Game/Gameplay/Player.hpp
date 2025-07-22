@@ -15,7 +15,7 @@ class ButtonWidget;
 class Player : public Entity
 {
 public:
-    explicit Player(EntityID actorID, Vec2 const& position, float orientationDegrees, Rgba8 const& color);
+    explicit Player(EntityID actorID, Vec2 const& position, float orientationDegrees, Rgba8 const& color, bool isVisible, bool hasChildWindow);
     ~Player() override;
     void UpdateWindowFocus();
     void Update(float deltaSeconds) override;

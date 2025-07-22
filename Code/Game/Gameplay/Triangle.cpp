@@ -11,11 +11,16 @@
 #include "Game/Subsystem/Widget/WidgetSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
-Triangle::Triangle(EntityID const entityID, Vec2 const& position, float const orientationDegrees, Rgba8 const& color)
-    : Entity(position, orientationDegrees, color)
+Triangle::Triangle(EntityID const entityID,
+                   Vec2 const&    position,
+                   float const    orientationDegrees,
+                   Rgba8 const&   color,
+                   bool const     isVisible,
+                   bool const     hasChildWindow)
+    : Entity(position, orientationDegrees, color, isVisible, hasChildWindow)
 {
     m_entityID       = entityID;
-    m_health         = g_theRNG->RollRandomIntInRange(1,5);
+    m_health         = g_theRNG->RollRandomIntInRange(1, 5);
     m_name           = "Triangle";
     m_physicRadius   = 30.f;
     m_thickness      = 10.f;
@@ -57,7 +62,7 @@ void Triangle::UpdateWindowFocus()
 
 void Triangle::Update(float const deltaSeconds)
 {
-    if (g_theGame->GetCurrentGameState()==eGameState::SHOP||g_theGame->GetCurrentGameState()==eGameState::ATTRACT)return;
+    if (g_theGame->GetCurrentGameState() == eGameState::SHOP || g_theGame->GetCurrentGameState() == eGameState::ATTRACT) return;
     Entity::Update(deltaSeconds);
 
     WindowID    windowID   = g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID);

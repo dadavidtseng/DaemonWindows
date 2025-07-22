@@ -8,8 +8,14 @@
 #include "Game/Subsystem/Widget/ButtonWidget.hpp"
 #include "Game/Subsystem/Widget/WidgetSubsystem.hpp"
 
-Shop::Shop(EntityID const entityID, Vec2 const& position, float const orientationDegrees, Rgba8 const& color)
-    : Entity(position, orientationDegrees, color)
+//----------------------------------------------------------------------------------------------------
+Shop::Shop(EntityID const entityID,
+           Vec2 const&    position,
+           float const    orientationDegrees,
+           Rgba8 const&   color,
+           bool const     isVisible,
+           bool const     hasChildWindow)
+    : Entity(position, orientationDegrees, color, isVisible, hasChildWindow)
 {
     m_entityID       = entityID;
     m_name           = "Shop";
@@ -45,6 +51,19 @@ void Shop::Update(float const deltaSeconds)
 
 void Shop::Render() const
 {
+    VertexList_PCU verts2;
+    Vec2 const     ccw0 = Vec2(m_position.x, m_position.y + m_physicRadius);
+    Vec2 const     ccw1 = Vec2(m_position.x - m_physicRadius, m_position.y - m_physicRadius);
+    Vec2 const     ccw2 = Vec2(m_position.x + m_physicRadius, m_position.y - m_physicRadius);
+    AddVertsForTriangle2D(verts2, ccw0, ccw1, ccw2, m_color);
+    g_theRenderer->SetModelConstants();
+    g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
+    g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
+    g_theRenderer->SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
+    g_theRenderer->SetDepthMode(eDepthMode::DISABLED);
+    g_theRenderer->BindTexture(nullptr);
+    g_theRenderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
+    g_theRenderer->DrawVertexArray(verts2);
 }
 
 void Shop::UpdateFromInput()

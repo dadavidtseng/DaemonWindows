@@ -66,7 +66,7 @@ void WindowSubsystem::Render()
         if (windowData.m_window->m_shouldUpdatePosition)
         {
             g_theRenderer->RenderViewportToWindow(*windowData.m_window);
-            // g_theRenderer->RenderViewportToWindowDX11(*windowData.m_window);
+            // g_theRenderer->RenderViewportToWindowDX11(*windowData.m_window);     // TODO: bug fix
         }
     }
 }
@@ -255,6 +255,18 @@ void WindowSubsystem::DestroyAllWindows()
     DebuggerPrintf("DestroyAllWindows: All windows destroyed.\n");
 }
 
+void WindowSubsystem::ShowWindowByWindowID(WindowID windowID)
+{
+    Window* window = GetWindow(windowID);
+    if (window) ShowWindow((HWND)window->GetWindowHandle(), SW_SHOW);
+}
+
+void WindowSubsystem::HideWindowByWindowID(WindowID windowID)
+{
+    Window* window = GetWindow(windowID);
+    if (window) ShowWindow((HWND)window->GetWindowHandle(), SW_HIDE);
+}
+
 //----------------------------------------------------------------------------------------------------
 // 查詢功能
 //----------------------------------------------------------------------------------------------------
@@ -382,6 +394,7 @@ void WindowSubsystem::SetWindowActive(WindowID windowID, bool active)
     if (it != m_windowList.end())
     {
         it->second.m_isActive = active;
+
         DebuggerPrintf("SetWindowActive: Window %d set to %s.\n", windowID, active ? "active" : "inactive");
     }
     else

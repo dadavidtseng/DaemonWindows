@@ -63,6 +63,10 @@ public:
     void     DestroyWindow(WindowID windowID);
     void     DestroyAllWindows();
 
+    // Show and Hide window
+    void ShowWindowByWindowID(WindowID windowID);
+    void HideWindowByWindowID(WindowID windowID);
+
     // 查詢功能
     Window*               GetWindow(WindowID windowID);
     WindowData*           GetWindowData(WindowID windowID);

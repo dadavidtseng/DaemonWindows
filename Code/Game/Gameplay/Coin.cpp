@@ -6,10 +6,15 @@
 #include "Game/Gameplay/Coin.hpp"
 
 //----------------------------------------------------------------------------------------------------
-Coin::Coin(EntityID const entityID, Vec2 const& position, float const orientationDegrees, Rgba8 const& color)
-    : Entity(position, orientationDegrees, color)
+Coin::Coin(EntityID const entityID,
+           Vec2 const&    position,
+           float const    orientationDegrees,
+           Rgba8 const&   color,
+           bool const     isVisible,
+           bool const     hasChildWindow)
+    : Entity(position, orientationDegrees, color, isVisible, hasChildWindow)
 {
-    m_entityID = entityID;
+    m_entityID       = entityID;
     m_name           = "Coin";
     m_health         = 999;
     m_physicRadius   = 30.f;

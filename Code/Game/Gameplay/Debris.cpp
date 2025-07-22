@@ -6,8 +6,13 @@
 #include "Game/Gameplay/Debris.hpp"
 
 //----------------------------------------------------------------------------------------------------
-Debris::Debris(EntityID const entityID, Vec2 const& position, float const orientationDegrees, Rgba8 const& color)
-    : Entity(position, orientationDegrees, color)
+Debris::Debris(EntityID const entityID,
+               Vec2 const&    position,
+               float const    orientationDegrees,
+               Rgba8 const&   color,
+               bool const     isVisible,
+               bool const     hasChildWindow)
+    : Entity(position, orientationDegrees, color, isVisible, hasChildWindow)
 {
     m_entityID       = entityID;
     m_name           = "Debris";

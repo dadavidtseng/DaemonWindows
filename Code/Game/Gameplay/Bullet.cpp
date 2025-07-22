@@ -6,16 +6,29 @@
 #include "Game/Gameplay/Bullet.hpp"
 
 #include "Game.hpp"
+#include "Player.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 
-Bullet::Bullet(Vec2 const& position, float const orientationDegrees, Rgba8 const& color)
-    : Entity(position, orientationDegrees, color)
+Bullet::Bullet(EntityID const& entityID,
+               Vec2 const&     position,
+               float const     orientationDegrees,
+               Rgba8 const&    color,
+               bool const      isVisible,
+               bool const      hasChildWindow)
+    : Entity(position, orientationDegrees, color, isVisible, hasChildWindow)
 {
-    // 明確初始化所有重要成員
+    m_entityID     = entityID;
     m_name         = "BULLET";
     m_physicRadius = 10.f;
     m_speed        = 500.0f;
     m_health       = 1;  // 子彈通常一擊就消失
+
+    g_theWindowSubsystem->CreateChildWindow(m_entityID, m_name, static_cast<int>(m_position.x), static_cast<int>(m_position.y), 100, 100);
+}
+
+Bullet::~Bullet()
+{
+    g_theWindowSubsystem->RemoveEntityFromMappings(m_entityID);
 }
 
 void Bullet::Update(float const deltaSeconds)
@@ -25,7 +38,7 @@ void Bullet::Update(float const deltaSeconds)
     m_position.x += m_velocity.x * deltaSeconds * m_speed;
     m_position.y += m_velocity.y * deltaSeconds * m_speed;
 
-    WindowID windowID = g_theWindowSubsystem->FindWindowIDByEntityID(g_theGame->m_entities[0]->m_entityID);
+    WindowID windowID = g_theWindowSubsystem->FindWindowIDByEntityID(g_theGame->GetPlayer()->m_entityID);
     Window*  window   = g_theWindowSubsystem->GetWindow(windowID);
 
     // 檢查碰撞，但只在不在動畫中時才觸發新的動畫
@@ -67,6 +80,10 @@ void Bullet::Update(float const deltaSeconds)
             m_health -= 1;
         }
     }
+
+    WindowID    windowID2   = g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID);
+    WindowData* windowData2 = g_theWindowSubsystem->GetWindowData(windowID2);
+    windowData2->m_window->SetClientPosition(m_position - windowData2->m_window->GetClientDimensions() * 0.5f);
 }
 
 void Bullet::Render() const

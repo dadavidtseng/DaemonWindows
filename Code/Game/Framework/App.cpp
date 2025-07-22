@@ -51,8 +51,8 @@ void App::Startup()
     //------------------------------------------------------------------------------------------------
     //-Start-of-InputSystem---------------------------------------------------------------------------
 
-    sInputSystemConfig constexpr inputConfig;
-    g_theInput = new InputSystem(inputConfig);
+    sInputSystemConfig constexpr inputSystemConfig;
+    g_theInput = new InputSystem(inputSystemConfig);
 
     //-End-of-InputSystem-----------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
@@ -71,17 +71,17 @@ void App::Startup()
     //------------------------------------------------------------------------------------------------
     //-Start-of-Renderer------------------------------------------------------------------------------
 
-    sRendererConfig renderConfig;
-    renderConfig.m_window = g_theWindow;
-    g_theRenderer         = new Renderer(renderConfig);
+    sRendererConfig rendererConfig;
+    rendererConfig.m_window = g_theWindow;
+    g_theRenderer         = new Renderer(rendererConfig);
 
     //-End-of-Renderer--------------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
     //-Start-of-DebugRender---------------------------------------------------------------------------
 
-    sDebugRenderConfig debugConfig;
-    debugConfig.m_renderer = g_theRenderer;
-    debugConfig.m_fontName = "SquirrelFixedFont";
+    sDebugRenderConfig debugRenderConfig;
+    debugRenderConfig.m_renderer = g_theRenderer;
+    debugRenderConfig.m_fontName = "SquirrelFixedFont";
 
     //-End-of-DebugRender-----------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
@@ -109,8 +109,8 @@ void App::Startup()
     //------------------------------------------------------------------------------------------------
     //-Start-of-AudioSystem---------------------------------------------------------------------------
 
-    sAudioSystemConfig constexpr audioConfig;
-    g_theAudio = new AudioSystem(audioConfig);
+    sAudioSystemConfig constexpr audioSystemConfig;
+    g_theAudio = new AudioSystem(audioSystemConfig);
 
     //-End-of-AudioSystem-----------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
@@ -124,16 +124,15 @@ void App::Startup()
     //------------------------------------------------------------------------------------------------
     //-Start-of-WindowSubsystem-----------------------------------------------------------------------
 
-    sWidgetSubsystemConfig constexpr widgetConfig;
-    g_theWidgetSubsystem = new WidgetSubsystem(widgetConfig);
+    sWidgetSubsystemConfig constexpr widgetSubsystemConfig;
+    g_theWidgetSubsystem = new WidgetSubsystem(widgetSubsystemConfig);
 
     //-End-of-WindowSubsystem-------------------------------------------------------------------------
-
 
     g_theEventSystem->Startup();
     g_theWindow->Startup();
     g_theRenderer->Startup();
-    DebugRenderSystemStartup(debugConfig);
+    DebugRenderSystemStartup(debugRenderConfig);
     // g_theDevConsole->StartUp();
     g_theInput->Startup();
     g_theAudio->Startup();

@@ -14,8 +14,13 @@
 #include "Game/Subsystem/Widget/ButtonWidget.hpp"
 #include "Game/Subsystem/Widget/WidgetSubsystem.hpp"
 
-Player::Player(EntityID const actorID, Vec2 const& position, float const orientationDegrees, Rgba8 const& color)
-    : Entity(position, orientationDegrees, color),
+Player::Player(EntityID const actorID,
+               Vec2 const&    position,
+               float const    orientationDegrees,
+               Rgba8 const&   color,
+               bool const     isVisible,
+               bool const     hasChildWindow)
+    : Entity(position, orientationDegrees, color, isVisible, hasChildWindow),
       m_bulletFireTimer(0.5f)
 {
     g_theEventSystem->SubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
@@ -71,7 +76,6 @@ void Player::Update(float const deltaSeconds)
     UpdateFromInput();
     if (g_theGame->GetCurrentGameState() == eGameState::GAME)
     {
-
         BounceOfWindow();
         ShrinkWindow();
     }
@@ -156,11 +160,11 @@ void Player::UpdateFromInput()
 
 void Player::FireBullet()
 {
-    Bullet* bullet     = new Bullet(m_position, 0.f, Rgba8::WHITE);
-    int     id         = g_theRNG->RollRandomIntInRange(100, 1000);
-    bullet->m_entityID = id;
-    bullet->m_windowID = 10;
-    bullet->m_name     = "BULLET";
+    Bullet* bullet     = new Bullet(g_theRNG->RollRandomIntInRange(100, 1000),m_position, 0.f, Rgba8::WHITE, true, true);
+    // int     id         = g_theRNG->RollRandomIntInRange(100, 1000);
+    // bullet->m_entityID = id;
+    // bullet->m_windowID = 10;
+    // bullet->m_name     = "BULLET";
 
     Vec2 velocity      = (Window::s_mainWindow->GetCursorPositionOnScreen() - m_position).GetNormalized();
     bullet->m_velocity = velocity;
