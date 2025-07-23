@@ -169,10 +169,16 @@ void Triangle::ShrinkWindow()
 
 STATIC bool Triangle::OnCollisionEnter(EventArgs& args)
 {
+    EntityID entityAID = args.GetValue("entityAID", -1);
     EntityID entityBID = args.GetValue("entityBID", -1);
-    Entity*  entity    = g_theGame->GetEntityByEntityID(entityBID);
-    entity->DecreaseHealth(1);
-    entity->m_position = entity->m_position - entity->m_velocity * 30.f;
+    Entity*  entityA   = g_theGame->GetEntityByEntityID(entityAID);
+    Entity*  entityB   = g_theGame->GetEntityByEntityID(entityBID);
+    if (entityA->m_name == "Bullet")
+    {
+        entityB->DecreaseHealth(1);
+        entityB->m_position = entityB->m_position - entityB->m_velocity * 30.f;
+    }
+
 
     return false;
 }

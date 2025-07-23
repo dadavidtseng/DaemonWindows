@@ -26,6 +26,7 @@ Player::Player(EntityID const entityID,
 {
     m_entityID       = entityID;
     m_health         = 10;
+    m_maxHealth      = 10;
     m_physicRadius   = 30.f;
     m_thickness      = 10.f;
     m_cosmeticRadius = m_physicRadius + m_thickness;
@@ -41,7 +42,7 @@ Player::Player(EntityID const entityID,
     Vec2    windowClientDimension = window->GetClientDimensions();
 
     m_coinWidget   = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("Coin=%d", m_coin), windowClientPosition.x, windowClientPosition.y, windowClientDimension.x, windowClientDimension.y, m_color);
-    m_healthWidget = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("Health=%d", m_health), windowClientPosition.x, windowClientPosition.y, windowClientDimension.x, windowClientDimension.y, m_color);
+    m_healthWidget = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("Health=%d/%d", m_health, m_maxHealth), windowClientPosition.x, windowClientPosition.y, windowClientDimension.x, windowClientDimension.y, m_color);
 
     g_theWidgetSubsystem->AddWidget(m_coinWidget, 100);
     g_theWidgetSubsystem->AddWidget(m_healthWidget, 200);
@@ -53,8 +54,13 @@ Player::Player(EntityID const entityID,
 Player::~Player()
 {
     Entity::~Entity();
+    g_theWindowSubsystem->RemoveEntityFromMappings(m_entityID);
     g_theEventSystem->UnsubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
     g_theEventSystem->UnsubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
+    m_coinWidget->MarkForDestroy();
+    m_healthWidget->MarkForDestroy();
+    // TODO: this should be replaced to end game scene
+    g_theGame->ChangeGameState(eGameState::ATTRACT);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -62,7 +68,7 @@ void Player::Update(float const deltaSeconds)
 {
     Entity::Update(deltaSeconds);
 
-    if (g_theGame->GetCurrentGameState() == eGameState::GAME)
+    if (g_theGame->GetCurrentGameState() != eGameState::ATTRACT)
     {
         UpdateFromInput();
         BounceOfWindow();
@@ -71,13 +77,14 @@ void Player::Update(float const deltaSeconds)
 
     WindowID    windowID   = g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID);
     WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
-    WindowRect  rect       = windowData->m_window->lastRect;
-    DebugAddScreenText(Stringf("Player Window Position(top:%ld, bottom:%ld, left:%ld, right:%ld)", rect.top, rect.bottom, rect.left, rect.right), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 20.f), 20.f, Vec2::ZERO, 0.f);
-    DebugAddScreenText(Stringf("Player Window Dimensions(width:%.1f, height:%.1f)", windowData->m_window->GetWindowDimensions().x, windowData->m_window->GetWindowDimensions().y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 40.f), 20.f, Vec2::ZERO, 0.f);
-    DebugAddScreenText(Stringf("Player Client Dimensions(width:%.1f, height:%.1f)", windowData->m_window->GetClientDimensions().x, windowData->m_window->GetClientDimensions().y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 60.f), 20.f, Vec2::ZERO, 0.f);
-    DebugAddScreenText(Stringf("Player Window Position(width:%.1f, height:%.1f)", windowData->m_window->GetWindowPosition().x, windowData->m_window->GetWindowPosition().y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 80.f), 20.f, Vec2::ZERO, 0.f);
-    DebugAddScreenText(Stringf("Player Client Position(width:%.1f, height:%.1f)", windowData->m_window->GetClientPosition().x, windowData->m_window->GetClientPosition().y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 100.f), 20.f, Vec2::ZERO, 0.f);
-    DebugAddScreenText(Stringf("Player Position(%.1f, %.1f)", m_position.x, m_position.y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 120.f), 20.f, Vec2::ZERO, 0.f);
+    if (windowData == nullptr)return;
+    // WindowRect  rect       = windowData->m_window->lastRect;
+    // DebugAddScreenText(Stringf("Player Window Position(top:%ld, bottom:%ld, left:%ld, right:%ld)", rect.top, rect.bottom, rect.left, rect.right), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 20.f), 20.f, Vec2::ZERO, 0.f);
+    // DebugAddScreenText(Stringf("Player Window Dimensions(width:%.1f, height:%.1f)", windowData->m_window->GetWindowDimensions().x, windowData->m_window->GetWindowDimensions().y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 40.f), 20.f, Vec2::ZERO, 0.f);
+    // DebugAddScreenText(Stringf("Player Client Dimensions(width:%.1f, height:%.1f)", windowData->m_window->GetClientDimensions().x, windowData->m_window->GetClientDimensions().y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 60.f), 20.f, Vec2::ZERO, 0.f);
+    // DebugAddScreenText(Stringf("Player Window Position(width:%.1f, height:%.1f)", windowData->m_window->GetWindowPosition().x, windowData->m_window->GetWindowPosition().y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 80.f), 20.f, Vec2::ZERO, 0.f);
+    // DebugAddScreenText(Stringf("Player Client Position(width:%.1f, height:%.1f)", windowData->m_window->GetClientPosition().x, windowData->m_window->GetClientPosition().y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 100.f), 20.f, Vec2::ZERO, 0.f);
+    // DebugAddScreenText(Stringf("Player Position(%.1f, %.1f)", m_position.x, m_position.y), Vec2(0.f, Window::s_mainWindow->GetScreenDimensions().y - 120.f), 20.f, Vec2::ZERO, 0.f);
 
     m_coinWidget->SetPosition(windowData->m_window->GetClientPosition());
     m_coinWidget->SetDimensions(windowData->m_window->GetClientDimensions());
@@ -240,14 +247,23 @@ bool Player::OnGameStateChanged(EventArgs& args)
 
 STATIC bool Player::OnCollisionEnter(EventArgs& args)
 {
-    String entityA = args.GetValue("entityA", "DEFAULT");
-    String entityB = args.GetValue("entityB", "DEFAULT");
+    String  entityA = args.GetValue("entityA", "DEFAULT");
+    String  entityB = args.GetValue("entityB", "DEFAULT");
+    EntityID entityBID = args.GetValue("entityBID", -1);
+    Player* player  = g_theGame->GetPlayer();
+    Entity* entity = g_theGame->GetEntityByEntityID(entityBID);
+    if (entityA == "You" && entityB == "Coin")
+    {
+        player->IncreaseCoin(1);
+        player->m_coinWidget->SetText(Stringf("Coin=%d", player->m_coin));
+    }
+    else if (entityA == "You" && entityB == "Triangle")
+    {
+        player->DecreaseHealth(1);
+        player->m_healthWidget->SetText(Stringf("Health=%d/%d", player->m_health, player->m_maxHealth));
+        player->m_position +=  (player->m_position-entity->m_position);
+    }
 
-    if (entityA != "You" && entityB != "You") return false;
-
-    Player* player = g_theGame->GetPlayer();
-    player->IncreaseCoin(1);
-    player->m_coinWidget->SetText(Stringf("Coin=%d", player->m_coin));
 
     return false;
 }

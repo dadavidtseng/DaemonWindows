@@ -29,6 +29,7 @@ enum class eGameState : int8_t
 class Game
 {
 public:
+    void SpawnPlayer() ;
     Game();
     ~Game();
 
@@ -61,5 +62,4 @@ private:
     eGameState m_gameState     = eGameState::ATTRACT;
     Clock*     m_gameClock     = nullptr;
     Timer*     m_gameTimer     = nullptr;
-    Vec2       m_titlePosition = Vec2::ZERO;
 };

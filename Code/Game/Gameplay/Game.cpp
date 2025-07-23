@@ -27,6 +27,11 @@
 #include "Game/Subsystem/Widget/ButtonWidget.hpp"
 #include "Game/Subsystem/Widget/WidgetSubsystem.hpp"
 
+void Game::SpawnPlayer()
+{
+    m_entities.push_back(new Player((int)m_entities.size(), Window::s_mainWindow->GetScreenDimensions() * 0.5f, 0.f, Rgba8::YELLOW, true, true));
+}
+
 //----------------------------------------------------------------------------------------------------
 Game::Game()
 {
@@ -44,10 +49,14 @@ Game::Game()
     m_gameClock = new Clock(Clock::GetSystemClock());
     m_gameTimer = new Timer(60.f, m_gameClock);
 
-    m_entities.push_back(new Player((int)m_entities.size(), Window::s_mainWindow->GetScreenDimensions() * 0.5f, 0.f, Rgba8::YELLOW, true, true));
-
-    m_titlePosition = Vec2(300, 300);
-    // g_theWindowSubsystem->CreateChildWindow(-1, "WindowKills", (int)m_titlePosition.x, (int)m_titlePosition.y, (int)(1445 * 0.5f), (int)(248 ));
+    SpawnPlayer();
+    // TODO: spawn before firing the event will cause nullptr
+    m_entities.push_back(new Shop((int)m_entities.size(), Vec2(Window::s_mainWindow->GetScreenDimensions().x*0.5f,  Window::s_mainWindow->GetScreenDimensions().y*0.5f), 0.f, Rgba8::YELLOW, true, true));
+    Shop* shop = GetShop();
+    if (shop != nullptr)
+    {
+        shop->MarkAsChildWindowInvisible();
+    }
 }
 
 Game::~Game()
@@ -72,6 +81,7 @@ void Game::Update()
             if (!entity->IsDead())  // 再檢查是否存活
             {
                 entity->Update(gameDeltaSeconds);
+                entity->UpdateFromInput();
             }
             else
             {
@@ -121,6 +131,7 @@ bool Game::OnGameStateChanged(EventArgs& args)
     else if (preGameState == "GAME" && curGameState == "ATTRACT")
     {
         g_theGame->DestroyEntity();
+        if (g_theGame->GetPlayer()==nullptr) g_theGame->SpawnPlayer();
     }
     else if (preGameState == "GAME" && curGameState == "SHOP")
     {
@@ -264,6 +275,7 @@ void Game::UpdateFromInput()
     }
 }
 
+// TODO: refactor!!!
 void Game::HandleEntityCollision()
 {
     for (int i = 0; i < (int)m_entities.size(); ++i)
@@ -303,6 +315,16 @@ void Game::HandleEntityCollision()
                     args.SetValue("entityAID", std::to_string(player->m_entityID));
                     args.SetValue("entityB", coin->m_name);
                     args.SetValue("entityBID", std::to_string(coin->m_entityID));
+                    g_theEventSystem->FireEvent("OnCollisionEnter", args);
+                }
+
+                if (player!=nullptr && triangle!=nullptr)
+                {
+                    EventArgs args;
+                    args.SetValue("entityA", player->m_name);
+                    args.SetValue("entityAID", std::to_string(player->m_entityID));
+                    args.SetValue("entityB", triangle->m_name);
+                    args.SetValue("entityBID", std::to_string(triangle->m_entityID));
                     g_theEventSystem->FireEvent("OnCollisionEnter", args);
                 }
             }
@@ -384,7 +406,8 @@ void Game::RenderAttractMode() const
     VertexList_PCU verts3;
     Vec2           offset2 = Vec2(0, -80);
     // AddVertsForAABB2D(verts2, AABB2(Vec2(m_entities[0]->m_position-offset*0.5f), Vec2(m_entities[0]->m_position + offset*0.5f)));
-    g_theBitmapFont->AddVertsForTextInBox2D(verts3, Stringf("Press Space to Start"), AABB2(Vec2(m_entities[0]->m_position - offset * 0.5f) + offset2, Vec2(m_entities[0]->m_position + offset * 0.5f) + offset2), 20.f, Rgba8::WHITE, 1.f, Vec2(0.5, 0.5f), OVERRUN);
+    g_theBitmapFont->AddVertsForTextInBox2D(verts3, Stringf("Press Space to Start\nWASD to move, LMB to shoot"), AABB2(Vec2(m_entities[0]->m_position - offset * 0.5f) + offset2, Vec2(m_entities[0]->m_position + offset * 0.5f) + offset2), 20.f, Rgba8::WHITE, 1.f, Vec2(0.5, 0.5f), OVERRUN);
+
     // g_theRenderer->SetModelConstants(Mat44{}, Rgba8(255, 255, 255, 100));
     g_theRenderer->SetBlendMode(eBlendMode::ALPHA);
     g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
@@ -431,12 +454,12 @@ void Game::SpawnEntity()
 
     if (m_entities.size() <= 4)
     {
-        m_entities.push_back(new Shop((int)m_entities.size(), Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::YELLOW, true, true));
-        Shop* shop = GetShop();
-        if (shop != nullptr)
-        {
-            shop->MarkAsChildWindowInvisible();
-        }
+        // m_entities.push_back(new Shop((int)m_entities.size(), Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::YELLOW, true, true));
+        // Shop* shop = GetShop();
+        // if (shop != nullptr)
+        // {
+        //     shop->MarkAsChildWindowInvisible();
+        // }
     }
 }
 

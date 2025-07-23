@@ -29,7 +29,7 @@ public:
 
     virtual void Update(float deltaSeconds);
     virtual void Render() const = 0;
-    virtual void UpdateFromInput() = 0;
+    virtual void UpdateFromInput() = 0;    // TODO: should entity handle its own input logic? or should the game handle it for him?
 
     virtual void MarkAsDead();
     virtual void MarkAsGarbage();
@@ -43,14 +43,14 @@ public:
     virtual bool IsChildWindowVisible() const;
     virtual bool IsEntityVisible() const;
 
-    void IncreaseHealth(int amount);
-    void DecreaseHealth(int amount);
+    void  IncreaseHealth(int amount);
+    void  DecreaseHealth(int amount);
+    float m_speed = 100.f;
 
 protected:
-    float m_speed                = 100.f;
-    bool  m_isDead               = false;
-    bool  m_isGarbage            = false;
-    bool  m_isChildWindowVisible = true;        // Should we show this entity's child window or not?
-    bool  m_isEntityVisible      = true;        // Should we render this entity or not?
-    bool  m_hasChildWindow       = false;       // Should this entity have child window or not?
+    bool m_isDead               = false;
+    bool m_isGarbage            = false;
+    bool m_isChildWindowVisible = true;        // Should we show this entity's child window or not?
+    bool m_isEntityVisible      = true;        // Should we render this entity or not?
+    bool m_hasChildWindow       = false;       // Should this entity have child window or not?
 };

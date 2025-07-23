@@ -12,6 +12,7 @@
 //-Forward-Declaration--------------------------------------------------------------------------------
 class ButtonWidget;
 
+//----------------------------------------------------------------------------------------------------
 class Player : public Entity
 {
 public:
@@ -21,9 +22,13 @@ public:
     void Update(float deltaSeconds) override;
     void Render() const override;
 
-    void UpdateFromInput() override;
-    void UpdateWindowFocus();
-    void FireBullet();
+    void                          UpdateFromInput() override;
+    void                          UpdateWindowFocus();
+    void                          FireBullet();
+    std::shared_ptr<ButtonWidget> m_healthWidget;
+    std::shared_ptr<ButtonWidget> m_coinWidget;
+    int                           m_maxHealth = 0;
+    int                           m_coin      = 50;
 
 private:
     static bool OnGameStateChanged(EventArgs& args);
@@ -33,10 +38,5 @@ private:
     void        BounceOfWindow();
     void        ShrinkWindow();
 
-    Timer                         m_bulletFireTimer;
-    std::shared_ptr<ButtonWidget> m_coinWidget;
-    std::shared_ptr<ButtonWidget> m_healthWidget;
-    int                           m_coin = 0;
+    Timer m_bulletFireTimer;
 };
-
-//----------------------------------------------------------------------------------------------------
