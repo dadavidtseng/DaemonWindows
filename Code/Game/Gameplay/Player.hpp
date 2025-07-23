@@ -27,6 +27,7 @@ public:
     void                          FireBullet();
     std::shared_ptr<ButtonWidget> m_healthWidget;
     std::shared_ptr<ButtonWidget> m_coinWidget;
+    std::shared_ptr<ButtonWidget> m_timerWidget;
     int                           m_maxHealth = 0;
     int                           m_coin      = 50;
 

@@ -43,11 +43,14 @@ Player::Player(EntityID const entityID,
 
     m_coinWidget   = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("Coin=%d", m_coin), windowClientPosition.x, windowClientPosition.y, windowClientDimension.x, windowClientDimension.y, m_color);
     m_healthWidget = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("Health=%d/%d", m_health, m_maxHealth), windowClientPosition.x, windowClientPosition.y, windowClientDimension.x, windowClientDimension.y, m_color);
+    m_timerWidget = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("Time=%.1f", g_theGame->m_gameTimer->GetElapsedTime()), windowClientPosition.x, windowClientPosition.y, windowClientDimension.x, windowClientDimension.y, m_color);
 
     g_theWidgetSubsystem->AddWidget(m_coinWidget, 100);
     g_theWidgetSubsystem->AddWidget(m_healthWidget, 200);
+    g_theWidgetSubsystem->AddWidget(m_timerWidget, 200);
     m_coinWidget->SetVisible(false);
     m_healthWidget->SetVisible(false);
+    m_timerWidget->SetVisible(false);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -59,6 +62,7 @@ Player::~Player()
     g_theEventSystem->UnsubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
     m_coinWidget->MarkForDestroy();
     m_healthWidget->MarkForDestroy();
+    m_timerWidget->MarkForDestroy();
     // TODO: this should be replaced to end game scene
     g_theGame->ChangeGameState(eGameState::ATTRACT);
 }
@@ -90,6 +94,8 @@ void Player::Update(float const deltaSeconds)
     m_coinWidget->SetDimensions(windowData->m_window->GetClientDimensions());
     m_healthWidget->SetPosition(windowData->m_window->GetClientPosition() + Vec2(0, 20));
     m_healthWidget->SetDimensions(windowData->m_window->GetClientDimensions());
+    m_timerWidget->SetPosition(windowData->m_window->GetClientPosition() + Vec2(0, 40));
+    m_timerWidget->SetDimensions(windowData->m_window->GetClientDimensions());
 
     if (g_theGame->GetCurrentGameState() == eGameState::ATTRACT)
     {
@@ -179,6 +185,8 @@ void Player::FireBullet()
 
     // g_theWindowSubsystem->CreateChildWindow(bullet->m_actorID, bullet->m_name);
     g_theGame->m_entities.push_back(bullet);
+    SoundID const attractBGM = g_theAudio->CreateOrGetSound("Data/Audio/shoot.mp3", eAudioSystemSoundDimension::Sound2D);
+     g_theAudio->StartSound(attractBGM, false, 1.f, 0.f, 1.f);
 }
 
 void Player::BounceOfWindow()

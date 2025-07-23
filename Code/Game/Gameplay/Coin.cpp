@@ -72,7 +72,8 @@ STATIC bool Coin::OnCollisionEnter(EventArgs& args)
 {
     EntityID entityBID = args.GetValue("entityBID", -1);
     g_theGame->GetEntityByEntityID(entityBID)->DecreaseHealth(1);
-
+    SoundID const attractBGM = g_theAudio->CreateOrGetSound("Data/Audio/coin.mp3", eAudioSystemSoundDimension::Sound2D);
+    g_theAudio->StartSound(attractBGM, false, 1.f, 0.f, 1.f);
     return false;
 }
 

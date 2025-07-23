@@ -51,12 +51,15 @@ Game::Game()
 
     SpawnPlayer();
     // TODO: spawn before firing the event will cause nullptr
-    m_entities.push_back(new Shop((int)m_entities.size(), Vec2(Window::s_mainWindow->GetScreenDimensions().x*0.5f,  Window::s_mainWindow->GetScreenDimensions().y*0.5f), 0.f, Rgba8::YELLOW, true, true));
+    m_entities.push_back(new Shop((int)m_entities.size(), Vec2(Window::s_mainWindow->GetScreenDimensions().x * 0.5f, Window::s_mainWindow->GetScreenDimensions().y * 0.5f), 0.f, Rgba8::YELLOW, true, true));
     Shop* shop = GetShop();
     if (shop != nullptr)
     {
         shop->MarkAsChildWindowInvisible();
     }
+
+    SoundID const attractBGM = g_theAudio->CreateOrGetSound("Data/Audio/attract.mp3", eAudioSystemSoundDimension::Sound2D);
+    m_attractPlaybackID      = g_theAudio->StartSound(attractBGM, true, 1.f, 0.f, 1.f);
 }
 
 Game::~Game()
@@ -127,11 +130,17 @@ bool Game::OnGameStateChanged(EventArgs& args)
     if (preGameState == "ATTRACT" && curGameState == "GAME")
     {
         g_theGame->SpawnEntity();
+        g_theAudio->StopSound(g_theGame->m_attractPlaybackID);
+        SoundID const ingameBGM       = g_theAudio->CreateOrGetSound("Data/Audio/ingame.mp3", eAudioSystemSoundDimension::Sound2D);
+        g_theGame->m_ingamePlaybackID = g_theAudio->StartSound(ingameBGM, true, 1.f, 0.f, 1.f);
     }
     else if (preGameState == "GAME" && curGameState == "ATTRACT")
     {
         g_theGame->DestroyEntity();
-        if (g_theGame->GetPlayer()==nullptr) g_theGame->SpawnPlayer();
+        if (g_theGame->GetPlayer() == nullptr) g_theGame->SpawnPlayer();
+        g_theAudio->StopSound(g_theGame->m_ingamePlaybackID);
+        SoundID const attractBGM       = g_theAudio->CreateOrGetSound("Data/Audio/attract.mp3", eAudioSystemSoundDimension::Sound2D);
+        g_theGame->m_attractPlaybackID = g_theAudio->StartSound(attractBGM, true, 1.f, 0.f, 1.f);
     }
     else if (preGameState == "GAME" && curGameState == "SHOP")
     {
@@ -318,7 +327,7 @@ void Game::HandleEntityCollision()
                     g_theEventSystem->FireEvent("OnCollisionEnter", args);
                 }
 
-                if (player!=nullptr && triangle!=nullptr)
+                if (player != nullptr && triangle != nullptr)
                 {
                     EventArgs args;
                     args.SetValue("entityA", player->m_name);

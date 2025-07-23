@@ -8,6 +8,7 @@
 
 
 #include "Shop.hpp"
+#include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Core/Timer.hpp"
 #include "Game/Gameplay/Entity.hpp"
@@ -29,7 +30,7 @@ enum class eGameState : int8_t
 class Game
 {
 public:
-    void SpawnPlayer() ;
+    void SpawnPlayer();
     Game();
     ~Game();
 
@@ -43,7 +44,7 @@ public:
     Shop*                GetShop() const;
     Entity*              GetEntityByEntityID(EntityID const& entityID) const;
     std::vector<Entity*> m_entities;
-
+    Timer*          m_gameTimer    = nullptr;
 private:
     static bool OnGameStateChanged(EventArgs& args);
     static bool OnEntityDestroyed(EventArgs& args);
@@ -58,8 +59,10 @@ private:
     void SpawnShop();
     void DestroyShop();
 
-    Camera*    m_screenCamera  = nullptr;
-    eGameState m_gameState     = eGameState::ATTRACT;
-    Clock*     m_gameClock     = nullptr;
-    Timer*     m_gameTimer     = nullptr;
+    Camera*         m_screenCamera = nullptr;
+    eGameState      m_gameState    = eGameState::ATTRACT;
+    Clock*          m_gameClock    = nullptr;
+
+    SoundPlaybackID m_attractPlaybackID;
+    SoundPlaybackID m_ingamePlaybackID;
 };
