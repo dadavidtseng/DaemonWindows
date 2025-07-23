@@ -5,9 +5,9 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Coin.hpp"
 
-#include "Game.hpp"
-#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/NamedStrings.hpp"
+#include "Engine/Math/RandomNumberGenerator.hpp"
+#include "Game/Gameplay/Game.hpp"
 
 //----------------------------------------------------------------------------------------------------
 Coin::Coin(EntityID const entityID,
@@ -21,11 +21,14 @@ Coin::Coin(EntityID const entityID,
     m_entityID       = entityID;
     m_name           = "Coin";
     m_health         = 999;
-    m_physicRadius   = 30.f;
+    m_physicRadius   = g_theRNG->RollRandomFloatInRange(2.f, 10.f);
     m_thickness      = 10.f;
     m_cosmeticRadius = m_physicRadius + m_thickness;
 
-    g_theWindowSubsystem->CreateChildWindow(m_entityID, m_name, static_cast<int>(m_position.x), static_cast<int>(m_position.y), 200, 200);
+    if (m_hasChildWindow)
+    {
+        g_theWindowSubsystem->CreateChildWindow(m_entityID, m_name, static_cast<int>(m_position.x), static_cast<int>(m_position.y), 200, 200);
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -38,19 +41,19 @@ Coin::~Coin()
 void Coin::Update(float const deltaSeconds)
 {
     Entity::Update(deltaSeconds);
-    WindowID    windowID   = g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID);
-    WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
-    windowData->m_window->SetClientPosition(m_position - windowData->m_window->GetClientDimensions() * 0.5f);
+    if (m_hasChildWindow)
+    {
+        WindowID    windowID   = g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID);
+        WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
+        windowData->m_window->SetClientPosition(m_position - windowData->m_window->GetClientDimensions() * 0.5f);
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
 void Coin::Render() const
 {
-    VertexList_PCU verts2;
-    Vec2 const     ccw0 = Vec2(m_position.x, m_position.y + m_physicRadius);
-    Vec2 const     ccw1 = Vec2(m_position.x - m_physicRadius, m_position.y - m_physicRadius);
-    Vec2 const     ccw2 = Vec2(m_position.x + m_physicRadius, m_position.y - m_physicRadius);
-    AddVertsForTriangle2D(verts2, ccw0, ccw1, ccw2, m_color);
+    VertexList_PCU verts;
+    AddVertsForDisc2D(verts, m_position, m_physicRadius, m_color);
     g_theRenderer->SetModelConstants();
     g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
     g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
@@ -58,9 +61,10 @@ void Coin::Render() const
     g_theRenderer->SetDepthMode(eDepthMode::DISABLED);
     g_theRenderer->BindTexture(nullptr);
     g_theRenderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
-    g_theRenderer->DrawVertexArray(verts2);
+    g_theRenderer->DrawVertexArray(verts);
 }
 
+//----------------------------------------------------------------------------------------------------
 void Coin::UpdateFromInput()
 {
 }

@@ -19,6 +19,5 @@ public:
     void Render() const override;
 
 private:
-    static bool OnEntityDestroyed(EventArgs& args);
-    void        UpdateFromInput() override;
+    void UpdateFromInput() override;
 };

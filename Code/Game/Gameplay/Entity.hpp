@@ -33,20 +33,24 @@ public:
 
     virtual void MarkAsDead();
     virtual void MarkAsGarbage();
-    virtual void MarkAsInvisible();
-    virtual void MarkAsVisible();
+    virtual void MarkAsChildWindowInvisible();
+    virtual void MarkAsChildWindowVisible();
+    virtual void MarkAsEntityInvisible();
+    virtual void MarkAsEntityVisible();
 
     virtual bool IsDead() const;
     virtual bool IsGarbage() const;
-    virtual bool IsVisible() const;
+    virtual bool IsChildWindowVisible() const;
+    virtual bool IsEntityVisible() const;
 
     void IncreaseHealth(int amount);
     void DecreaseHealth(int amount);
 
 protected:
-    float m_speed          = 100.f;
-    bool  m_isDead         = false;
-    bool  m_isGarbage      = false;
-    bool  m_isVisible      = true;
-    bool  m_hasChildWindow = false;
+    float m_speed                = 100.f;
+    bool  m_isDead               = false;
+    bool  m_isGarbage            = false;
+    bool  m_isChildWindowVisible = true;        // Should we show this entity's child window or not?
+    bool  m_isEntityVisible      = true;        // Should we render this entity or not?
+    bool  m_hasChildWindow       = false;       // Should this entity have child window or not?
 };

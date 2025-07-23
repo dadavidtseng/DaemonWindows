@@ -139,8 +139,8 @@ STATIC bool Game::OnEntityDestroyed(EventArgs& args)
     EntityID entityID = args.GetValue("entityID", -1);
 
     Vec2 position = g_theGame->GetEntityByEntityID(entityID)->m_position;
-    g_theGame->m_entities.push_back(new Coin((int)g_theGame->m_entities.size(), position, 0.f, Rgba8::RED, true, true));
-    // g_theGame->m_entities.push_back(new Coin((int)g_theGame->m_entities.size(), Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::RED, true, true));
+    g_theGame->m_entities.push_back(new Coin((int)g_theGame->m_entities.size(), position, 0.f, Rgba8::RED, true, false));
+
     return true;
 }
 
@@ -434,7 +434,7 @@ void Game::RenderGame() const
 
     for (Entity* entity : m_entities)
     {
-        if (entity && !entity->IsDead() && entity->IsVisible())
+        if (entity && !entity->IsDead() && entity->IsChildWindowVisible())
         {
             entity->Render();
         }
@@ -458,7 +458,7 @@ void Game::SpawnEntity()
         Shop* shop = GetShop();
         if (shop != nullptr)
         {
-            shop->MarkAsInvisible();
+            shop->MarkAsChildWindowInvisible();
         }
     }
 }
@@ -478,7 +478,7 @@ void Game::SpawnShop()
     Shop* shop = GetShop();
     if (shop != nullptr)
     {
-        shop->MarkAsVisible();
+        shop->MarkAsChildWindowVisible();
     }
 }
 
@@ -487,6 +487,6 @@ void Game::DestroyShop()
     Shop* shop = GetShop();
     if (shop != nullptr)
     {
-        shop->MarkAsInvisible();
+        shop->MarkAsChildWindowInvisible();
     }
 }
