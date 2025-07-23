@@ -40,24 +40,26 @@ public:
     Clock*               GetGameClock() const;
     Player*              GetPlayer() const;
     Shop*                GetShop() const;
+    Entity*              GetEntityByEntityID(EntityID const& entityID) const;
     std::vector<Entity*> m_entities;
 
 private:
     static bool OnGameStateChanged(EventArgs& args);
-    void UpdateFromInput();
-    void HandleEntityCollision();
-    void AdjustForPauseAndTimeDistortion() const;
-    void RenderAttractMode() const;
-    void RenderGame() const;
+    static bool OnEntityDestroyed(EventArgs& args);
+    void        UpdateFromInput();
+    void        HandleEntityCollision();
+    void        AdjustForPauseAndTimeDistortion() const;
+    void        RenderAttractMode() const;
+    void        RenderGame() const;
 
     void SpawnEntity();
     void DestroyEntity();
     void SpawnShop();
     void DestroyShop();
 
-    Camera*    m_screenCamera = nullptr;
-    eGameState m_gameState    = eGameState::ATTRACT;
-    Clock*     m_gameClock    = nullptr;
-    Timer*     m_gameTimer    = nullptr;
-    Vec2 m_titlePosition = Vec2::ZERO;
+    Camera*    m_screenCamera  = nullptr;
+    eGameState m_gameState     = eGameState::ATTRACT;
+    Clock*     m_gameClock     = nullptr;
+    Timer*     m_gameTimer     = nullptr;
+    Vec2       m_titlePosition = Vec2::ZERO;
 };

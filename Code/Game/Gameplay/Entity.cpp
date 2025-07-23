@@ -4,7 +4,9 @@
 
 #include "Game/Gameplay/Entity.hpp"
 
+#include "Game.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/EventSystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
 Entity::Entity(Vec2 const&  position,
@@ -34,6 +36,17 @@ void Entity::Update(float const deltaSeconds)
 void Entity::MarkAsDead()
 {
     m_isDead = true;
+
+    if (m_name == "Bullet") return;
+
+    if (g_theGame->GetCurrentGameState()==eGameState::GAME)
+    {
+        EventArgs args;
+        args.SetValue("name", m_name);
+        args.SetValue("entityID", std::to_string(m_entityID));
+        g_theEventSystem->FireEvent("OnEntityDestroyed", args);
+    }
+
 }
 
 void Entity::MarkAsGarbage()

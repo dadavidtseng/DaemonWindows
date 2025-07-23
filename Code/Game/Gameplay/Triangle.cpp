@@ -26,20 +26,26 @@ Triangle::Triangle(EntityID const entityID,
     m_thickness      = 10.f;
     m_cosmeticRadius = m_physicRadius + m_thickness;
 
-    g_theWindowSubsystem->CreateChildWindow(m_entityID, m_name, static_cast<int>(m_position.x), static_cast<int>(m_position.y), 200, 200);
+    if (m_hasChildWindow)
+    {
+        g_theWindowSubsystem->CreateChildWindow(m_entityID, m_name, static_cast<int>(m_position.x), static_cast<int>(m_position.y), 200, 200);
 
-    Window* window                = g_theWindowSubsystem->GetWindow(g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID));
-    Vec2    windowClientPosition  = window->GetClientPosition();
-    Vec2    windowClientDimension = window->GetClientDimensions();
+        Window* window                = g_theWindowSubsystem->GetWindow(g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID));
+        Vec2    windowClientPosition  = window->GetClientPosition();
+        Vec2    windowClientDimension = window->GetClientDimensions();
 
-    m_healthWidget = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("Health=%d", m_health), (int)windowClientPosition.x, (int)windowClientPosition.y, (int)windowClientDimension.x, (int)windowClientDimension.y, m_color);
-    g_theWidgetSubsystem->AddWidget(m_healthWidget, 200);
+        m_healthWidget = g_theWidgetSubsystem->CreateWidget<ButtonWidget>(g_theWidgetSubsystem, Stringf("Health=%d", m_health), (int)windowClientPosition.x, (int)windowClientPosition.y, (int)windowClientDimension.x, (int)windowClientDimension.y, m_color);
+        g_theWidgetSubsystem->AddWidget(m_healthWidget, 200);
+    }
 }
 
 Triangle::~Triangle()
 {
-    g_theWindowSubsystem->RemoveEntityFromMappings(m_entityID);
-    m_healthWidget->MarkForDestroy();
+    if (m_hasChildWindow)
+    {
+        g_theWindowSubsystem->RemoveEntityFromMappings(m_entityID);
+        m_healthWidget->MarkForDestroy();
+    }
 }
 
 void Triangle::UpdateWindowFocus()
@@ -65,12 +71,16 @@ void Triangle::Update(float const deltaSeconds)
     if (g_theGame->GetCurrentGameState() == eGameState::SHOP || g_theGame->GetCurrentGameState() == eGameState::ATTRACT) return;
     Entity::Update(deltaSeconds);
 
-    WindowID    windowID   = g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID);
-    WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
-    m_healthWidget->SetPosition(windowData->m_window->GetClientPosition());
-    m_healthWidget->SetDimensions(windowData->m_window->GetClientDimensions());
-    m_healthWidget->SetText(Stringf("Health=%d", m_health));
-
+    if (m_hasChildWindow)
+    {
+        WindowID    windowID   = g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID);
+        WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
+        m_healthWidget->SetPosition(windowData->m_window->GetClientPosition());
+        m_healthWidget->SetDimensions(windowData->m_window->GetClientDimensions());
+        m_healthWidget->SetText(Stringf("Health=%d", m_health));
+        // 然後用限制後的位置來設定視窗位置
+        windowData->m_window->SetClientPosition(m_position - windowData->m_window->GetClientDimensions() * 0.5f);
+    }
     if (m_isDead) return;
 
     // 追蹤玩家的邏輯
@@ -86,9 +96,6 @@ void Triangle::Update(float const deltaSeconds)
 
     // 先限制Triangle位置在螢幕邊界內
     // BounceOfWindow();
-
-    // 然後用限制後的位置來設定視窗位置
-    windowData->m_window->SetClientPosition(m_position - windowData->m_window->GetClientDimensions() * 0.5f);
 }
 
 void Triangle::Render() const

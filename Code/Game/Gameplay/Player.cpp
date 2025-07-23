@@ -14,7 +14,8 @@
 #include "Game/Subsystem/Widget/ButtonWidget.hpp"
 #include "Game/Subsystem/Widget/WidgetSubsystem.hpp"
 
-Player::Player(EntityID const actorID,
+//----------------------------------------------------------------------------------------------------
+Player::Player(EntityID const entityID,
                Vec2 const&    position,
                float const    orientationDegrees,
                Rgba8 const&   color,
@@ -23,13 +24,14 @@ Player::Player(EntityID const actorID,
     : Entity(position, orientationDegrees, color, isVisible, hasChildWindow),
       m_bulletFireTimer(0.5f)
 {
-    g_theEventSystem->SubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
-    m_entityID       = actorID;
+    m_entityID       = entityID;
     m_health         = 10;
     m_physicRadius   = 30.f;
     m_thickness      = 10.f;
     m_cosmeticRadius = m_physicRadius + m_thickness;
     m_name           = "You";
+
+    g_theEventSystem->SubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
 
     g_theWindowSubsystem->CreateChildWindow(m_entityID, m_name, 100, 100, (int)(1445 * 0.6f), (int)(248));
 
@@ -46,40 +48,25 @@ Player::Player(EntityID const actorID,
     m_healthWidget->SetVisible(false);
 }
 
+//----------------------------------------------------------------------------------------------------
 Player::~Player()
 {
     Entity::~Entity();
     g_theEventSystem->UnsubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
 }
 
-void Player::UpdateWindowFocus()
-{
-    WindowID    windowID   = g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID);
-    WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
-
-    if (windowData && windowData->m_window && windowData->m_window->GetWindowHandle())
-    {
-        HWND hwnd = (HWND)windowData->m_window->GetWindowHandle();
-
-        // 只有在視窗失去焦點時才重新設定
-        if (GetForegroundWindow() != hwnd)
-        {
-            SetForegroundWindow(hwnd);
-            SetFocus(hwnd);
-        }
-    }
-}
-
+//----------------------------------------------------------------------------------------------------
 void Player::Update(float const deltaSeconds)
 {
     Entity::Update(deltaSeconds);
-    UpdateFromInput();
+
     if (g_theGame->GetCurrentGameState() == eGameState::GAME)
     {
+        UpdateFromInput();
         BounceOfWindow();
         ShrinkWindow();
     }
-    // UpdateWindowFocus();
+
     WindowID    windowID   = g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID);
     WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
     WindowRect  rect       = windowData->m_window->lastRect;
@@ -101,6 +88,7 @@ void Player::Update(float const deltaSeconds)
     }
 }
 
+//----------------------------------------------------------------------------------------------------
 void Player::Render() const
 {
     VertexList_PCU verts2;
@@ -115,6 +103,7 @@ void Player::Render() const
     g_theRenderer->DrawVertexArray(verts2);
 }
 
+//----------------------------------------------------------------------------------------------------
 void Player::UpdateFromInput()
 {
     if (g_theInput->IsKeyDown(KEYCODE_W)) m_position.y += 10.f;
@@ -158,13 +147,29 @@ void Player::UpdateFromInput()
     }
 }
 
+//----------------------------------------------------------------------------------------------------
+void Player::UpdateWindowFocus()
+{
+    WindowID    windowID   = g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID);
+    WindowData* windowData = g_theWindowSubsystem->GetWindowData(windowID);
+
+    if (windowData && windowData->m_window && windowData->m_window->GetWindowHandle())
+    {
+        HWND hwnd = (HWND)windowData->m_window->GetWindowHandle();
+
+        // 只有在視窗失去焦點時才重新設定
+        if (GetForegroundWindow() != hwnd)
+        {
+            SetForegroundWindow(hwnd);
+            SetFocus(hwnd);
+        }
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
 void Player::FireBullet()
 {
-    Bullet* bullet     = new Bullet(g_theRNG->RollRandomIntInRange(100, 1000),m_position, 0.f, Rgba8::WHITE, true, true);
-    // int     id         = g_theRNG->RollRandomIntInRange(100, 1000);
-    // bullet->m_entityID = id;
-    // bullet->m_windowID = 10;
-    // bullet->m_name     = "BULLET";
+    Bullet* bullet = new Bullet(g_theRNG->RollRandomIntInRange(100, 1000), m_position, 0.f, Rgba8::WHITE, true, false);
 
     Vec2 velocity      = (Window::s_mainWindow->GetCursorPositionOnScreen() - m_position).GetNormalized();
     bullet->m_velocity = velocity;
@@ -216,23 +221,22 @@ void Player::ShrinkWindow()
         Vec2 newPos  = currentPos + Vec2(1, 1);
         Vec2 newSize = currentSize + Vec2(-1, -1);
         g_theWindowSubsystem->AnimateWindowPositionAndDimensions(windowID, newPos, newSize, 0.1f);
-        // g_theWindowSubsystem->AnimateWindowDimensions(windowID,  newSize, 0.1f);
     }
 }
 
 bool Player::OnGameStateChanged(EventArgs& args)
 {
-    String const newGameState = args.GetValue("OnGameStateChanged", "DEFAULT");
-
-    if (newGameState == "ATTRACT")
-    {
-        g_theGame->GetPlayer()->m_coinWidget->SetVisible(false);
-        g_theGame->GetPlayer()->m_healthWidget->SetVisible(false);
-    }
-    if (newGameState == "GAME")
+    String const preGameState = args.GetValue("preGameState", "DEFAULT");
+    String const curGameState = args.GetValue("curGameState", "DEFAULT");
+    if (preGameState == "ATTRACT" && curGameState == "GAME")
     {
         g_theGame->GetPlayer()->m_coinWidget->SetVisible(true);
         g_theGame->GetPlayer()->m_healthWidget->SetVisible(true);
+    }
+    else if (preGameState == "GAME" && curGameState == "ATTRACT")
+    {
+        g_theGame->GetPlayer()->m_coinWidget->SetVisible(false);
+        g_theGame->GetPlayer()->m_healthWidget->SetVisible(false);
     }
 
     return false;

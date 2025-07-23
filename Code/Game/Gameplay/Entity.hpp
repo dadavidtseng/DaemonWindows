@@ -21,6 +21,7 @@ public:
     Vec2     m_velocity           = Vec2::ZERO;
     Rgba8    m_color              = Rgba8::WHITE;
     int      m_health             = 0;
+    int      m_coinToDrop         = 0;      // TODO: reconsider the name of this variable
     float    m_orientationDegrees = 0.f;
     float    m_physicRadius       = 0.f;
     float    m_cosmeticRadius     = 0.f;

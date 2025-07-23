@@ -9,6 +9,7 @@
 #include "Player.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 
+//----------------------------------------------------------------------------------------------------
 Bullet::Bullet(EntityID const& entityID,
                Vec2 const&     position,
                float const     orientationDegrees,
@@ -18,12 +19,15 @@ Bullet::Bullet(EntityID const& entityID,
     : Entity(position, orientationDegrees, color, isVisible, hasChildWindow)
 {
     m_entityID     = entityID;
-    m_name         = "BULLET";
+    m_name         = "Bullet";
     m_physicRadius = 10.f;
-    m_speed        = 500.0f;
-    m_health       = 1;  // 子彈通常一擊就消失
+    m_speed        = 500.f;
+    m_health       = 1;
 
-    g_theWindowSubsystem->CreateChildWindow(m_entityID, m_name, static_cast<int>(m_position.x), static_cast<int>(m_position.y), 100, 100);
+    if (m_hasChildWindow)
+    {
+        g_theWindowSubsystem->CreateChildWindow(m_entityID, m_name, static_cast<int>(m_position.x), static_cast<int>(m_position.y), 100, 100);
+    }
 }
 
 Bullet::~Bullet()
@@ -81,9 +85,12 @@ void Bullet::Update(float const deltaSeconds)
         }
     }
 
-    WindowID    windowID2   = g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID);
-    WindowData* windowData2 = g_theWindowSubsystem->GetWindowData(windowID2);
-    windowData2->m_window->SetClientPosition(m_position - windowData2->m_window->GetClientDimensions() * 0.5f);
+    if (m_hasChildWindow)
+    {
+        WindowID    windowID2   = g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID);
+        WindowData* windowData2 = g_theWindowSubsystem->GetWindowData(windowID2);
+        windowData2->m_window->SetClientPosition(m_position - windowData2->m_window->GetClientDimensions() * 0.5f);
+    }
 }
 
 void Bullet::Render() const

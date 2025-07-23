@@ -5,7 +5,6 @@
 #pragma once
 #include "Engine/Core/StringUtils.hpp"
 
-
 //-Forward-Declaration--------------------------------------------------------------------------------
 class Entity;
 
@@ -48,8 +47,7 @@ public:
     virtual void MarkForDestroy();
 
 protected:
-    void* m_owner = nullptr;
-    // Entity*          m_entity     = nullptr; // 擁有此 Widget 的 Entity
+    void*  m_owner      = nullptr;
     int    m_zOrder     = 0;       // 渲染順序，數字越大越在前面
     bool   m_bIsTick    = true;    // 是否需要 Update
     String m_name       = "DEFAULT";

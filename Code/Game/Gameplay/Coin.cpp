@@ -5,6 +5,10 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Coin.hpp"
 
+#include "Game.hpp"
+#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/NamedStrings.hpp"
+
 //----------------------------------------------------------------------------------------------------
 Coin::Coin(EntityID const entityID,
            Vec2 const&    position,
