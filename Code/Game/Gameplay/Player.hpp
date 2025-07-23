@@ -27,6 +27,7 @@ public:
 
 private:
     static bool OnGameStateChanged(EventArgs& args);
+    static bool OnCollisionEnter(EventArgs& args);
     void        IncreaseCoin(int amount);
     void        DecreaseCoin(int amount);
     void        BounceOfWindow();

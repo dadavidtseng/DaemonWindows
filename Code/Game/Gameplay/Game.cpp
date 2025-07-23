@@ -24,6 +24,7 @@
 #include "Game/Gameplay/Player.hpp"
 #include "Game/Gameplay/Shop.hpp"
 #include "Game/Gameplay/Triangle.hpp"
+#include "Game/Subsystem/Widget/ButtonWidget.hpp"
 #include "Game/Subsystem/Widget/WidgetSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
@@ -135,8 +136,10 @@ bool Game::OnGameStateChanged(EventArgs& args)
 
 STATIC bool Game::OnEntityDestroyed(EventArgs& args)
 {
-    // String   name     = args.GetValue("name", "DEFAULT");
+    String   name     = args.GetValue("name", "DEFAULT");
     EntityID entityID = args.GetValue("entityID", -1);
+
+    if (name == "Coin") return true;
 
     Vec2 position = g_theGame->GetEntityByEntityID(entityID)->m_position;
     g_theGame->m_entities.push_back(new Coin((int)g_theGame->m_entities.size(), position, 0.f, Rgba8::RED, true, false));
@@ -225,39 +228,6 @@ void Game::UpdateFromInput()
 {
     if (m_gameState == eGameState::ATTRACT)
     {
-        if (g_theInput->IsKeyDown(KEYCODE_I))
-        {
-            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowIDByEntityID(0), Vec2(0, 10));
-        }
-        if (g_theInput->IsKeyDown(KEYCODE_K))
-        {
-            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowIDByEntityID(0), Vec2(0, -10));
-        }
-        if (g_theInput->IsKeyDown(KEYCODE_J))
-        {
-            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowIDByEntityID(0), Vec2(-10, 0));
-        }
-        if (g_theInput->IsKeyDown(KEYCODE_L))
-        {
-            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowIDByEntityID(0), Vec2(10, 0));
-        }
-        if (g_theInput->IsKeyDown(KEYCODE_UPARROW))
-        {
-            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowIDByEntityID(1), Vec2(0, 10));
-        }
-        if (g_theInput->IsKeyDown(KEYCODE_DOWNARROW))
-        {
-            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowIDByEntityID(1), Vec2(0, -10));
-        }
-        if (g_theInput->IsKeyDown(KEYCODE_LEFTARROW))
-        {
-            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowIDByEntityID(1), Vec2(-10, 0));
-        }
-        if (g_theInput->IsKeyDown(KEYCODE_RIGHTARROW))
-        {
-            g_theWindowSubsystem->UpdateWindowPosition(g_theWindowSubsystem->FindWindowIDByEntityID(1), Vec2(10, 0));
-        }
-
         if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
         {
             App::RequestQuit();
@@ -268,8 +238,6 @@ void Game::UpdateFromInput()
             ChangeGameState(eGameState::GAME);
             SoundID const clickSound = g_theAudio->CreateOrGetSound("Data/Audio/TestSound.mp3", eAudioSystemSoundDimension::Sound2D);
             g_theAudio->StartSound(clickSound, false, 1.f, 0.f, 0.5f);
-            // g_theWindowSubsystem->CreateChildWindow(EntityID(1), "HELLO");
-            // m_entities.push_back(new Shop(6, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::BLACK));
         }
     }
     else if (m_gameState == eGameState::GAME)
@@ -284,10 +252,6 @@ void Game::UpdateFromInput()
         {
             ChangeGameState(eGameState::SHOP);
         }
-        if (g_theInput->WasKeyJustPressed(KEYCODE_Q)) g_theGame->SpawnEntity();
-        // Window* window = g_theWindowSubsystem->GetWindow(g_theWindowSubsystem->FindWindowIDByEntityID(m_entities[6]->m_entityID));
-        // if (g_theInput->WasKeyJustPressed(NUMCODE_1))ShowWindow((HWND)window->GetWindowHandle(), SW_HIDE);
-        // if (g_theInput->WasKeyJustPressed(NUMCODE_2))ShowWindow((HWND)window->GetWindowHandle(), SW_SHOW);
     }
     else if (m_gameState == eGameState::SHOP)
     {
@@ -302,12 +266,12 @@ void Game::UpdateFromInput()
 
 void Game::HandleEntityCollision()
 {
-    for (int i = 0; i < m_entities.size(); ++i)
+    for (int i = 0; i < (int)m_entities.size(); ++i)
     {
         Entity* entityA = m_entities[i];
         if (entityA->IsDead()) continue;
 
-        for (int j = 0; j < m_entities.size(); ++j)
+        for (int j = 0; j < (int)m_entities.size(); ++j)
         {
             if (i == j) continue;
 
@@ -316,17 +280,30 @@ void Game::HandleEntityCollision()
             // 檢查兩個實體是否發生碰撞
             if (DoDiscsOverlap2D(entityA->m_position, entityA->m_physicRadius, entityB->m_position, entityB->m_physicRadius))
             {
-                // 處理碰撞反應
-                // entityA->m_color = entityB->m_color;
-
-                // 方法1: 使用 dynamic_cast (如果有繼承關係和虛擬函式)
-                Bullet*   bulletA  = dynamic_cast<Bullet*>(entityA);
+                Bullet*   bullet   = dynamic_cast<Bullet*>(entityA);
                 Triangle* triangle = dynamic_cast<Triangle*>(entityB);
-                if (bulletA != nullptr && triangle != nullptr)
+
+                if (bullet != nullptr && triangle != nullptr)
                 {
-                    // entityA 是 Bullet 類別
-                    bulletA->DecreaseHealth(1);
-                    triangle->DecreaseHealth(1);
+                    EventArgs args;
+                    args.SetValue("entityA", bullet->m_name);
+                    args.SetValue("entityAID", std::to_string(bullet->m_entityID));
+                    args.SetValue("entityB", triangle->m_name);
+                    args.SetValue("entityBID", std::to_string(triangle->m_entityID));
+                    g_theEventSystem->FireEvent("OnCollisionEnter", args);
+                }
+
+                Player* player = dynamic_cast<Player*>(entityA);
+                Coin*   coin   = dynamic_cast<Coin*>(entityB);
+
+                if (player != nullptr && coin != nullptr)
+                {
+                    EventArgs args;
+                    args.SetValue("entityA", player->m_name);
+                    args.SetValue("entityAID", std::to_string(player->m_entityID));
+                    args.SetValue("entityB", coin->m_name);
+                    args.SetValue("entityBID", std::to_string(coin->m_entityID));
+                    g_theEventSystem->FireEvent("OnCollisionEnter", args);
                 }
             }
         }
@@ -447,8 +424,8 @@ void Game::RenderGame() const
 void Game::SpawnEntity()
 {
     m_entities.push_back(new Triangle((int)m_entities.size(), Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::BLUE, true, false));
-    m_entities.push_back(new Triangle((int)m_entities.size(), Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::BLUE, true, false));
-    m_entities.push_back(new Triangle((int)m_entities.size(), Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::BLUE, true, false));
+    // m_entities.push_back(new Triangle((int)m_entities.size(), Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::BLUE, true, false));
+    // m_entities.push_back(new Triangle((int)m_entities.size(), Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::BLUE, true, false));
     // m_entities.push_back(new Coin((int)m_entities.size(), Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::RED, true, true));
     // m_entities.push_back(new Debris((int)m_entities.size(), Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::GREEN, true, true));
 

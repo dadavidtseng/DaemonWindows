@@ -32,6 +32,7 @@ Player::Player(EntityID const entityID,
     m_name           = "You";
 
     g_theEventSystem->SubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
+    g_theEventSystem->SubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
 
     g_theWindowSubsystem->CreateChildWindow(m_entityID, m_name, 100, 100, (int)(1445 * 0.6f), (int)(248));
 
@@ -53,6 +54,7 @@ Player::~Player()
 {
     Entity::~Entity();
     g_theEventSystem->UnsubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
+    g_theEventSystem->UnsubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -110,12 +112,6 @@ void Player::UpdateFromInput()
     if (g_theInput->IsKeyDown(KEYCODE_A)) m_position.x -= 10.f;
     if (g_theInput->IsKeyDown(KEYCODE_S)) m_position.y -= 10.f;
     if (g_theInput->IsKeyDown(KEYCODE_D)) m_position.x += 10.f;
-
-    if (g_theInput->WasKeyJustPressed(KEYCODE_P))
-    {
-        m_coin += 1;
-        m_coinWidget->SetText(Stringf("%d", m_coin));
-    }
 
     // 連發射擊（持續按住）
     if (g_theInput->IsKeyDown(KEYCODE_LEFT_MOUSE))
@@ -238,6 +234,20 @@ bool Player::OnGameStateChanged(EventArgs& args)
         g_theGame->GetPlayer()->m_coinWidget->SetVisible(false);
         g_theGame->GetPlayer()->m_healthWidget->SetVisible(false);
     }
+
+    return false;
+}
+
+STATIC bool Player::OnCollisionEnter(EventArgs& args)
+{
+    String entityA = args.GetValue("entityA", "DEFAULT");
+    String entityB = args.GetValue("entityB", "DEFAULT");
+
+    if (entityA != "You" && entityB != "You") return false;
+
+    Player* player = g_theGame->GetPlayer();
+    player->IncreaseCoin(1);
+    player->m_coinWidget->SetText(Stringf("Coin=%d", player->m_coin));
 
     return false;
 }

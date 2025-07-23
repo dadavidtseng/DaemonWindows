@@ -5,6 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Triangle.hpp"
 
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Game/Gameplay/Game.hpp"
 #include "Game/Subsystem/Widget/ButtonWidget.hpp"
@@ -26,6 +27,8 @@ Triangle::Triangle(EntityID const entityID,
     m_thickness      = 10.f;
     m_cosmeticRadius = m_physicRadius + m_thickness;
 
+    g_theEventSystem->SubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
+
     if (m_hasChildWindow)
     {
         g_theWindowSubsystem->CreateChildWindow(m_entityID, m_name, static_cast<int>(m_position.x), static_cast<int>(m_position.y), 200, 200);
@@ -46,6 +49,7 @@ Triangle::~Triangle()
         g_theWindowSubsystem->RemoveEntityFromMappings(m_entityID);
         m_healthWidget->MarkForDestroy();
     }
+    g_theEventSystem->UnsubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
 }
 
 void Triangle::UpdateWindowFocus()
@@ -161,4 +165,14 @@ void Triangle::ShrinkWindow()
         g_theWindowSubsystem->AnimateWindowPositionAndDimensions(windowID, newPos, newSize, 0.1f);
         // g_theWindowSubsystem->AnimateWindowDimensions(windowID,  newSize, 0.1f);
     }
+}
+
+STATIC bool Triangle::OnCollisionEnter(EventArgs& args)
+{
+    EntityID entityBID = args.GetValue("entityBID", -1);
+    Entity*  entity    = g_theGame->GetEntityByEntityID(entityBID);
+    entity->DecreaseHealth(1);
+    entity->m_position = entity->m_position - entity->m_velocity * 30.f;
+
+    return false;
 }

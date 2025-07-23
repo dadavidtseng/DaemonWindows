@@ -7,6 +7,7 @@
 
 #include "Game.hpp"
 #include "Player.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 
 //----------------------------------------------------------------------------------------------------
@@ -24,6 +25,8 @@ Bullet::Bullet(EntityID const& entityID,
     m_speed        = 500.f;
     m_health       = 1;
 
+    g_theEventSystem->SubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
+
     if (m_hasChildWindow)
     {
         g_theWindowSubsystem->CreateChildWindow(m_entityID, m_name, static_cast<int>(m_position.x), static_cast<int>(m_position.y), 100, 100);
@@ -33,6 +36,7 @@ Bullet::Bullet(EntityID const& entityID,
 Bullet::~Bullet()
 {
     g_theWindowSubsystem->RemoveEntityFromMappings(m_entityID);
+    g_theEventSystem->UnsubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
 }
 
 void Bullet::Update(float const deltaSeconds)
@@ -109,4 +113,13 @@ void Bullet::Render() const
 
 void Bullet::UpdateFromInput()
 {
+}
+
+STATIC bool Bullet::OnCollisionEnter(EventArgs& args)
+{
+    EntityID entityAID = args.GetValue("entityAID", -1);
+    Entity*  entity    = g_theGame->GetEntityByEntityID(entityAID);
+    entity->DecreaseHealth(1);
+
+    return false;
 }

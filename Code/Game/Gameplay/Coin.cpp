@@ -5,6 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Coin.hpp"
 
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/NamedStrings.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Game/Gameplay/Game.hpp"
@@ -20,10 +21,12 @@ Coin::Coin(EntityID const entityID,
 {
     m_entityID       = entityID;
     m_name           = "Coin";
-    m_health         = 999;
+    m_health         = 1;
     m_physicRadius   = g_theRNG->RollRandomFloatInRange(2.f, 10.f);
     m_thickness      = 10.f;
     m_cosmeticRadius = m_physicRadius + m_thickness;
+
+    g_theEventSystem->SubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
 
     if (m_hasChildWindow)
     {
@@ -35,6 +38,7 @@ Coin::Coin(EntityID const entityID,
 Coin::~Coin()
 {
     g_theWindowSubsystem->RemoveEntityFromMappings(m_entityID);
+    g_theEventSystem->UnsubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -62,6 +66,14 @@ void Coin::Render() const
     g_theRenderer->BindTexture(nullptr);
     g_theRenderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
     g_theRenderer->DrawVertexArray(verts);
+}
+
+STATIC bool Coin::OnCollisionEnter(EventArgs& args)
+{
+    EntityID entityBID = args.GetValue("entityBID", -1);
+    g_theGame->GetEntityByEntityID(entityBID)->DecreaseHealth(1);
+
+    return false;
 }
 
 //----------------------------------------------------------------------------------------------------

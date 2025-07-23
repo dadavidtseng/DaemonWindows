@@ -5,6 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #pragma once
 
+#include "Engine/Core/EventSystem.hpp"
 #include "Game/Subsystem/Window/WindowSubsystem.hpp"
 
 //-Forward-Declaration--------------------------------------------------------------------------------
@@ -23,5 +24,7 @@ public:
     void UpdateFromInput() override;
     void ShrinkWindow();
 
+private:
+    static bool OnCollisionEnter(EventArgs& args);
     std::shared_ptr<ButtonWidget> m_healthWidget;
 };
