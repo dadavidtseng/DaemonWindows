@@ -29,7 +29,7 @@ public:
 
     virtual void Update(float deltaSeconds);
     virtual void Render() const = 0;
-    virtual void UpdateFromInput() = 0;    // TODO: should entity handle its own input logic? or should the game handle it for him?
+    virtual void UpdateFromInput(float deltaSeconds) = 0;    // TODO: should entity handle its own input logic? or should the game handle it for him?
 
     virtual void MarkAsDead();
     virtual void MarkAsGarbage();

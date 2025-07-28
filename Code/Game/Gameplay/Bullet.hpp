@@ -16,7 +16,7 @@ public:
     ~Bullet() override;
     void Update(float deltaSeconds) override;
     void Render() const override;
-    void UpdateFromInput() override;
+    void UpdateFromInput(float deltaSeconds) override;
 
 private:
     static bool OnCollisionEnter(EventArgs& args);

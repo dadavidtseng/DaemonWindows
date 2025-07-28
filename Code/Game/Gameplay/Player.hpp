@@ -22,12 +22,11 @@ public:
     void Update(float deltaSeconds) override;
     void Render() const override;
 
-    void                          UpdateFromInput() override;
+    void                          UpdateFromInput(float deltaSeconds) override;
     void                          UpdateWindowFocus();
     void                          FireBullet();
     std::shared_ptr<ButtonWidget> m_healthWidget;
     std::shared_ptr<ButtonWidget> m_coinWidget;
-    std::shared_ptr<ButtonWidget> m_timerWidget;
     int                           m_maxHealth = 0;
     int                           m_coin      = 50;
 

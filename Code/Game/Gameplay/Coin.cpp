@@ -26,7 +26,7 @@ Coin::Coin(EntityID const entityID,
     m_thickness      = 10.f;
     m_cosmeticRadius = m_physicRadius + m_thickness;
 
-    g_theEventSystem->SubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
+    // g_theEventSystem->SubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
 
     if (m_hasChildWindow)
     {
@@ -37,8 +37,11 @@ Coin::Coin(EntityID const entityID,
 //----------------------------------------------------------------------------------------------------
 Coin::~Coin()
 {
-    g_theWindowSubsystem->RemoveEntityFromMappings(m_entityID);
-    g_theEventSystem->UnsubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
+    if (m_hasChildWindow)
+    {
+        g_theWindowSubsystem->RemoveEntityFromMappings(m_entityID);
+    }
+    // g_theEventSystem->UnsubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -70,14 +73,23 @@ void Coin::Render() const
 
 STATIC bool Coin::OnCollisionEnter(EventArgs& args)
 {
+    String   entityA   = args.GetValue("entityA", "DEFAULT");
+    String   entityB   = args.GetValue("entityB", "DEFAULT");
     EntityID entityBID = args.GetValue("entityBID", -1);
-    g_theGame->GetEntityByEntityID(entityBID)->DecreaseHealth(1);
-    SoundID const attractBGM = g_theAudio->CreateOrGetSound("Data/Audio/coin.mp3", eAudioSystemSoundDimension::Sound2D);
-    g_theAudio->StartSound(attractBGM, false, 1.f, 0.f, 1.f);
+    //Player*  player    = g_theGame->GetPlayer();
+    Entity*  entity    = g_theGame->GetEntityByEntityID(entityBID);
+    if (entityA == "You" && entityB == "Coin")
+    {
+        entity->DecreaseHealth(1);
+        SoundID const attractBGM = g_theAudio->CreateOrGetSound("Data/Audio/coin.mp3", eAudioSystemSoundDimension::Sound2D);
+        g_theAudio->StartSound(attractBGM, false, 1.f, 0.f, 1.f);
+    }
+
     return false;
 }
 
 //----------------------------------------------------------------------------------------------------
-void Coin::UpdateFromInput()
+void Coin::UpdateFromInput(float deltaSeconds)
 {
+    UNUSED(deltaSeconds)
 }

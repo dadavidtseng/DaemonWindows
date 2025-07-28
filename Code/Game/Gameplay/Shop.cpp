@@ -98,8 +98,8 @@ void Shop::Update(float const deltaSeconds)
 void Shop::Render() const
 {
     // if (!m_isVisible) return;
-    WindowID       windowID   = g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID);
-    WindowData*    windowData = g_theWindowSubsystem->GetWindowData(windowID);
+    //WindowID       windowID   = g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID);
+    // WindowData*    windowData = g_theWindowSubsystem->GetWindowData(windowID);
     VertexList_PCU verts;
     AddVertsForAABB2D(verts, AABB2(m_position - Vec2(100, 200), m_position + Vec2(100, 200)));
     AddVertsForAABB2D(verts, AABB2(m_position - Vec2(315, 200), m_position + Vec2(-115, 200)));
@@ -149,8 +149,9 @@ STATIC bool Shop::OnGameStateChanged(EventArgs& args)
 }
 
 //----------------------------------------------------------------------------------------------------
-void Shop::UpdateFromInput()
+void Shop::UpdateFromInput(float const deltaSeconds)
 {
+    UNUSED(deltaSeconds)
     Player* player = g_theGame->GetPlayer();
     if (player->m_coin <= 0) return;
     if (g_theInput->WasKeyJustPressed(NUMCODE_1))

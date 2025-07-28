@@ -4,6 +4,7 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Debris.hpp"
+#include <Engine/Core/EngineCommon.hpp>
 
 //----------------------------------------------------------------------------------------------------
 Debris::Debris(EntityID const entityID,
@@ -56,6 +57,7 @@ void Debris::Render() const
     g_theRenderer->DrawVertexArray(verts);
 }
 
-void Debris::UpdateFromInput()
+void Debris::UpdateFromInput(float deltaSeconds)
 {
+    UNUSED(deltaSeconds)
 }

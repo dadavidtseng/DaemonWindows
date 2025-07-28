@@ -35,7 +35,7 @@ public:
 
 private:
     static bool OnGameStateChanged(EventArgs& args);
-    void        UpdateFromInput() override;
+    void        UpdateFromInput(float deltaSeconds) override;
 
     std::shared_ptr<ButtonWidget> m_itemWidgetA;
     std::shared_ptr<ButtonWidget> m_itemWidgetB;

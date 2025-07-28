@@ -20,5 +20,5 @@ public:
 
 private:
     static bool OnCollisionEnter(EventArgs& args);
-    void UpdateFromInput() override;
+    void UpdateFromInput(float deltaSeconds) override;
 };

@@ -21,7 +21,7 @@ public:
     void Update(float deltaSeconds) override;
     void Render() const override;
     void BounceOfWindow();
-    void UpdateFromInput() override;
+    void UpdateFromInput(float deltaSeconds) override;
     void ShrinkWindow();
 
 private:

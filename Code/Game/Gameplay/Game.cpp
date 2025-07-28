@@ -27,10 +27,7 @@
 #include "Game/Subsystem/Widget/ButtonWidget.hpp"
 #include "Game/Subsystem/Widget/WidgetSubsystem.hpp"
 
-void Game::SpawnPlayer()
-{
-    m_entities.push_back(new Player((int)m_entities.size(), Window::s_mainWindow->GetScreenDimensions() * 0.5f, 0.f, Rgba8::YELLOW, true, true));
-}
+int Game::s_nextEntityID = 0;
 
 //----------------------------------------------------------------------------------------------------
 Game::Game()
@@ -47,11 +44,10 @@ Game::Game()
     m_screenCamera->SetNormalizedViewport(AABB2::ZERO_TO_ONE);
 
     m_gameClock = new Clock(Clock::GetSystemClock());
-    m_gameTimer = new Timer(60.f, m_gameClock);
 
     SpawnPlayer();
     // TODO: spawn before firing the event will cause nullptr
-    m_entities.push_back(new Shop((int)m_entities.size(), Vec2(Window::s_mainWindow->GetScreenDimensions().x * 0.5f, Window::s_mainWindow->GetScreenDimensions().y * 0.5f), 0.f, Rgba8::YELLOW, true, true));
+    SpawnShop();
     Shop* shop = GetShop();
     if (shop != nullptr)
     {
@@ -62,6 +58,7 @@ Game::Game()
     m_attractPlaybackID      = g_theAudio->StartSound(attractBGM, true, 1.f, 0.f, 1.f);
 }
 
+//----------------------------------------------------------------------------------------------------
 Game::~Game()
 {
     g_theEventSystem->UnsubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
@@ -72,6 +69,17 @@ Game::~Game()
 void Game::Update()
 {
     float const gameDeltaSeconds = static_cast<float>(m_gameClock->GetDeltaSeconds());
+    m_spawnTimer += gameDeltaSeconds;
+
+    // 檢查是否到了生成時間
+    if (m_gameState == eGameState::GAME)
+    {
+        if (m_spawnTimer >= m_spawnInterval)
+        {
+            SpawnEntity();
+            m_spawnTimer = 0.0f;  // 重置計時器
+        }
+    }
 
     UpdateFromInput();
     AdjustForPauseAndTimeDistortion();
@@ -84,7 +92,7 @@ void Game::Update()
             if (!entity->IsDead())  // 再檢查是否存活
             {
                 entity->Update(gameDeltaSeconds);
-                entity->UpdateFromInput();
+                entity->UpdateFromInput(gameDeltaSeconds);
             }
             else
             {
@@ -122,7 +130,8 @@ void Game::Render() const
     // }
 }
 
-bool Game::OnGameStateChanged(EventArgs& args)
+//----------------------------------------------------------------------------------------------------
+STATIC bool Game::OnGameStateChanged(EventArgs& args)
 {
     String const preGameState = args.GetValue("preGameState", "DEFAULT");
     String const curGameState = args.GetValue("curGameState", "DEFAULT");
@@ -137,6 +146,7 @@ bool Game::OnGameStateChanged(EventArgs& args)
     else if (preGameState == "GAME" && curGameState == "ATTRACT")
     {
         g_theGame->DestroyEntity();
+
         if (g_theGame->GetPlayer() == nullptr) g_theGame->SpawnPlayer();
         g_theAudio->StopSound(g_theGame->m_ingamePlaybackID);
         SoundID const attractBGM       = g_theAudio->CreateOrGetSound("Data/Audio/attract.mp3", eAudioSystemSoundDimension::Sound2D);
@@ -144,7 +154,7 @@ bool Game::OnGameStateChanged(EventArgs& args)
     }
     else if (preGameState == "GAME" && curGameState == "SHOP")
     {
-        g_theGame->SpawnShop();
+        g_theGame->ShowShop();
     }
     else if (preGameState == "SHOP" && curGameState == "GAME")
     {
@@ -154,6 +164,7 @@ bool Game::OnGameStateChanged(EventArgs& args)
     return false;
 }
 
+//----------------------------------------------------------------------------------------------------
 STATIC bool Game::OnEntityDestroyed(EventArgs& args)
 {
     String   name     = args.GetValue("name", "DEFAULT");
@@ -167,11 +178,13 @@ STATIC bool Game::OnEntityDestroyed(EventArgs& args)
     return true;
 }
 
+//----------------------------------------------------------------------------------------------------
 eGameState Game::GetCurrentGameState() const
 {
     return m_gameState;
 }
 
+//----------------------------------------------------------------------------------------------------
 void Game::ChangeGameState(eGameState const newGameState)
 {
     if (newGameState == m_gameState) return;
@@ -205,12 +218,14 @@ void Game::ChangeGameState(eGameState const newGameState)
     g_theEventSystem->FireEvent("OnGameStateChanged", args);
 }
 
+//----------------------------------------------------------------------------------------------------
 Clock* Game::GetGameClock() const
 {
     if (m_gameClock != nullptr) return m_gameClock;
     return nullptr;
 }
 
+//----------------------------------------------------------------------------------------------------
 Player* Game::GetPlayer() const
 {
     for (Entity* entity : m_entities)
@@ -221,6 +236,7 @@ Player* Game::GetPlayer() const
     return nullptr;
 }
 
+//----------------------------------------------------------------------------------------------------
 Shop* Game::GetShop() const
 {
     for (Entity* entity : m_entities)
@@ -231,6 +247,7 @@ Shop* Game::GetShop() const
     return nullptr;
 }
 
+//----------------------------------------------------------------------------------------------------
 Entity* Game::GetEntityByEntityID(EntityID const& entityID) const
 {
     for (Entity* entity : m_entities)
@@ -271,6 +288,8 @@ void Game::UpdateFromInput()
         if (g_theInput->WasKeyJustPressed(KEYCODE_SPACE))
         {
             ChangeGameState(eGameState::SHOP);
+            SoundID const clickSound = g_theAudio->CreateOrGetSound("Data/Audio/TestSound.mp3", eAudioSystemSoundDimension::Sound2D);
+            g_theAudio->StartSound(clickSound, false, 10.f, 0.f, 1.f);
         }
     }
     else if (m_gameState == eGameState::SHOP)
@@ -279,7 +298,7 @@ void Game::UpdateFromInput()
         {
             ChangeGameState(eGameState::GAME);
             SoundID const clickSound = g_theAudio->CreateOrGetSound("Data/Audio/TestSound.mp3", eAudioSystemSoundDimension::Sound2D);
-            g_theAudio->StartSound(clickSound);
+            g_theAudio->StartSound(clickSound, false, 10.f, 0.f, 1.f);
         }
     }
 }
@@ -312,6 +331,11 @@ void Game::HandleEntityCollision()
                     args.SetValue("entityB", triangle->m_name);
                     args.SetValue("entityBID", std::to_string(triangle->m_entityID));
                     g_theEventSystem->FireEvent("OnCollisionEnter", args);
+
+                    triangle->DecreaseHealth(1);
+                    triangle->m_position     = triangle->m_position - triangle->m_velocity * 30.f;
+                    SoundID const attractBGM = g_theAudio->CreateOrGetSound("Data/Audio/hit.mp3", eAudioSystemSoundDimension::Sound2D);
+                    g_theAudio->StartSound(attractBGM, false, 1.f, 0.f, 1.f);
                 }
 
                 Player* player = dynamic_cast<Player*>(entityA);
@@ -325,6 +349,10 @@ void Game::HandleEntityCollision()
                     args.SetValue("entityB", coin->m_name);
                     args.SetValue("entityBID", std::to_string(coin->m_entityID));
                     g_theEventSystem->FireEvent("OnCollisionEnter", args);
+
+                    coin->DecreaseHealth(1);
+                    SoundID const attractBGM = g_theAudio->CreateOrGetSound("Data/Audio/coin.mp3", eAudioSystemSoundDimension::Sound2D);
+                    g_theAudio->StartSound(attractBGM, false, 1.f, 0.f, 1.f);
                 }
 
                 if (player != nullptr && triangle != nullptr)
@@ -380,14 +408,14 @@ void Game::RenderAttractMode() const
     g_theRenderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
     g_theRenderer->DrawVertexArray(verts1);
 
-    HWND    hwnd        = GetFocus();
-    wchar_t wTitle[256] = L"";
-    GetWindowTextW(hwnd, wTitle, 256);
-    std::wstring ws(wTitle);
-    std::string  title(ws.begin(), ws.end());
+    HWND hwnd        = GetFocus();
+    char wTitle[256] = "";
+    GetWindowTextA(hwnd, wTitle, 256);
+
+
     DebugAddScreenText(Stringf("NormalizedMouseUV(%.2f, %.2f)", Window::s_mainWindow->GetNormalizedMouseUV().x, Window::s_mainWindow->GetNormalizedMouseUV().y), m_screenCamera->GetOrthographicBottomLeft(), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
     DebugAddScreenText(Stringf("CursorPositionOnScreen(%.1f, %.1f)", Window::s_mainWindow->GetCursorPositionOnScreen().x, Window::s_mainWindow->GetCursorPositionOnScreen().y), m_screenCamera->GetOrthographicBottomLeft() + Vec2(0, 20), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
-    DebugAddScreenText(Stringf("Focus Window(%s)", title.c_str()), m_screenCamera->GetOrthographicBottomLeft() + Vec2(0, 40), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
+    DebugAddScreenText(Stringf("Focus Window(%s)", wTitle), m_screenCamera->GetOrthographicBottomLeft() + Vec2(0, 40), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
     DebugAddScreenText(Stringf("Client Dimensions(%.1f, %.1f)", Window::s_mainWindow->GetClientDimensions().x, Window::s_mainWindow->GetClientDimensions().y), m_screenCamera->GetOrthographicBottomLeft() + Vec2(0, 60), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
     DebugAddScreenText(Stringf("Viewport Dimensions(%.1f, %.1f)", Window::s_mainWindow->GetViewportDimensions().x, Window::s_mainWindow->GetViewportDimensions().y), m_screenCamera->GetOrthographicBottomLeft() + Vec2(0, 80), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
     DebugAddScreenText(Stringf("Screen Dimensions(%.1f, %.1f)", Window::s_mainWindow->GetScreenDimensions().x, Window::s_mainWindow->GetScreenDimensions().y), m_screenCamera->GetOrthographicBottomLeft() + Vec2(0, 100), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
@@ -453,11 +481,15 @@ void Game::RenderGame() const
     DebugAddScreenText(Stringf("Time: %.2f\nFPS: %.2f\nScale: %.1f", m_gameClock->GetTotalSeconds(), 1.f / m_gameClock->GetDeltaSeconds(), m_gameClock->GetTimeScale()), m_screenCamera->GetOrthographicBottomLeft(), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
 }
 
+//----------------------------------------------------------------------------------------------------
 void Game::SpawnEntity()
 {
-    m_entities.push_back(new Triangle((int)m_entities.size(), Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::BLUE, true, false));
-    // m_entities.push_back(new Triangle((int)m_entities.size(), Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::BLUE, true, false));
-    // m_entities.push_back(new Triangle((int)m_entities.size(), Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::BLUE, true, false));
+    m_entities.push_back(new Triangle(s_nextEntityID++, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::BLUE, true,
+                                      g_theRNG->RollRandomIntInRange(0, 1)));
+    m_entities.push_back(new Triangle(s_nextEntityID++, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::BLUE, true,
+                                      g_theRNG->RollRandomIntInRange(0, 1)));
+    m_entities.push_back(new Triangle(s_nextEntityID++, Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::BLUE, true,
+                                      g_theRNG->RollRandomIntInRange(0, 1)));
     // m_entities.push_back(new Coin((int)m_entities.size(), Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::RED, true, true));
     // m_entities.push_back(new Debris((int)m_entities.size(), Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::GREEN, true, true));
 
@@ -472,17 +504,20 @@ void Game::SpawnEntity()
     }
 }
 
+//----------------------------------------------------------------------------------------------------
 void Game::DestroyEntity()
 {
     for (Entity* entity : m_entities)
     {
         if (entity == nullptr) continue;
         if (entity->m_name == "You") continue;
+        if (entity->m_name == "Shop") continue;
         entity->MarkAsDead();
     }
 }
 
-void Game::SpawnShop()
+//----------------------------------------------------------------------------------------------------
+void Game::ShowShop()
 {
     Shop* shop = GetShop();
     if (shop != nullptr)
@@ -491,6 +526,7 @@ void Game::SpawnShop()
     }
 }
 
+//----------------------------------------------------------------------------------------------------
 void Game::DestroyShop()
 {
     Shop* shop = GetShop();
@@ -498,4 +534,16 @@ void Game::DestroyShop()
     {
         shop->MarkAsChildWindowInvisible();
     }
+}
+
+//----------------------------------------------------------------------------------------------------
+void Game::SpawnPlayer()
+{
+    m_entities.push_back(new Player(s_nextEntityID++, Window::s_mainWindow->GetScreenDimensions() * 0.5f, 0.f, Rgba8::YELLOW, true, true));
+}
+
+//----------------------------------------------------------------------------------------------------
+void Game::SpawnShop()
+{
+    m_entities.push_back(new Shop(s_nextEntityID++, Vec2(Window::s_mainWindow->GetScreenDimensions().x * 0.5f, Window::s_mainWindow->GetScreenDimensions().y * 0.5f), 0.f, Rgba8::BLACK, true, true));
 }

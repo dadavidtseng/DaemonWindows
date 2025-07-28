@@ -6,6 +6,7 @@
 #include "Game/Gameplay/Triangle.hpp"
 
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Game/Gameplay/Game.hpp"
 #include "Game/Subsystem/Widget/ButtonWidget.hpp"
@@ -27,7 +28,7 @@ Triangle::Triangle(EntityID const entityID,
     m_thickness      = 10.f;
     m_cosmeticRadius = m_physicRadius + m_thickness;
 
-    g_theEventSystem->SubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
+    // g_theEventSystem->SubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
 
     if (m_hasChildWindow)
     {
@@ -49,7 +50,7 @@ Triangle::~Triangle()
         g_theWindowSubsystem->RemoveEntityFromMappings(m_entityID);
         m_healthWidget->MarkForDestroy();
     }
-    g_theEventSystem->UnsubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
+    // g_theEventSystem->UnsubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
 }
 
 void Triangle::UpdateWindowFocus()
@@ -143,8 +144,9 @@ void Triangle::BounceOfWindow()
     m_position.y = clampedY;
 }
 
-void Triangle::UpdateFromInput()
+void Triangle::UpdateFromInput(float deltaSeconds)
 {
+    UNUSED(deltaSeconds)
 }
 
 void Triangle::ShrinkWindow()
@@ -169,15 +171,24 @@ void Triangle::ShrinkWindow()
 
 STATIC bool Triangle::OnCollisionEnter(EventArgs& args)
 {
-    EntityID entityAID = args.GetValue("entityAID", -1);
+
+
+    String   entityA   = args.GetValue("entityA", "DEFAULT");
+    String   entityB   = args.GetValue("entityB", "DEFAULT");
     EntityID entityBID = args.GetValue("entityBID", -1);
-    Entity*  entityA   = g_theGame->GetEntityByEntityID(entityAID);
-    Entity*  entityB   = g_theGame->GetEntityByEntityID(entityBID);
-    if (entityA->m_name == "Bullet")
+    //Player*  player    = g_theGame->GetPlayer();
+    Entity*  entity    = g_theGame->GetEntityByEntityID(entityBID);
+    if (entityA == "Bullet" && entityB == "Triangle")
     {
-        entityB->DecreaseHealth(1);
-        entityB->m_position = entityB->m_position - entityB->m_velocity * 30.f;
+        if (entity->m_entityID==entityBID)
+        {
+            entity->DecreaseHealth(1);
+            entity->m_position = entity->m_position - entity->m_velocity * 30.f;
+        }
+
+        DebuggerPrintf("TRIANGLE HIT\n");
     }
+
 
 
     return false;

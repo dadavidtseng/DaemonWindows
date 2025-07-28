@@ -35,14 +35,17 @@ Bullet::Bullet(EntityID const& entityID,
 
 Bullet::~Bullet()
 {
-    g_theWindowSubsystem->RemoveEntityFromMappings(m_entityID);
+    if (m_hasChildWindow)
+    {
+        g_theWindowSubsystem->RemoveEntityFromMappings(m_entityID);
+    }
     g_theEventSystem->UnsubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
 }
 
 void Bullet::Update(float const deltaSeconds)
 {
     Entity::Update(deltaSeconds);
-    UpdateFromInput();
+    UpdateFromInput( deltaSeconds);
     m_position.x += m_velocity.x * deltaSeconds * m_speed;
     m_position.y += m_velocity.y * deltaSeconds * m_speed;
 
@@ -111,8 +114,9 @@ void Bullet::Render() const
     g_theRenderer->DrawVertexArray(verts);
 }
 
-void Bullet::UpdateFromInput()
+void Bullet::UpdateFromInput(float deltaSeconds)
 {
+    UNUSED(deltaSeconds)
 }
 
 STATIC bool Bullet::OnCollisionEnter(EventArgs& args)
