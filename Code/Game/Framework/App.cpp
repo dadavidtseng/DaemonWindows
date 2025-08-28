@@ -22,15 +22,15 @@
 
 
 //----------------------------------------------------------------------------------------------------
-App*                   g_theApp             = nullptr;       // Created and owned by Main_Windows.cpp
-AudioSystem*           g_theAudio           = nullptr;       // Created and owned by the App
-BitmapFont*            g_theBitmapFont      = nullptr;       // Created and owned by the App
-Game*                  g_theGame            = nullptr;       // Created and owned by the App
-Renderer*              g_theRenderer        = nullptr;       // Created and owned by the App
-RandomNumberGenerator* g_theRNG             = nullptr;       // Created and owned by the App
-Window*                g_theWindow          = nullptr;       // Created and owned by the App
-WidgetSubsystem*       g_theWidgetSubsystem = nullptr;       // Created and owned by the App
-WindowSubsystem*       g_theWindowSubsystem = nullptr;       // Created and owned by the App
+App*                   g_app             = nullptr;       // Created and owned by Main_Windows.cpp
+AudioSystem*           g_audio           = nullptr;       // Created and owned by the App
+BitmapFont*            g_bitmapFont      = nullptr;       // Created and owned by the App
+Game*                  g_game            = nullptr;       // Created and owned by the App
+Renderer*              g_renderer        = nullptr;       // Created and owned by the App
+RandomNumberGenerator* g_rng             = nullptr;       // Created and owned by the App
+Window*                g_window          = nullptr;       // Created and owned by the App
+WidgetSubsystem*       g_widgetSubsystem = nullptr;       // Created and owned by the App
+WindowSubsystem*       g_windowSubsystem = nullptr;       // Created and owned by the App
 
 //----------------------------------------------------------------------------------------------------
 STATIC bool App::m_isQuitting = false;
@@ -43,16 +43,16 @@ void App::Startup()
     //-Start-of-EventSystem---------------------------------------------------------------------------
 
     sEventSystemConfig constexpr sEventSystemConfig;
-    g_theEventSystem = new EventSystem(sEventSystemConfig);
-    g_theEventSystem->SubscribeEventCallbackFunction("OnCloseButtonClicked", OnWindowClose);
-    g_theEventSystem->SubscribeEventCallbackFunction("quit", OnWindowClose);
+    g_eventSystem = new EventSystem(sEventSystemConfig);
+    g_eventSystem->SubscribeEventCallbackFunction("OnCloseButtonClicked", OnWindowClose);
+    g_eventSystem->SubscribeEventCallbackFunction("quit", OnWindowClose);
 
     //-End-of-EventSystem-----------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
     //-Start-of-InputSystem---------------------------------------------------------------------------
 
     sInputSystemConfig constexpr sInputSystemConfig;
-    g_theInput = new InputSystem(sInputSystemConfig);
+    g_input = new InputSystem(sInputSystemConfig);
 
     //-End-of-InputSystem-----------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
@@ -61,26 +61,26 @@ void App::Startup()
     sWindowConfig sWindowConfig;
     sWindowConfig.m_windowType             = eWindowType::FULLSCREEN_CROP;
     sWindowConfig.m_aspectRatio            = 2.f;
-    sWindowConfig.m_inputSystem            = g_theInput;
+    sWindowConfig.m_inputSystem            = g_input;
     sWindowConfig.m_windowTitle            = "WindowKills";
     sWindowConfig.m_iconFilePath           = L"C:/p4/Personal/SD/WindowKills/Run/Data/Images/windowIcon.ico";
     sWindowConfig.m_supportMultipleWindows = true;
-    g_theWindow                           = new Window(sWindowConfig);
+    g_window                           = new Window(sWindowConfig);
 
     //-End-of-Window----------------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
     //-Start-of-Renderer------------------------------------------------------------------------------
 
     sRendererConfig sRendererConfig;
-    sRendererConfig.m_window = g_theWindow;
-    g_theRenderer           = new Renderer(sRendererConfig);
+    sRendererConfig.m_window = g_window;
+    g_renderer           = new Renderer(sRendererConfig);
 
     //-End-of-Renderer--------------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
     //-Start-of-DebugRender---------------------------------------------------------------------------
 
     sDebugRenderConfig sDebugRenderConfig;
-    sDebugRenderConfig.m_renderer = g_theRenderer;
+    sDebugRenderConfig.m_renderer = g_renderer;
     sDebugRenderConfig.m_fontName = "SquirrelFixedFont";
 
     //-End-of-DebugRender-----------------------------------------------------------------------------
@@ -110,7 +110,7 @@ void App::Startup()
     //-Start-of-AudioSystem---------------------------------------------------------------------------
 
     sAudioSystemConfig constexpr sAudioSystemConfig;
-    g_theAudio = new AudioSystem(sAudioSystemConfig);
+    g_audio = new AudioSystem(sAudioSystemConfig);
 
     //-End-of-AudioSystem-----------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
@@ -118,30 +118,30 @@ void App::Startup()
 
     sWindowSubsystemConfig sWindowSubsystemConfig;
     sWindowSubsystemConfig.m_iconFilePath = L"C:/p4/Personal/SD/WindowKills/Run/Data/Images/windowIcon.ico";
-    g_theWindowSubsystem                 = new WindowSubsystem(sWindowSubsystemConfig);
+    g_windowSubsystem                 = new WindowSubsystem(sWindowSubsystemConfig);
 
     //-End-of-WindowSubsystem-------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
     //-Start-of-WindowSubsystem-----------------------------------------------------------------------
 
     sWidgetSubsystemConfig constexpr sWidgetSubsystemConfig;
-    g_theWidgetSubsystem = new WidgetSubsystem(sWidgetSubsystemConfig);
+    g_widgetSubsystem = new WidgetSubsystem(sWidgetSubsystemConfig);
 
     //-End-of-WindowSubsystem-------------------------------------------------------------------------
 
-    g_theEventSystem->Startup();
-    g_theWindow->Startup();
-    g_theRenderer->Startup();
+    g_eventSystem->Startup();
+    g_window->Startup();
+    g_renderer->Startup();
     DebugRenderSystemStartup(sDebugRenderConfig);
     // g_theDevConsole->StartUp();
-    g_theInput->Startup();
-    g_theAudio->Startup();
-    g_theWindowSubsystem->StartUp();
-    g_theWidgetSubsystem->StartUp();
+    g_input->Startup();
+    g_audio->Startup();
+    g_windowSubsystem->StartUp();
+    g_widgetSubsystem->StartUp();
 
-    g_theBitmapFont = g_theRenderer->CreateOrGetBitmapFontFromFile("Data/Fonts/SquirrelFixedFont"); // DO NOT SPECIFY FILE .EXTENSION!!  (Important later on.)
-    g_theRNG        = new RandomNumberGenerator();
-    g_theGame       = new Game();
+    g_bitmapFont = g_renderer->CreateOrGetBitmapFontFromFile("Data/Fonts/SquirrelFixedFont"); // DO NOT SPECIFY FILE .EXTENSION!!  (Important later on.)
+    g_rng        = new RandomNumberGenerator();
+    g_game       = new Game();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -150,27 +150,27 @@ void App::Startup()
 void App::Shutdown()
 {
     // Destroy all Engine Subsystem
-    GAME_SAFE_RELEASE(g_theGame);
-    GAME_SAFE_RELEASE(g_theRNG);
-    GAME_SAFE_RELEASE(g_theBitmapFont);
+    GAME_SAFE_RELEASE(g_game);
+    GAME_SAFE_RELEASE(g_rng);
+    GAME_SAFE_RELEASE(g_bitmapFont);
 
-    g_theWidgetSubsystem->ShutDown();
-    g_theWindowSubsystem->ShutDown();
-    g_theAudio->Shutdown();
-    g_theInput->Shutdown();
+    g_widgetSubsystem->ShutDown();
+    g_windowSubsystem->ShutDown();
+    g_audio->Shutdown();
+    g_input->Shutdown();
     // g_theDevConsole->Shutdown();
 
     GAME_SAFE_RELEASE(m_devConsoleCamera);
 
     DebugRenderSystemShutdown();
-    g_theRenderer->Shutdown();
-    g_theWindow->Shutdown();
-    g_theEventSystem->Shutdown();
+    g_renderer->Shutdown();
+    g_window->Shutdown();
+    g_eventSystem->Shutdown();
 
-    GAME_SAFE_RELEASE(g_theAudio);
-    GAME_SAFE_RELEASE(g_theRenderer);
-    GAME_SAFE_RELEASE(g_theWindow);
-    GAME_SAFE_RELEASE(g_theInput);
+    GAME_SAFE_RELEASE(g_audio);
+    GAME_SAFE_RELEASE(g_renderer);
+    GAME_SAFE_RELEASE(g_window);
+    GAME_SAFE_RELEASE(g_input);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -214,15 +214,15 @@ STATIC void App::RequestQuit()
 //----------------------------------------------------------------------------------------------------
 void App::BeginFrame() const
 {
-    g_theEventSystem->BeginFrame();
-    g_theWindow->BeginFrame();
-    g_theRenderer->BeginFrame();
+    g_eventSystem->BeginFrame();
+    g_window->BeginFrame();
+    g_renderer->BeginFrame();
     DebugRenderBeginFrame();
     // g_theDevConsole->BeginFrame();
-    g_theInput->BeginFrame();
-    g_theAudio->BeginFrame();
-    g_theWindowSubsystem->BeginFrame();
-    g_theWidgetSubsystem->BeginFrame();
+    g_input->BeginFrame();
+    g_audio->BeginFrame();
+    g_windowSubsystem->BeginFrame();
+    g_widgetSubsystem->BeginFrame();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -232,9 +232,9 @@ void App::Update()
 
     UpdateCursorMode();
 
-    g_theWindowSubsystem->Update();
-    g_theWidgetSubsystem->Update();
-    g_theGame->Update();
+    g_windowSubsystem->Update();
+    g_widgetSubsystem->Update();
+    g_game->Update();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -247,44 +247,44 @@ void App::Update()
 void App::Render() const
 {
     // g_theRenderer->ClearScreen(Rgba8::BLUE);
-    g_theGame->Render();
-    g_theWidgetSubsystem->Render();
+    g_game->Render();
+    g_widgetSubsystem->Render();
 
 
     AABB2 const box = AABB2(Vec2::ZERO, Vec2(1600.f, 30.f));
 
     // g_theDevConsole->Render(box);
-    g_theWindowSubsystem->Render();
+    g_windowSubsystem->Render();
 }
 
 //----------------------------------------------------------------------------------------------------
 void App::EndFrame() const
 {
-    g_theEventSystem->EndFrame();
-    g_theWindow->EndFrame();
-    g_theRenderer->EndFrame();
+    g_eventSystem->EndFrame();
+    g_window->EndFrame();
+    g_renderer->EndFrame();
     DebugRenderEndFrame();
     // g_theDevConsole->EndFrame();
-    g_theInput->EndFrame();
-    g_theAudio->EndFrame();
-    g_theWindowSubsystem->EndFrame();
-    g_theWidgetSubsystem->EndFrame();
+    g_input->EndFrame();
+    g_audio->EndFrame();
+    g_windowSubsystem->EndFrame();
+    g_widgetSubsystem->EndFrame();
 }
 
 //----------------------------------------------------------------------------------------------------
 void App::UpdateCursorMode()
 {
-    bool const doesWindowHasFocus = GetActiveWindow() == g_theWindow->GetWindowHandle();
-    bool const isAttractState     = g_theGame->GetCurrentGameState() == eGameState::ATTRACT;
+    bool const doesWindowHasFocus = GetActiveWindow() == g_window->GetWindowHandle();
+    bool const isAttractState     = g_game->GetCurrentGameState() == eGameState::ATTRACT;
     // bool const shouldUsePointerMode = !doesWindowHasFocus || g_theDevConsole->IsOpen() || isAttractState;
     bool const shouldUsePointerMode = !doesWindowHasFocus || isAttractState;
 
     if (shouldUsePointerMode == true)
     {
-        g_theInput->SetCursorMode(eCursorMode::POINTER);
+        g_input->SetCursorMode(eCursorMode::POINTER);
     }
     else
     {
-        g_theInput->SetCursorMode(eCursorMode::FPS);
+        g_input->SetCursorMode(eCursorMode::FPS);
     }
 }

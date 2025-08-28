@@ -29,8 +29,8 @@ void WindowSubsystem::BeginFrame()
 
 void WindowSubsystem::Update()
 {
-    if (g_theGame->GetCurrentGameState() == eGameState::SHOP || g_theGame->GetCurrentGameState() == eGameState::ATTRACT) return;
-    float const deltaSeconds = static_cast<float>(g_theGame->GetGameClock()->GetDeltaSeconds());
+    if (g_game->GetCurrentGameState() == eGameState::SHOP || g_game->GetCurrentGameState() == eGameState::ATTRACT) return;
+    float const deltaSeconds = static_cast<float>(g_game->GetGameClock()->GetDeltaSeconds());
 
     UpdateWindowAnimations(deltaSeconds);
 
@@ -44,7 +44,7 @@ void WindowSubsystem::Update()
 
         if (windowData.m_window->m_shouldUpdateDimension)
         {
-            HRESULT const hr                             = g_theRenderer->ResizeWindowSwapChain(*windowData.m_window);
+            HRESULT const hr                             = g_renderer->ResizeWindowSwapChain(*windowData.m_window);
             windowData.m_window->m_shouldUpdateDimension = false;
 
             if (FAILED(hr))
@@ -57,7 +57,7 @@ void WindowSubsystem::Update()
 
 void WindowSubsystem::Render()
 {
-    g_theRenderer->ReadStagingTextureToPixelData();
+    g_renderer->ReadStagingTextureToPixelData();
 
     for (auto& [windowId, windowData] : m_windowList)
     {
@@ -65,7 +65,7 @@ void WindowSubsystem::Render()
 
         if (windowData.m_window->m_shouldUpdatePosition)
         {
-            g_theRenderer->RenderViewportToWindow(*windowData.m_window);
+            g_renderer->RenderViewportToWindow(*windowData.m_window);
             // g_theRenderer->RenderViewportToWindowDX11(*windowData.m_window);     // TODO: bug fix
         }
     }
@@ -129,9 +129,9 @@ WindowID WindowSubsystem::CreateChildWindow(EntityID const owner,
     m_actorToWindow[owner] = newId;
 
     // 創建 SwapChain
-    if (g_theRenderer)
+    if (g_renderer)
     {
-        g_theRenderer->CreateWindowSwapChain(*m_windowList[newId].m_window);
+        g_renderer->CreateWindowSwapChain(*m_windowList[newId].m_window);
     }
 
     ShowWindow(hwnd, SW_SHOW);

@@ -30,7 +30,7 @@ void Entity::Update(float const deltaSeconds)
 {
     UNUSED(deltaSeconds)
     if (m_health <= 0) MarkAsDead();
-    m_isChildWindowVisible ? g_theWindowSubsystem->ShowWindowByWindowID(g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID)) : g_theWindowSubsystem->HideWindowByWindowID(g_theWindowSubsystem->FindWindowIDByEntityID(m_entityID));
+    m_isChildWindowVisible ? g_windowSubsystem->ShowWindowByWindowID(g_windowSubsystem->FindWindowIDByEntityID(m_entityID)) : g_windowSubsystem->HideWindowByWindowID(g_windowSubsystem->FindWindowIDByEntityID(m_entityID));
 }
 
 void Entity::MarkAsDead()
@@ -39,12 +39,12 @@ void Entity::MarkAsDead()
 
     if (m_name == "Bullet") return;
 
-    if (g_theGame->GetCurrentGameState() == eGameState::GAME)
+    if (g_game->GetCurrentGameState() == eGameState::GAME)
     {
         EventArgs args;
         args.SetValue("name", m_name);
         args.SetValue("entityID", std::to_string(m_entityID));
-        g_theEventSystem->FireEvent("OnEntityDestroyed", args);
+        g_eventSystem->FireEvent("OnEntityDestroyed", args);
     }
 }
 

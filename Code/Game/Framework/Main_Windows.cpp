@@ -20,12 +20,12 @@ int WINAPI WinMain(HINSTANCE const applicationInstanceHandle,
     UNUSED(applicationInstanceHandle)
     UNUSED(commandLineString)
 
-    g_theApp = new App();
-    g_theApp->Startup();
-    g_theApp->RunMainLoop();
-    g_theApp->Shutdown();
+    g_app = new App();
+    g_app->Startup();
+    g_app->RunMainLoop();
+    g_app->Shutdown();
 
-    GAME_SAFE_RELEASE(g_theApp);
+    GAME_SAFE_RELEASE(g_app);
 
     return 0;
 }

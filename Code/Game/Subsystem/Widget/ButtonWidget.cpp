@@ -29,9 +29,9 @@ void ButtonWidget::Draw() const
 
     VertexList_PCU verts2;
     // g_theBitmapFont->AddVertsForText2D(verts, m_text, Vec2(m_x, m_y), 20.f);
-    g_theBitmapFont->AddVertsForTextInBox2D(verts2, m_text, AABB2(Vec2(m_x, m_y), Vec2(m_x + m_width, m_y + m_height)), 20.f, m_color, 1.f, Vec2(1, 0), OVERRUN);
-    g_theRenderer->BindTexture(&g_theBitmapFont->GetTexture());
-    g_theRenderer->DrawVertexArray(verts2);
+    g_bitmapFont->AddVertsForTextInBox2D(verts2, m_text, AABB2(Vec2(m_x, m_y), Vec2(m_x + m_width, m_y + m_height)), 20.f, m_color, 1.f, Vec2(1, 0), OVERRUN);
+    g_renderer->BindTexture(&g_bitmapFont->GetTexture());
+    g_renderer->DrawVertexArray(verts2);
 }
 
 void ButtonWidget::Update()
