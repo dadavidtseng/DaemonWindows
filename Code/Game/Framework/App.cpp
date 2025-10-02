@@ -4,10 +4,13 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Game/Framework/App.hpp"
-
+//----------------------------------------------------------------------------------------------------
+#include "Game/Framework/GameCommon.hpp"
+#include "Game/Gameplay/Game.hpp"
+#include "Game/Subsystem/Window/WindowSubsystem.hpp"
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Core/Clock.hpp"
-#include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
@@ -15,11 +18,7 @@
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
-#include "Game/Framework/GameCommon.hpp"
-#include "Game/Gameplay/Game.hpp"
-#include "Game/Subsystem/Widget/WidgetSubsystem.hpp"
-#include "Game/Subsystem/Window/WindowSubsystem.hpp"
-
+#include "Engine/Widget/WidgetSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
 App*                   g_app             = nullptr;       // Created and owned by Main_Windows.cpp
@@ -64,7 +63,7 @@ void App::Startup()
     sWindowConfig.m_inputSystem            = g_input;
     sWindowConfig.m_windowTitle            = "WindowKills";
     sWindowConfig.m_iconFilePath           = L"C:/p4/Personal/SD/WindowKills/Run/Data/Images/windowIcon.ico";
-    sWindowConfig.m_supportMultipleWindows = true;
+    sWindowConfig.m_supportMultipleWindows = false;
     g_window                           = new Window(sWindowConfig);
 
     //-End-of-Window----------------------------------------------------------------------------------
@@ -81,7 +80,7 @@ void App::Startup()
 
     sDebugRenderConfig sDebugRenderConfig;
     sDebugRenderConfig.m_renderer = g_renderer;
-    sDebugRenderConfig.m_fontName = "SquirrelFixedFont";
+    sDebugRenderConfig.m_fontName = "DaemonFont";
 
     //-End-of-DebugRender-----------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
@@ -139,7 +138,7 @@ void App::Startup()
     g_windowSubsystem->StartUp();
     g_widgetSubsystem->StartUp();
 
-    g_bitmapFont = g_renderer->CreateOrGetBitmapFontFromFile("Data/Fonts/SquirrelFixedFont"); // DO NOT SPECIFY FILE .EXTENSION!!  (Important later on.)
+    g_bitmapFont = g_renderer->CreateOrGetBitmapFontFromFile("Data/Fonts/DaemonFont"); // DO NOT SPECIFY FILE .EXTENSION!!  (Important later on.)
     g_rng        = new RandomNumberGenerator();
     g_game       = new Game();
 }
