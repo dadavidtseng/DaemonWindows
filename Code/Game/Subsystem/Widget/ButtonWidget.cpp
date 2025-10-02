@@ -16,7 +16,8 @@ ButtonWidget::ButtonWidget(WidgetSubsystem* owner, String const& text, int x, in
       m_height(height),
       m_color(color)
 {
-    SetOwner(owner);
+    // Note: Owner parameter is kept for backward compatibility but not used
+    // Widgets are now managed by WidgetSubsystem::AddWidget/AddWidgetToOwner
     SetName("ButtonWidget_" + text);
 }
 

@@ -52,14 +52,8 @@
     <ClCompile Include="Gameplay\Player.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
-    <ClCompile Include="Subsystem\Widget\WidgetSubsystem.cpp">
-      <Filter>Subsystem\Widget</Filter>
-    </ClCompile>
     <ClCompile Include="Gameplay\Bullet.cpp">
       <Filter>Gameplay</Filter>
-    </ClCompile>
-    <ClCompile Include="Subsystem\Widget\IWidget.cpp">
-      <Filter>Subsystem\Widget</Filter>
     </ClCompile>
     <ClCompile Include="Subsystem\Widget\ButtonWidget.cpp">
       <Filter>Subsystem\Widget</Filter>
@@ -105,14 +99,8 @@
     <ClInclude Include="Gameplay\Player.hpp">
       <Filter>Gameplay</Filter>
     </ClInclude>
-    <ClInclude Include="Subsystem\Widget\WidgetSubsystem.hpp">
-      <Filter>Subsystem\Widget</Filter>
-    </ClInclude>
     <ClInclude Include="Gameplay\Bullet.hpp">
       <Filter>Gameplay</Filter>
-    </ClInclude>
-    <ClInclude Include="Subsystem\Widget\IWidget.hpp">
-      <Filter>Subsystem\Widget</Filter>
     </ClInclude>
     <ClInclude Include="Subsystem\Widget\ButtonWidget.hpp">
       <Filter>Subsystem\Widget</Filter>

@@ -137,14 +137,17 @@
       <Message>Copying $(TargetFileName) to $(SolutionDir)Run...</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
+  <!-- Debug x64 Configuration -->
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/Zc:__cplusplus /std:c++20</AdditionalOptions>
       <AdditionalIncludeDirectories>$(SolutionDir)Code/;$(SolutionDir)../Engine/Code/</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -203,8 +206,6 @@
     <ClCompile Include="Gameplay\Shop.cpp" />
     <ClCompile Include="Gameplay\Triangle.cpp" />
     <ClCompile Include="Subsystem\Widget\ButtonWidget.cpp" />
-    <ClCompile Include="Subsystem\Widget\IWidget.cpp" />
-    <ClCompile Include="Subsystem\Widget\WidgetSubsystem.cpp" />
     <ClCompile Include="Subsystem\Window\WindowSubsystem.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -222,8 +223,6 @@
     <ClInclude Include="Gameplay\Shop.hpp" />
     <ClInclude Include="Gameplay\Triangle.hpp" />
     <ClInclude Include="Subsystem\Widget\ButtonWidget.hpp" />
-    <ClInclude Include="Subsystem\Widget\IWidget.hpp" />
-    <ClInclude Include="Subsystem\Widget\WidgetSubsystem.hpp" />
     <ClInclude Include="Subsystem\Window\WindowSubsystem.hpp" />
   </ItemGroup>
   <ItemGroup>
