@@ -2,118 +2,115 @@
 
 # Widget Subsystem
 
+**MIGRATION NOTICE**: As of 2025-09-30, the core Widget system (IWidget and WidgetSubsystem) has been migrated to `Engine/UI/`. This directory now contains only game-specific widget implementations.
+
 ## Module Responsibilities
 
-The Widget Subsystem provides a comprehensive UI management framework for the DaemonWindows multi-window game:
+The Widget directory now provides game-specific UI widget implementations for DaemonWindows:
 
-- **Widget Lifecycle Management**: Creation, registration, updating, and cleanup of UI components
-- **Hierarchical Widget Organization**: Z-order sorting and owner-based widget grouping
-- **Template-Based Widget Creation**: Type-safe widget instantiation system
-- **Viewport Management**: Specialized viewport widget handling for multi-window scenarios
-- **Entity Integration**: Widget ownership by game entities for context-sensitive UI
+- **ButtonWidget**: Text-based button widget used for player health/coin displays
+- Game-specific widget customizations that use global rendering systems
+
+## Architecture Changes
+
+### What Moved to Engine
+- **IWidget.hpp/cpp** → `Engine/UI/IWidget.hpp/cpp` - Abstract widget base class
+- **WidgetSubsystem.hpp/cpp** → `Engine/UI/WidgetSubsystem.hpp/cpp` - Widget management system
+
+### Key Refactoring Changes
+1. **Owner Type Changed**: `void*` → `uint64_t` for type-safe owner IDs
+2. **Include Paths Updated**: All files now use `#include "Engine/UI/WidgetSubsystem.hpp"`
+3. **English Documentation**: All Engine code now has English comments
+
+### What Stayed in Game Layer
+- **ButtonWidget.hpp/cpp** - Game-specific button implementation using global `g_renderer` and `g_bitmapFont`
 
 ## Entry and Startup
 
-### Primary Entry Point
-- **File**: `WidgetSubsystem.cpp`
-- **Class**: `WidgetSubsystem` - Central UI management system
-- **Initialization**: Created and managed through global `g_widgetSubsystem` pointer
+### Widget Subsystem (Engine Level)
+- **Location**: `Engine/UI/WidgetSubsystem.cpp`
+- **Global Access**: `g_widgetSubsystem` defined in `GameCommon.hpp`
+- **Initialization**: Created in `App::Startup()`
 - **Lifecycle**: StartUp() → BeginFrame() → Update() → Render() → EndFrame() → ShutDown()
 
-### Configuration
-```cpp
-struct sWidgetSubsystemConfig {
-    size_t m_initialWidgetCapacity = 64;   // Initial widget vector capacity
-    size_t m_initialOwnerCapacity = 32;    // Initial owner mapping capacity
-};
-```
+### ButtonWidget (Game Level)
+- **File**: `ButtonWidget.cpp`
+- **Usage**: Player health/coin displays
+- **Creation**: Via `g_widgetSubsystem->CreateWidget<ButtonWidget>(...)`
 
 ## External Interfaces
 
-### Widget Management API
+### Engine Widget Management API (Engine/UI/WidgetSubsystem.hpp)
 ```cpp
 class WidgetSubsystem {
     // Widget lifecycle
     void AddWidget(WidgetPtr const& widget, int zOrder = 0);
-    void AddWidgetToEntity(WidgetPtr const& widget, void* entity, int zOrder = 0);
+    void AddWidgetToOwner(WidgetPtr const& widget, uint64_t ownerID, int zOrder = 0);  // Changed from void*
     void RemoveWidget(WidgetPtr const& widget);
-    void RemoveAllWidgetsFromEntity(void* entity);
+    void RemoveAllWidgetsFromOwner(uint64_t ownerID);  // Changed from void*
     void RemoveAllWidgets();
-    
+
     // Widget queries
     WidgetPtr FindWidgetByName(String const& name) const;
-    std::vector<WidgetPtr> GetWidgetsByOwner(void* owner) const;
+    std::vector<WidgetPtr> GetWidgetsByOwner(uint64_t ownerID) const;  // Changed from void*
     std::vector<WidgetPtr> GetAllWidgets() const;
-    
+
     // Template widget creation
     template <typename T, typename... Args>
     std::shared_ptr<T> CreateWidget(Args&&... args);
 };
 ```
 
-### Widget Base Interface
-```cpp
-class IWidget {
-    // Core widget interface (implementation details in IWidget.hpp)
-    virtual void Update() = 0;
-    virtual void Render() const = 0;
-    virtual void HandleInput() = 0;
-};
-```
-
-### Specialized Widget Types
+### Game-Specific ButtonWidget Interface (Game/Subsystem/Widget/ButtonWidget.hpp)
 ```cpp
 class ButtonWidget : public IWidget {
-    // Button-specific functionality
-    // Used by Player class for health and coin display widgets
+    ButtonWidget(WidgetSubsystem* owner, String const& text, int x, int y,
+                 int width, int height, Rgba8 const& color);
+
+    void Draw() const override;
+    void Update() override;
+
+    void SetText(String const& text);
+    void SetPosition(Vec2 const& newPosition);
+    void SetDimensions(Vec2 const& newDimensions);
 };
 ```
 
 ## Key Dependencies and Configuration
 
-### Engine Dependencies
-- **Engine/Core/StringUtils.hpp**: String manipulation utilities for widget names and text handling
+### Engine Dependencies (for WidgetSubsystem)
+- **Engine/Core/StringUtils.hpp**: String manipulation utilities for widget names
+- **Engine/UI/IWidget.hpp**: Abstract widget base class (now in Engine)
 
-### Internal Dependencies
-- **IWidget.hpp**: Abstract widget base class interface
-- **ButtonWidget.hpp**: Concrete button widget implementation
+### Game Layer Dependencies (for ButtonWidget)
+- **Engine/UI/IWidget.hpp**: Base widget interface
+- **Engine/Renderer/Renderer.hpp**: Global `g_renderer` for drawing
+- **Engine/Renderer/BitmapFont.hpp**: Global `g_bitmapFont` for text rendering
+- **Game/Framework/GameCommon.hpp**: Global system access
 
 ### Memory Management
 - **Smart Pointers**: Uses `std::shared_ptr<IWidget>` for automatic memory management
-- **Type Alias**: `using WidgetPtr = std::shared_ptr<IWidget>;` for cleaner syntax
+- **Type Alias**: `using WidgetPtr = std::shared_ptr<IWidget>;` defined in Engine
 
-### Template System
-```cpp
-// Type-safe widget creation with perfect forwarding
-template <typename T, typename... Args>
-std::shared_ptr<T> WidgetSubsystem::CreateWidget(Args&&... args) {
-    static_assert(std::is_base_of_v<IWidget, T>, "T must derive from Widget");
-    return std::make_shared<T>(std::forward<Args>(args)...);
-}
-```
+## Migration Impact
 
-## Data Models
+### Breaking Changes for Game Code
+1. **Owner IDs**: Change from `void*` to `uint64_t`
+   - Old: `AddWidgetToEntity(widget, entityPtr, zOrder)`
+   - New: `AddWidgetToOwner(widget, entityID, zOrder)`
 
-### Widget Container Structure
-```cpp
-class WidgetSubsystem {
-private:
-    std::vector<WidgetPtr> m_widgets;                                // Main widget storage
-    std::unordered_map<void*, std::vector<WidgetPtr>> m_ownerWidgetsMapping; // Entity ownership tracking
-    WidgetPtr m_viewportWidget = nullptr;                           // Special viewport widget
-    bool m_bNeedsSorting = false;                                   // Z-order sorting flag
-};
-```
+2. **Include Paths**: Update all widget includes
+   - Old: `#include "Game/Subsystem/Widget/WidgetSubsystem.hpp"`
+   - New: `#include "Engine/UI/WidgetSubsystem.hpp"`
 
-### Widget Ownership Model
-- **Global Widgets**: Added without specific owner for persistent UI elements
-- **Entity Widgets**: Associated with specific entities (e.g., Player health/coin displays)
-- **Viewport Widget**: Special widget for multi-window viewport management
+3. **Method Names**: Some methods renamed for clarity
+   - `AddWidgetToEntity()` → `AddWidgetToOwner()`
+   - `RemoveAllWidgetsFromEntity()` → `RemoveAllWidgetsFromOwner()`
 
-### Z-Order Management
-- **Integer Z-Values**: Higher values render on top
-- **Automatic Sorting**: Triggered when widgets are added/modified
-- **Performance Optimization**: Sorting only when necessary (`m_bNeedsSorting` flag)
+### Backward Compatibility
+- ButtonWidget constructor signature unchanged (keeps `WidgetSubsystem*` parameter for compatibility)
+- All visual behavior preserved - no rendering changes
+- Same z-order sorting and garbage collection behavior
 
 ## Testing and Quality
 
@@ -149,16 +146,18 @@ private:
 
 ## Related File List
 
-### Core Widget System
-- `WidgetSubsystem.cpp/hpp` - Main widget management system implementation
-- `IWidget.cpp/hpp` - Abstract widget base class interface
+### Engine-Level Widget System (Migrated)
+- `Engine/UI/WidgetSubsystem.cpp/hpp` - Core widget management system (migrated from Game)
+- `Engine/UI/IWidget.cpp/hpp` - Abstract widget base class (migrated from Game)
 
-### Concrete Widget Types
-- `ButtonWidget.cpp/hpp` - Button widget implementation used for Player UI
+### Game-Level Widget Implementations (Stayed)
+- `ButtonWidget.cpp/hpp` - Text button widget for Player UI (health/coin displays)
 
 ### Integration Points
 - Referenced in `Game/Framework/GameCommon.hpp` as global `g_widgetSubsystem`
 - Used by `Game/Gameplay/Player.hpp` for health and coin display widgets
+- Created in `Game/Framework/App.cpp` during application startup
 
 ## Changelog
+- **2025-09-30**: Migrated IWidget and WidgetSubsystem to Engine/UI/, refactored void* to uint64_t owner IDs, updated all includes
 - **2025-09-10**: Initial module documentation created, analyzed widget lifecycle management, template-based creation system, and entity integration patterns
