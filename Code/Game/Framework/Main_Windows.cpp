@@ -2,14 +2,14 @@
 // Main_Windows.cpp
 //----------------------------------------------------------------------------------------------------
 
-#define WIN32_LEAN_AND_MEAN		// Always #define this before #including <windows.h>
-
-#include <cstdio>
-#include <iostream>
-#include <windows.h>			// #include this (massive, platform-specific) header in VERY few places (and .CPPs only)
-#include "Engine/Core/EngineCommon.hpp"
+//----------------------------------------------------------------------------------------------------
 #include "Game/Framework/App.hpp"
 #include "Game/Framework/GameCommon.hpp"
+//----------------------------------------------------------------------------------------------------
+#include "Engine/Core/EngineCommon.hpp"
+//----------------------------------------------------------------------------------------------------
+#include <cstdio>
+#include <iostream>
 
 //-----------------------------------------------------------------------------------------------
 int WINAPI WinMain(HINSTANCE const applicationInstanceHandle,
