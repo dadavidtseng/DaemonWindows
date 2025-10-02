@@ -9,10 +9,10 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
+#include "Engine/UI/WidgetSubsystem.hpp"
 #include "Game/Gameplay/Bullet.hpp"
 #include "Game/Gameplay/Game.hpp"
 #include "Game/Subsystem/Widget/ButtonWidget.hpp"
-#include "Game/Subsystem/Widget/WidgetSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
 Player::Player(EntityID const entityID,

@@ -9,8 +9,8 @@
 #include "Player.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Input/InputSystem.hpp"
+#include "Engine/UI/WidgetSubsystem.hpp"
 #include "Game/Subsystem/Widget/ButtonWidget.hpp"
-#include "Game/Subsystem/Widget/WidgetSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
 Shop::Shop(EntityID const entityID,

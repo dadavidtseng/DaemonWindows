@@ -16,6 +16,7 @@
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
+#include "Engine/UI/WidgetSubsystem.hpp"
 #include "Game/Framework/App.hpp"
 #include "Game/Framework/GameCommon.hpp"
 #include "Game/Gameplay/Bullet.hpp"
@@ -25,7 +26,6 @@
 #include "Game/Gameplay/Shop.hpp"
 #include "Game/Gameplay/Triangle.hpp"
 #include "Game/Subsystem/Widget/ButtonWidget.hpp"
-#include "Game/Subsystem/Widget/WidgetSubsystem.hpp"
 
 int Game::s_nextEntityID = 0;
 
