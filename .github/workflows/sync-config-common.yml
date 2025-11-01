@@ -1,0 +1,278 @@
+#-----------------------------------------------------------------------------------------------------
+# sync-config-common.yml Modify test
+#-----------------------------------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------------------------------
+# GitHub Actions Workflow: Sync Configuration Files
+# Author: dadavidtseng
+# Purpose: Automatically sync configuration files from ConfigCommon repository
+#-----------------------------------------------------------------------------------------------------
+
+name: Sync Config Files from dadavidtseng/ConfigCommon
+
+# Grant write permissions to allow committing changes back to the repository
+permissions:
+  contents: write
+on:
+  workflow_dispatch:
+    inputs:
+      # Option to sync .gitignore file
+      sync_gitignore:
+        description: 'sync .gitignore'
+        required: false
+        default: true
+        type: boolean
+      # Source filename for .gitignore in the remote repository
+      gitignore_source:
+        description: '.gitignore source file name (e.g., UnrealEngine.gitignore, DaemonEngine.gitignore)'
+        required: false
+        default: 'DaemonEngine.gitignore'
+        type: string
+      # Option to sync .gitattributes file
+      sync_gitattributes:
+        description: 'sync .gitattributes'
+        required: false
+        default: true
+        type: boolean
+      # Source filename for .gitattributes in the remote repository
+      gitattributes_source:
+        description: '.gitattributes source file name (e.g., UnrealEngine.gitattributes, DaemonEngine.gitattributes)'
+        required: false
+        default: 'DaemonEngine.gitattributes'
+        type: string
+      # Option to sync .editorconfig file
+      sync_editorconfig:
+        description: 'sync .editorconfig'
+        required: false
+        default: false
+        type: boolean
+      # Source filename for .editorconfig in the remote repository
+      editorconfig_source:
+        description: '.editorconfig source file name'
+        required: false
+        default: '.editorconfig'
+        type: string
+
+      # Option to sync .clang-format file (disabled by default)
+      sync_clangformat:
+        description: 'sync .clang-format'
+        required: false
+        default: false
+        type: boolean
+      # Source filename for .clang-format in the remote repository
+      clangformat_source:
+        description: '.clang-format source file name'
+        required: false
+        default: '.clang-format'
+        type: string
+
+      # Additional files to sync
+      # Format: local_file:remote_file, comma-separated
+      # Examples:
+      #   Single file: README.md:template-readme.md
+      #   Multiple files: LICENSE:MIT-license.txt,.pre-commit-config.yaml:.pre-commit-config.yaml
+      #   Mixed examples: my-config.json:default-config.json,docker-compose.yml:development-docker-compose.yml
+      # Notes:
+      #   - Colon (:) separates local filename from remote filename
+      #   - Comma (,) separates multiple file pairs
+      #   - No spaces around colons or commas
+      #   - If remote file doesn't exist, it will be skipped
+      additional_files:
+        description: 'Additional files (format: local_file:remote_file, comma-separated)'
+        required: false
+        default: ''
+        type: string
+
+  # Automatic trigger - runs every Monday at 2:00 AM UTC
+  # Cron format: minute(0-59) hour(0-23) day(1-31) month(1-12) weekday(0-6, 0=Sunday)
+  schedule:
+    - cron: '0 2 * * 1'
+
+#-----------------------------------------------------------------------------------------------------
+jobs:
+  sync-config-files:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the current repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Step 2: Download and sync config files
+      - name: Download and sync config files
+        id: sync_files
+        run: |
+          # Initialize array to store file pairs (local:remote)
+          declare -a FILES=()
+          
+          # Define sync configuration array
+          declare -A SYNC_CONFIG=(
+            ["gitignore"]="${{ github.event.inputs.sync_gitignore || 'true' }}"
+            ["gitattributes"]="${{ github.event.inputs.sync_gitattributes || 'true' }}"
+            ["editorconfig"]="${{ github.event.inputs.sync_editorconfig || 'false' }}"
+            ["clangformat"]="${{ github.event.inputs.sync_clangformat || 'false' }}"
+          )
+          
+          declare -A SOURCE_CONFIG=(
+            ["gitignore"]="${{ github.event.inputs.gitignore_source || 'DaemonEngine.gitignore' }}"
+            ["gitattributes"]="${{ github.event.inputs.gitattributes_source || 'DaemonEngine.gitattributes' }}"
+            ["editorconfig"]="${{ github.event.inputs.editorconfig_source || '.editorconfig' }}"
+            ["clangformat"]="${{ github.event.inputs.clangformat_source || '.clang-format' }}"
+          )
+          
+          declare -A LOCAL_CONFIG=(
+            ["gitignore"]=".gitignore"
+            ["gitattributes"]=".gitattributes"
+            ["editorconfig"]=".editorconfig"
+            ["clangformat"]=".clang-format"
+          )
+          
+          # Add files to sync based on configuration
+          for config_type in "${!SYNC_CONFIG[@]}"; do
+            if [ "${SYNC_CONFIG[$config_type]}" = "true" ]; then
+              FILES+=("${LOCAL_CONFIG[$config_type]}:${SOURCE_CONFIG[$config_type]}")
+              echo "✓ Enabled sync for ${LOCAL_CONFIG[$config_type]} (source: ${SOURCE_CONFIG[$config_type]})"
+            fi
+          done
+          
+          # Process additional files if specified
+          ADDITIONAL_FILES="${{ github.event.inputs.additional_files }}"
+          if [ -n "$ADDITIONAL_FILES" ]; then
+            echo "Processing additional files: $ADDITIONAL_FILES"
+            IFS=',' read -ra EXTRA_FILES <<< "$ADDITIONAL_FILES"
+            for file_pair in "${EXTRA_FILES[@]}"; do
+              # Trim whitespace
+              file_pair=$(echo "$file_pair" | xargs)
+              if [[ "$file_pair" == *":"* ]]; then
+                FILES+=("$file_pair")
+                echo "✓ Added additional file: $file_pair"
+              else
+                echo "⚠ Skipping invalid file format: $file_pair (missing colon separator)"
+              fi
+            done
+          fi
+          
+          # Configuration for file sync operation
+          readonly BASE_URL="https://raw.githubusercontent.com/dadavidtseng/ConfigCommon/main"
+          CHANGED_FILES=""
+          ANY_CHANGED=false
+          
+          echo "Starting sync process with ${#FILES[@]} file(s) to process..."
+          
+          # Process each file pair in the FILES array
+          for FILE_PAIR in "${FILES[@]}"; do
+            # Validate file pair format
+            if [[ ! "$FILE_PAIR" == *":"* ]]; then
+              echo "⚠ Skipping invalid file pair format: $FILE_PAIR"
+              continue
+            fi
+            
+            # Split local and remote file names using colon as delimiter
+            IFS=':' read -r LOCAL_FILE REMOTE_FILE <<< "$FILE_PAIR"
+            
+            # Remove leading and trailing whitespace
+            LOCAL_FILE=$(echo "$LOCAL_FILE" | xargs)
+            REMOTE_FILE=$(echo "$REMOTE_FILE" | xargs)
+            
+            # Validate file names are not empty
+            if [ -z "$LOCAL_FILE" ] || [ -z "$REMOTE_FILE" ]; then
+              echo "⚠ Skipping empty file names: '$LOCAL_FILE' : '$REMOTE_FILE'"
+              continue
+            fi
+            
+            echo "📥 Processing $LOCAL_FILE (source: $REMOTE_FILE)"
+            
+            # Download file with better error handling
+            TEMP_FILE="${LOCAL_FILE}.temp.$$"
+            if curl -fsSL --max-time 30 --retry 3 "$BASE_URL/$REMOTE_FILE" -o "$TEMP_FILE"; then
+              # Verify downloaded file is not empty
+              if [ -s "$TEMP_FILE" ]; then
+                echo "✓ Successfully downloaded $REMOTE_FILE"
+                
+                # Check for changes between existing and downloaded file
+                if [ -f "$LOCAL_FILE" ]; then
+                  # Compare files byte by byte
+                  if ! cmp -s "$LOCAL_FILE" "$TEMP_FILE"; then
+                    echo "🔄 Changes detected in $LOCAL_FILE"
+                    mv "$TEMP_FILE" "$LOCAL_FILE"
+                    CHANGED_FILES="$CHANGED_FILES $LOCAL_FILE"
+                    ANY_CHANGED=true
+                  else
+                    echo "✓ No changes in $LOCAL_FILE"
+                    rm -f "$TEMP_FILE"
+                  fi
+                else
+                  # Create new file if it doesn't exist
+                  echo "📝 Creating new file: $LOCAL_FILE"
+                  mv "$TEMP_FILE" "$LOCAL_FILE"
+                  CHANGED_FILES="$CHANGED_FILES $LOCAL_FILE"
+                  ANY_CHANGED=true
+                fi
+              else
+                echo "❌ Downloaded file $REMOTE_FILE is empty, skipping..."
+                rm -f "$TEMP_FILE"
+              fi
+            else
+              echo "❌ Failed to download $REMOTE_FILE, skipping..."
+              rm -f "$TEMP_FILE"
+            fi
+          done
+          
+          # Clean up any remaining temporary files
+          find . -name "*.temp.*" -type f -delete 2>/dev/null || true
+          
+          # Set output variables for subsequent steps
+          if [ "$ANY_CHANGED" = true ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "changed_files=$CHANGED_FILES" >> "$GITHUB_OUTPUT"
+            echo "📋 Summary: Files changed -$CHANGED_FILES"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "✅ All files are up to date"
+          fi
+
+      # Step 3: Commit and push changes (only if files were changed)
+      - name: Commit and push changes
+        if: steps.sync_files.outputs.changed == 'true'
+        run: |
+          # Configure git with GitHub Actions bot credentials
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # Stage all changes
+          git add .
+          
+          # Create commit with detailed message
+          git commit -m "chore: sync config files from dadavidtseng/ConfigCommon
+          
+          📝 Updated files:${{ steps.sync_files.outputs.changed_files }}
+          🕒 Sync timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          🔗 Source: https://github.com/dadavidtseng/ConfigCommon"
+          
+          # Push changes to repository
+          git push
+
+      # Step 4: Display comprehensive summary
+      - name: Display sync summary
+        run: |
+          echo "==========================================="
+          echo "🔄 CONFIG SYNC OPERATION COMPLETE"
+          echo "==========================================="
+          echo "📅 Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "🔗 Source Repository: dadavidtseng/ConfigCommon"
+          echo "📂 Target Repository: ${{ github.repository }}"
+          echo "🌿 Branch: ${{ github.ref_name }}"
+          echo ""
+          
+          if [ "${{ steps.sync_files.outputs.changed }}" = "true" ]; then
+            echo "✅ STATUS: Files Updated and Committed"
+            echo "📝 Updated Files:${{ steps.sync_files.outputs.changed_files }}"
+            echo "🔍 Changes have been automatically committed and pushed"
+          else
+            echo "✅ STATUS: All Files Up to Date"
+            echo "🔍 No changes detected - repository is current"
+          fi
+          
+          echo "==========================================="
