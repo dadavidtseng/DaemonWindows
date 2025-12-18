@@ -236,3 +236,4 @@ docs/_build/
 # ----------------------------------------------------------------------------------------------------
 # Add your custom project-specific ignores below this line
 
+Run/Logs
