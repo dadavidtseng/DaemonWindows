@@ -4,13 +4,15 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Triangle.hpp"
-
+//----------------------------------------------------------------------------------------------------
+#include "Game/Gameplay/Game.hpp"
+#include "Game/Subsystem/Widget/ButtonWidget.hpp"
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
-#include "Engine/UI/WidgetSubsystem.hpp"
-#include "Game/Gameplay/Game.hpp"
-#include "Game/Subsystem/Widget/ButtonWidget.hpp"
+#include "Engine/Widget/WidgetSubsystem.hpp"
+
 
 //----------------------------------------------------------------------------------------------------
 Triangle::Triangle(EntityID const entityID,

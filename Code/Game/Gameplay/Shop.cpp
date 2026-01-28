@@ -4,13 +4,14 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Shop.hpp"
-
-#include "Game.hpp"
-#include "Player.hpp"
+//----------------------------------------------------------------------------------------------------
+#include "Game/Gameplay/Game.hpp"
+#include "Game/Gameplay/Player.hpp"
+#include "Game/Subsystem/Widget/ButtonWidget.hpp"
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Input/InputSystem.hpp"
-#include "Engine/UI/WidgetSubsystem.hpp"
-#include "Game/Subsystem/Widget/ButtonWidget.hpp"
+#include "Engine/Widget/WidgetSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
 Shop::Shop(EntityID const entityID,

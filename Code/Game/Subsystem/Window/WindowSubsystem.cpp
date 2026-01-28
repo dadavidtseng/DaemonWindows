@@ -8,6 +8,7 @@
 #include <dxgi1_2.h>
 
 #include "Engine/Core/Clock.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Game/Gameplay/Game.hpp"
@@ -87,13 +88,36 @@ WindowID WindowSubsystem::CreateChildWindow(EntityID const owner,
                                             int const      width,
                                             int const      height)
 {
+    // Validate input parameters
+    if (owner == 0)
+    {
+        DebuggerPrintf("CreateChildWindow: Invalid owner ID 0.\n");
+        return INVALID_WINDOW_ID;
+    }
+
+    if (width <= 0 || height <= 0)
+    {
+        DebuggerPrintf("CreateChildWindow: Invalid dimensions (%d x %d) for owner %llu.\n",
+                       width, height, static_cast<unsigned long long>(owner));
+        return INVALID_WINDOW_ID;
+    }
+
+    // Check if entity already owns a window
+    auto existingIt = m_actorToWindow.find(owner);
+    if (existingIt != m_actorToWindow.end())
+    {
+        DebuggerPrintf("CreateChildWindow: Entity %llu already owns Window %d.\n",
+                       static_cast<unsigned long long>(owner), existingIt->second);
+        return existingIt->second;
+    }
+
     // 創建作業系統視窗
     HWND hwnd = CreateOSWindow(windowTitle, x, y, width, height);
 
     if (!hwnd)
     {
         DebuggerPrintf("CreateWindowInternal: Failed to create OS window.\n");
-        return 0;
+        return INVALID_WINDOW_ID;
     }
 
     // 生成新的視窗ID
@@ -113,9 +137,12 @@ WindowID WindowSubsystem::CreateChildWindow(EntityID const owner,
     newWindow->SetDisplayContext(GetDC(hwnd));
 
     // 設定視窗位置和大小追蹤
-    newWindow->SetWindowDimensions(Vec2(width, height));
-    newWindow->SetWindowPosition(Vec2(x, y));
+    newWindow->SetWindowDimensions(Vec2(static_cast<float>(width), static_cast<float>(height)));
+    newWindow->SetWindowPosition(Vec2(static_cast<float>(x), static_cast<float>(y)));
     newWindow->m_shouldUpdatePosition = true;
+
+    // CRITICAL: Initialize client position to prevent crash when GetClientPosition() is called
+    InitializeWindowClientPosition(newWindow.get(), hwnd);
 
     // 創建 WindowData 並添加到容器
     std::unordered_set const ownerSet = {owner};
@@ -255,16 +282,22 @@ void WindowSubsystem::DestroyAllWindows()
     DebuggerPrintf("DestroyAllWindows: All windows destroyed.\n");
 }
 
-void WindowSubsystem::ShowWindowByWindowID(WindowID windowID)
+void WindowSubsystem::ShowWindowByWindowID(WindowID const windowID)
 {
-    Window* window = GetWindow(windowID);
-    if (window) ShowWindow((HWND)window->GetWindowHandle(), SW_SHOW);
+    Window* window = GetValidatedWindow(windowID, "ShowWindowByWindowID");
+    if (window)
+    {
+        ShowWindow(static_cast<HWND>(window->GetWindowHandle()), SW_SHOW);
+    }
 }
 
-void WindowSubsystem::HideWindowByWindowID(WindowID windowID)
+void WindowSubsystem::HideWindowByWindowID(WindowID const windowID)
 {
-    Window* window = GetWindow(windowID);
-    if (window) ShowWindow((HWND)window->GetWindowHandle(), SW_HIDE);
+    Window* window = GetValidatedWindow(windowID, "HideWindowByWindowID");
+    if (window)
+    {
+        ShowWindow(static_cast<HWND>(window->GetWindowHandle()), SW_HIDE);
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -286,7 +319,7 @@ WindowData* WindowSubsystem::GetWindowData(WindowID const windowID)
 WindowID WindowSubsystem::FindWindowIDByEntityID(EntityID const entityID)
 {
     auto it = m_actorToWindow.find(entityID);
-    return (it != m_actorToWindow.end()) ? it->second : 0;
+    return (it != m_actorToWindow.end()) ? it->second : INVALID_WINDOW_ID;
 }
 
 std::vector<EntityID> WindowSubsystem::GetWindowOwners(WindowID const windowID)
@@ -345,46 +378,41 @@ bool WindowSubsystem::WindowExists(WindowID const windowID)
 
 void WindowSubsystem::UpdateWindowPosition(WindowID const windowID)
 {
-    auto it = m_windowList.find(windowID);
-    if (it != m_windowList.end() && it->second.m_window)
+    Window* window = GetValidatedWindow(windowID, "UpdateWindowPosition");
+    if (window)
     {
-        it->second.m_window->UpdatePosition();
-    }
-    else
-    {
-        DebuggerPrintf("UpdateWindowPosition: Window %d not found.\n", windowID);
+        window->UpdatePosition();
     }
 }
 
 void WindowSubsystem::UpdateWindowPosition(WindowID const windowID,
                                            Vec2 const&    newPosition)
 {
-    auto it = m_windowList.find(windowID);
-    if (it != m_windowList.end() && it->second.m_window)
+    // DEPRECATED: This method name is misleading - it adds to position rather than setting it
+    // Use MoveWindowByOffset() for clarity
+    MoveWindowByOffset(windowID, newPosition);
+}
+
+void WindowSubsystem::MoveWindowByOffset(WindowID const windowID, Vec2 const& offset)
+{
+    Window* window = GetValidatedWindow(windowID, "MoveWindowByOffset");
+    if (window)
     {
-        it->second.m_window->SetWindowPosition(it->second.m_window->GetWindowPosition() + newPosition);
-        Vec2 totalPosition = it->second.m_window->GetWindowPosition() + newPosition;
-        // it->second.window->UpdatePosition(newPosition);
-        // it->second.window->m_shouldUpdatePosition = true;
-        DebuggerPrintf("(NewPosition: %f, %f)\n", newPosition.x, newPosition.y);
-        DebuggerPrintf("(it->second.window->GetWindowPosition(): %f, %f)\n", it->second.m_window->GetWindowPosition().x, it->second.m_window->GetWindowPosition().y);
-    }
-    else
-    {
-        DebuggerPrintf("UpdateWindowPosition: Window %d not found.\n", windowID);
+        Vec2 const oldPosition = window->GetWindowPosition();
+        Vec2 const newPosition = oldPosition + offset;
+        window->SetWindowPosition(newPosition);
+        DebuggerPrintf("MoveWindowByOffset: Moved Window %d by (%f, %f), from (%f, %f) to (%f, %f)\n",
+                       windowID, offset.x, offset.y,
+                       oldPosition.x, oldPosition.y, newPosition.x, newPosition.y);
     }
 }
 
-void WindowSubsystem::UpdateWindowDimension(WindowID windowID)
+void WindowSubsystem::UpdateWindowDimension(WindowID const windowID)
 {
-    auto it = m_windowList.find(windowID);
-    if (it != m_windowList.end() && it->second.m_window)
+    Window* window = GetValidatedWindow(windowID, "UpdateWindowDimension");
+    if (window)
     {
-        it->second.m_window->UpdateDimension();
-    }
-    else
-    {
-        DebuggerPrintf("UpdateWindowDimension: Window %d not found.\n", windowID);
+        window->UpdateDimension();
     }
 }
 
@@ -507,6 +535,48 @@ HWND WindowSubsystem::CreateOSWindow(String const& title,
     return hwnd;
 }
 
+void WindowSubsystem::InitializeWindowClientPosition(Window* window, HWND hwnd)
+{
+    if (!window || !hwnd) return;
+
+    // Get client rectangle in client coordinates
+    RECT clientRect;
+    GetClientRect(hwnd, &clientRect);
+
+    // Convert client area top-left corner to screen coordinates
+    POINT clientTopLeft = {0, 0};
+    ClientToScreen(hwnd, &clientTopLeft);
+
+    // Calculate client dimensions
+    int const clientWidth  = clientRect.right - clientRect.left;
+    int const clientHeight = clientRect.bottom - clientRect.top;
+
+    // Get screen dimensions for Y-axis flip
+    Vec2 const screenDimensions = Vec2(static_cast<float>(GetSystemMetrics(SM_CXSCREEN)),
+                                       static_cast<float>(GetSystemMetrics(SM_CYSCREEN)));
+
+    // Set client position (with Y-axis flip for engine coordinate system)
+    Vec2 const clientPosition = Vec2(static_cast<float>(clientTopLeft.x),
+                                     screenDimensions.y - static_cast<float>(clientTopLeft.y + clientHeight));
+
+    window->SetClientPosition(clientPosition);
+    window->SetClientDimensions(Vec2(static_cast<float>(clientWidth), static_cast<float>(clientHeight)));
+}
+
+Window* WindowSubsystem::GetValidatedWindow(WindowID const windowID, char const* callerName)
+{
+    auto it = m_windowList.find(windowID);
+    if (it == m_windowList.end() || !it->second.m_window)
+    {
+        if (callerName)
+        {
+            DebuggerPrintf("%s: Window %d not found.\n", callerName, windowID);
+        }
+        return nullptr;
+    }
+    return it->second.m_window.get();
+}
+
 void WindowSubsystem::SetupTransparentMainWindow()
 {
     if (!Window::s_mainWindow) return;
@@ -582,12 +652,27 @@ void WindowSubsystem::AnimateWindowPosition(WindowID id, Vec2 const& targetPosit
 
 void WindowSubsystem::UpdateWindowAnimations(float deltaSeconds)
 {
+    // Collect completed animations for removal
+    std::vector<WindowID> completedAnimations;
+
     for (auto& [windowId, animData] : m_windowAnimations)
     {
         if (animData.IsAnimating())
         {
             UpdateSingleWindowAnimation(windowId, animData, deltaSeconds);
+
+            // Mark for removal if completed
+            if (!animData.IsAnimating())
+            {
+                completedAnimations.push_back(windowId);
+            }
         }
+    }
+
+    // Remove completed animations to prevent memory growth
+    for (WindowID windowId : completedAnimations)
+    {
+        m_windowAnimations.erase(windowId);
     }
 }
 

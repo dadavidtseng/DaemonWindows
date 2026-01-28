@@ -6,8 +6,7 @@
 #pragma once
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/StringUtils.hpp"
-#include "Engine/UI/IWidget.hpp"
-#include "Game/Framework/GameCommon.hpp"
+#include "Engine/Widget/IWidget.hpp"
 
 //----------------------------------------------------------------------------------------------------
 class ButtonWidget : public IWidget

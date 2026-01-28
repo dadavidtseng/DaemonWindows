@@ -11,3 +11,4 @@
 #pragma once
 // #define ENGINE_DISABLE_AUDIO	// (If uncommented) Disables AudioSystem code and fmod linkage.
 #define ENGINE_DEBUG_RENDER
+#define ENGINE_DISABLE_SCRIPT

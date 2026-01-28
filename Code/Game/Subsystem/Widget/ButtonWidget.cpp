@@ -4,11 +4,22 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Game/Subsystem/Widget/ButtonWidget.hpp"
-
+//----------------------------------------------------------------------------------------------------
+#include "Game/Framework/GameCommon.hpp"
+//----------------------------------------------------------------------------------------------------
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Renderer.hpp"
+#include "Engine/Resource/ResourceSubsystem.hpp"
 
-ButtonWidget::ButtonWidget(WidgetSubsystem* owner, String const& text, int x, int y, int width, int height, Rgba8 const& color)
+//----------------------------------------------------------------------------------------------------
+ButtonWidget::ButtonWidget(WidgetSubsystem* owner,
+                           String const&    text,
+                           int              x,
+                           int              y,
+                           int              width,
+                           int              height,
+                           Rgba8 const&     color)
     : m_text(text),
       m_x(x),
       m_y(y),
@@ -30,8 +41,9 @@ void ButtonWidget::Draw() const
 
     VertexList_PCU verts2;
     // g_theBitmapFont->AddVertsForText2D(verts, m_text, Vec2(m_x, m_y), 20.f);
-    g_bitmapFont->AddVertsForTextInBox2D(verts2, m_text, AABB2(Vec2(m_x, m_y), Vec2(m_x + m_width, m_y + m_height)), 20.f, m_color, 1.f, Vec2(1, 0), OVERRUN);
-    g_renderer->BindTexture(&g_bitmapFont->GetTexture());
+    BitmapFont* bitmapFont = g_resourceSubsystem->CreateOrGetBitmapFontFromFile("Data/Fonts/DaemonFont");
+    bitmapFont->AddVertsForTextInBox2D(verts2, m_text, AABB2(Vec2(m_x, m_y), Vec2(m_x + m_width, m_y + m_height)), 20.f, m_color, 1.f, Vec2(1, 0), eTextBoxMode::OVERRUN);
+    g_renderer->BindTexture(&bitmapFont->GetTexture());
     g_renderer->DrawVertexArray(verts2);
 }
 

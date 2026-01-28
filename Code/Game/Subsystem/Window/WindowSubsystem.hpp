@@ -13,6 +13,12 @@
 #include "Game/Gameplay/Entity.hpp"
 
 //----------------------------------------------------------------------------------------------------
+// Constants
+//----------------------------------------------------------------------------------------------------
+constexpr WindowID INVALID_WINDOW_ID         = 0;
+constexpr float    DEFAULT_ANIMATION_DURATION = 0.5f;
+
+//----------------------------------------------------------------------------------------------------
 struct WindowAnimationData
 {
     bool m_isAnimatingSize     = false;
@@ -79,7 +85,8 @@ public:
 
     // 視窗操作
     void   UpdateWindowPosition(WindowID windowID);
-    void   UpdateWindowPosition(WindowID windowID, Vec2 const& newPosition);
+    void   UpdateWindowPosition(WindowID windowID, Vec2 const& newPosition); // DEPRECATED: Use MoveWindowByOffset instead
+    void   MoveWindowByOffset(WindowID windowID, Vec2 const& offset);
     void   UpdateWindowDimension(WindowID windowID);
     void   SetWindowActive(WindowID windowID, bool active);
     void   SetWindowName(WindowID windowId, String const& name);
@@ -89,9 +96,9 @@ public:
     size_t GetActiveWindowCount() const;
 
     // Animations
-    void AnimateWindowDimensions(WindowID id, Vec2 const& targetDimensions, float duration = 0.5f);
-    void AnimateWindowPosition(WindowID id, Vec2 const& targetPosition, float duration = 0.5f);
-    void AnimateWindowPositionAndDimensions(WindowID id, Vec2 const& targetPosition, Vec2 const& targetDimensions, float duration = 0.5f);
+    void AnimateWindowDimensions(WindowID id, Vec2 const& targetDimensions, float duration = DEFAULT_ANIMATION_DURATION);
+    void AnimateWindowPosition(WindowID id, Vec2 const& targetPosition, float duration = DEFAULT_ANIMATION_DURATION);
+    void AnimateWindowPositionAndDimensions(WindowID id, Vec2 const& targetPosition, Vec2 const& targetDimensions, float duration = DEFAULT_ANIMATION_DURATION);
     bool IsWindowAnimating(WindowID id) const;
 
 private:
@@ -102,6 +109,8 @@ private:
     WindowID                                          m_nextWindowID = 1; // 從1開始，0保留為無效ID
 
     HWND   CreateOSWindow(String const& title, int x, int y, int width, int height);
+    void   InitializeWindowClientPosition(Window* window, HWND hwnd);
+    Window* GetValidatedWindow(WindowID windowID, char const* callerName = nullptr);
     void   SetupTransparentMainWindow();
     String GenerateDefaultWindowName(std::vector<EntityID> const& owners) const;
 

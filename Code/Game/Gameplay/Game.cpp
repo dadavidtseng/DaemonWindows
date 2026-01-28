@@ -4,30 +4,32 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Game.hpp"
-
+//----------------------------------------------------------------------------------------------------
+#include "Game/Framework/App.hpp"
+#include "Game/Framework/GameCommon.hpp"
+#include "Game/Gameplay/Bullet.hpp"
+#include "Game/Gameplay/Coin.hpp"
+#include "Game/Gameplay/Player.hpp"
+#include "Game/Gameplay/Shop.hpp"
+#include "Game/Gameplay/Triangle.hpp"
+#include "Game/Subsystem/Widget/ButtonWidget.hpp"
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
-#include "Engine/Renderer/VertexUtils.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Math/Triangle2.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
-#include "Engine/UI/WidgetSubsystem.hpp"
-#include "Game/Framework/App.hpp"
-#include "Game/Framework/GameCommon.hpp"
-#include "Game/Gameplay/Bullet.hpp"
-#include "Game/Gameplay/Coin.hpp"
-#include "Game/Gameplay/Debris.hpp"
-#include "Game/Gameplay/Player.hpp"
-#include "Game/Gameplay/Shop.hpp"
-#include "Game/Gameplay/Triangle.hpp"
-#include "Game/Subsystem/Widget/ButtonWidget.hpp"
+#include "Engine/Renderer/VertexUtils.hpp"
+#include "Engine/Resource/ResourceSubsystem.hpp"
+#include "Engine/Widget/WidgetSubsystem.hpp"
 
-int Game::s_nextEntityID = 0;
+// Start entity IDs from 1 (0 is reserved as INVALID_ENTITY_ID)
+int Game::s_nextEntityID = 1;
 
 //----------------------------------------------------------------------------------------------------
 Game::Game()
@@ -122,7 +124,7 @@ void Game::Render() const
 
     g_renderer->EndCamera(*m_screenCamera);
     //-End-of-Screen-Camera---------------------------------------------------------------------------
-
+    g_widgetSubsystem->Render();
     DebugRenderScreen(*m_screenCamera);
     // if (m_gameState == eGameState::GAME)
     // {
@@ -404,7 +406,7 @@ void Game::RenderAttractMode() const
     g_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
     g_renderer->SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
     g_renderer->SetDepthMode(eDepthMode::DISABLED);
-    g_renderer->BindTexture(g_renderer->CreateOrGetTextureFromFile("Data/Images/serenity.png"));
+    g_renderer->BindTexture(g_resourceSubsystem->CreateOrGetTextureFromFile("Data/Images/serenity.png"));
     g_renderer->BindShader(g_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
     g_renderer->DrawVertexArray(verts1);
 
@@ -436,21 +438,22 @@ void Game::RenderAttractMode() const
     g_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
     g_renderer->SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
     g_renderer->SetDepthMode(eDepthMode::DISABLED);
-    g_renderer->BindTexture(g_renderer->CreateOrGetTextureFromFile("Data/Images/title.png"));
+    g_renderer->BindTexture(g_resourceSubsystem->CreateOrGetTextureFromFile("Data/Images/title.png"));
     g_renderer->BindShader(nullptr);
     g_renderer->DrawVertexArray(verts2);
 
     VertexList_PCU verts3;
     Vec2           offset2 = Vec2(0, -80);
     // AddVertsForAABB2D(verts2, AABB2(Vec2(m_entities[0]->m_position-offset*0.5f), Vec2(m_entities[0]->m_position + offset*0.5f)));
-    g_bitmapFont->AddVertsForTextInBox2D(verts3, Stringf("Press Space to Start\nWASD to move, LMB to shoot"), AABB2(Vec2(m_entities[0]->m_position - offset * 0.5f) + offset2, Vec2(m_entities[0]->m_position + offset * 0.5f) + offset2), 20.f, Rgba8::WHITE, 1.f, Vec2(0.5, 0.5f), OVERRUN);
+    BitmapFont* bitmapFont = g_resourceSubsystem->CreateOrGetBitmapFontFromFile("Data/Fonts/DaemonFont");
+    bitmapFont->AddVertsForTextInBox2D(verts3, Stringf("Press Space to Start\nWASD to move, LMB to shoot"), AABB2(Vec2(m_entities[0]->m_position - offset * 0.5f) + offset2, Vec2(m_entities[0]->m_position + offset * 0.5f) + offset2), 20.f, Rgba8::WHITE, 1.f, Vec2(0.5, 0.5f), eTextBoxMode::OVERRUN);
 
     // g_theRenderer->SetModelConstants(Mat44{}, Rgba8(255, 255, 255, 100));
     g_renderer->SetBlendMode(eBlendMode::ALPHA);
     g_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
     g_renderer->SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
     g_renderer->SetDepthMode(eDepthMode::DISABLED);
-    g_renderer->BindTexture(&g_bitmapFont->GetTexture());
+    g_renderer->BindTexture(&bitmapFont->GetTexture());
     g_renderer->BindShader(nullptr);
     g_renderer->DrawVertexArray(verts3);
 }
@@ -465,7 +468,7 @@ void Game::RenderGame() const
     g_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
     g_renderer->SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
     g_renderer->SetDepthMode(eDepthMode::DISABLED);
-    g_renderer->BindTexture(g_renderer->CreateOrGetTextureFromFile("Data/Images/ripple.png"));
+    g_renderer->BindTexture(g_resourceSubsystem->CreateOrGetTextureFromFile("Data/Images/ripple.png"));
     g_renderer->BindShader(g_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
     g_renderer->DrawVertexArray(verts1);
 
