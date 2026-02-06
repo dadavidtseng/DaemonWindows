@@ -183,7 +183,7 @@ void Player::FireBullet()
     bullet->m_velocity = velocity;
 
     // g_theWindowSubsystem->CreateChildWindow(bullet->m_actorID, bullet->m_name);
-    g_game->m_entities.push_back(bullet);
+    g_game->m_entityList.push_back(bullet);
     SoundID const attractBGM = g_audio->CreateOrGetSound("Data/Audio/shoot.mp3", eAudioSystemSoundDimension::Sound2D);
     g_audio->StartSound(attractBGM, false, 1.f, 0.f, 1.f);
 }

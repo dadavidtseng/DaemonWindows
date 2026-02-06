@@ -86,9 +86,9 @@ void Game::Update()
     UpdateFromInput();
     AdjustForPauseAndTimeDistortion();
     HandleEntityCollision();
-    for (size_t i = 0; i < m_entities.size(); ++i)
+    for (size_t i = 0; i < m_entityList.size(); ++i)
     {
-        Entity* entity = m_entities[i];
+        Entity* entity = m_entityList[i];
         if (entity != nullptr)  // 先檢查指標
         {
             if (!entity->IsDead())  // 再檢查是否存活
@@ -100,7 +100,7 @@ void Game::Update()
             {
                 // 清理死亡的實體
                 delete entity;
-                m_entities.erase(m_entities.begin() + i);
+                m_entityList.erase(m_entityList.begin() + i);
                 --i;  // 調整索引
             }
         }
@@ -175,7 +175,7 @@ STATIC bool Game::OnEntityDestroyed(EventArgs& args)
     if (name == "Coin") return true;
 
     Vec2 position = g_game->GetEntityByEntityID(entityID)->m_position;
-    g_game->m_entities.push_back(new Coin((int)g_game->m_entities.size(), position, 0.f, Rgba8::RED, true, false));
+    g_game->m_entityList.push_back(new Coin((int)g_game->m_entityList.size(), position, 0.f, Rgba8::RED, true, false));
 
     return true;
 }
@@ -230,7 +230,7 @@ Clock* Game::GetGameClock() const
 //----------------------------------------------------------------------------------------------------
 Player* Game::GetPlayer() const
 {
-    for (Entity* entity : m_entities)
+    for (Entity* entity : m_entityList)
     {
         Player* player = dynamic_cast<Player*>(entity);
         if (player != nullptr) return player;
@@ -241,7 +241,7 @@ Player* Game::GetPlayer() const
 //----------------------------------------------------------------------------------------------------
 Shop* Game::GetShop() const
 {
-    for (Entity* entity : m_entities)
+    for (Entity* entity : m_entityList)
     {
         Shop* shop = dynamic_cast<Shop*>(entity);
         if (shop != nullptr) return shop;
@@ -252,7 +252,7 @@ Shop* Game::GetShop() const
 //----------------------------------------------------------------------------------------------------
 Entity* Game::GetEntityByEntityID(EntityID const& entityID) const
 {
-    for (Entity* entity : m_entities)
+    for (Entity* entity : m_entityList)
     {
         if (entity && entity->m_entityID == entityID)
         {
@@ -305,19 +305,59 @@ void Game::UpdateFromInput()
     }
 }
 
+//----------------------------------------------------------------------------------------------------
+void Game::FireCollisionEvent(Entity* entityA, Entity* entityB)
+{
+	EventArgs args;
+	args.SetValue("entityA", entityA->m_name);
+	args.SetValue("entityAID", std::to_string(entityA->m_entityID));
+	args.SetValue("entityB", entityB->m_name);
+	args.SetValue("entityBID", std::to_string(entityB->m_entityID));
+	g_eventSystem->FireEvent("OnCollisionEnter", args);
+}
+
+//----------------------------------------------------------------------------------------------------
+void Game::HandleBulletTriangleCollision(Bullet* bullet, Triangle* triangle)
+{
+	FireCollisionEvent(bullet, triangle);
+	
+	triangle->DecreaseHealth(1);
+	triangle->m_position = triangle->m_position - triangle->m_velocity * 30.f;
+	
+	SoundID const hitSound = g_audio->CreateOrGetSound("Data/Audio/hit.mp3", eAudioSystemSoundDimension::Sound2D);
+	g_audio->StartSound(hitSound, false, 1.f, 0.f, 1.f);
+}
+
+//----------------------------------------------------------------------------------------------------
+void Game::HandlePlayerCoinCollision(Player* player, Coin* coin)
+{
+	FireCollisionEvent(player, coin);
+	
+	coin->DecreaseHealth(1);
+	
+	SoundID const coinSound = g_audio->CreateOrGetSound("Data/Audio/coin.mp3", eAudioSystemSoundDimension::Sound2D);
+	g_audio->StartSound(coinSound, false, 1.f, 0.f, 1.f);
+}
+
+//----------------------------------------------------------------------------------------------------
+void Game::HandlePlayerTriangleCollision(Player* player, Triangle* triangle)
+{
+	FireCollisionEvent(player, triangle);
+}
+
 // TODO: refactor!!!
 void Game::HandleEntityCollision()
 {
-    for (int i = 0; i < (int)m_entities.size(); ++i)
+    for (int i = 0; i < (int)m_entityList.size(); ++i)
     {
-        Entity* entityA = m_entities[i];
+        Entity* entityA = m_entityList[i];
         if (entityA->IsDead()) continue;
 
-        for (int j = 0; j < (int)m_entities.size(); ++j)
+        for (int j = 0; j < (int)m_entityList.size(); ++j)
         {
             if (i == j) continue;
 
-            Entity* entityB = m_entities[j];
+            Entity* entityB = m_entityList[j];
             if (entityB->IsDead()) continue;
             // 檢查兩個實體是否發生碰撞
             if (DoDiscsOverlap2D(entityA->m_position, entityA->m_physicRadius, entityB->m_position, entityB->m_physicRadius))
@@ -327,17 +367,7 @@ void Game::HandleEntityCollision()
 
                 if (bullet != nullptr && triangle != nullptr)
                 {
-                    EventArgs args;
-                    args.SetValue("entityA", bullet->m_name);
-                    args.SetValue("entityAID", std::to_string(bullet->m_entityID));
-                    args.SetValue("entityB", triangle->m_name);
-                    args.SetValue("entityBID", std::to_string(triangle->m_entityID));
-                    g_eventSystem->FireEvent("OnCollisionEnter", args);
-
-                    triangle->DecreaseHealth(1);
-                    triangle->m_position     = triangle->m_position - triangle->m_velocity * 30.f;
-                    SoundID const attractBGM = g_audio->CreateOrGetSound("Data/Audio/hit.mp3", eAudioSystemSoundDimension::Sound2D);
-                    g_audio->StartSound(attractBGM, false, 1.f, 0.f, 1.f);
+                    HandleBulletTriangleCollision(bullet, triangle);
                 }
 
                 Player* player = dynamic_cast<Player*>(entityA);
@@ -345,26 +375,12 @@ void Game::HandleEntityCollision()
 
                 if (player != nullptr && coin != nullptr)
                 {
-                    EventArgs args;
-                    args.SetValue("entityA", player->m_name);
-                    args.SetValue("entityAID", std::to_string(player->m_entityID));
-                    args.SetValue("entityB", coin->m_name);
-                    args.SetValue("entityBID", std::to_string(coin->m_entityID));
-                    g_eventSystem->FireEvent("OnCollisionEnter", args);
-
-                    coin->DecreaseHealth(1);
-                    SoundID const attractBGM = g_audio->CreateOrGetSound("Data/Audio/coin.mp3", eAudioSystemSoundDimension::Sound2D);
-                    g_audio->StartSound(attractBGM, false, 1.f, 0.f, 1.f);
+                    HandlePlayerCoinCollision(player, coin);
                 }
 
                 if (player != nullptr && triangle != nullptr)
                 {
-                    EventArgs args;
-                    args.SetValue("entityA", player->m_name);
-                    args.SetValue("entityAID", std::to_string(player->m_entityID));
-                    args.SetValue("entityB", triangle->m_name);
-                    args.SetValue("entityBID", std::to_string(triangle->m_entityID));
-                    g_eventSystem->FireEvent("OnCollisionEnter", args);
+                    HandlePlayerTriangleCollision(player, triangle);
                 }
             }
         }
@@ -422,7 +438,7 @@ void Game::RenderAttractMode() const
     DebugAddScreenText(Stringf("Viewport Dimensions(%.1f, %.1f)", Window::s_mainWindow->GetViewportDimensions().x, Window::s_mainWindow->GetViewportDimensions().y), m_screenCamera->GetOrthographicBottomLeft() + Vec2(0, 80), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
     DebugAddScreenText(Stringf("Screen Dimensions(%.1f, %.1f)", Window::s_mainWindow->GetScreenDimensions().x, Window::s_mainWindow->GetScreenDimensions().y), m_screenCamera->GetOrthographicBottomLeft() + Vec2(0, 100), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
 
-    for (Entity* entity : m_entities)
+    for (Entity* entity : m_entityList)
     {
         if (entity && !entity->IsDead() && entity->m_name == "You")
         {
@@ -446,7 +462,7 @@ void Game::RenderAttractMode() const
     Vec2           offset2 = Vec2(0, -80);
     // AddVertsForAABB2D(verts2, AABB2(Vec2(m_entities[0]->m_position-offset*0.5f), Vec2(m_entities[0]->m_position + offset*0.5f)));
     BitmapFont* bitmapFont = g_resourceSubsystem->CreateOrGetBitmapFontFromFile("Data/Fonts/DaemonFont");
-    bitmapFont->AddVertsForTextInBox2D(verts3, Stringf("Press Space to Start\nWASD to move, LMB to shoot"), AABB2(Vec2(m_entities[0]->m_position - offset * 0.5f) + offset2, Vec2(m_entities[0]->m_position + offset * 0.5f) + offset2), 20.f, Rgba8::WHITE, 1.f, Vec2(0.5, 0.5f), eTextBoxMode::OVERRUN);
+    bitmapFont->AddVertsForTextInBox2D(verts3, Stringf("Press Space to Start\nWASD to move, LMB to shoot"), AABB2(Vec2(m_entityList[0]->m_position - offset * 0.5f) + offset2, Vec2(m_entityList[0]->m_position + offset * 0.5f) + offset2), 20.f, Rgba8::WHITE, 1.f, Vec2(0.5, 0.5f), eTextBoxMode::OVERRUN);
 
     // g_theRenderer->SetModelConstants(Mat44{}, Rgba8(255, 255, 255, 100));
     g_renderer->SetBlendMode(eBlendMode::ALPHA);
@@ -472,7 +488,7 @@ void Game::RenderGame() const
     g_renderer->BindShader(g_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
     g_renderer->DrawVertexArray(verts1);
 
-    for (Entity* entity : m_entities)
+    for (Entity* entity : m_entityList)
     {
         if (entity && !entity->IsDead() && entity->IsChildWindowVisible())
         {
@@ -485,32 +501,45 @@ void Game::RenderGame() const
 }
 
 //----------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
+Triangle* Game::SpawnTriangle()
+{
+	float const screenWidth  = Window::s_mainWindow->GetScreenDimensions().x;
+	float const screenHeight = Window::s_mainWindow->GetScreenDimensions().y;
+	
+	Vec2 const randomPos = Vec2(
+		g_rng->RollRandomFloatInRange(0.f, screenWidth * 0.5f),
+		g_rng->RollRandomFloatInRange(0.f, screenHeight * 0.5f)
+	);
+	
+	int const randomType = g_rng->RollRandomIntInRange(0, 1);
+	
+	Triangle* triangle = new Triangle(
+		s_nextEntityID++,
+		randomPos,
+		0.f,
+		Rgba8::BLUE,
+		true,
+		randomType
+	);
+	
+	m_entityList.push_back(triangle);
+	return triangle;
+}
+
+//----------------------------------------------------------------------------------------------------
 void Game::SpawnEntity()
 {
-    m_entities.push_back(new Triangle(s_nextEntityID++, Vec2(g_rng->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_rng->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::BLUE, true,
-                                      g_rng->RollRandomIntInRange(0, 1)));
-    m_entities.push_back(new Triangle(s_nextEntityID++, Vec2(g_rng->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_rng->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::BLUE, true,
-                                      g_rng->RollRandomIntInRange(0, 1)));
-    m_entities.push_back(new Triangle(s_nextEntityID++, Vec2(g_rng->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_rng->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::BLUE, true,
-                                      g_rng->RollRandomIntInRange(0, 1)));
-    // m_entities.push_back(new Coin((int)m_entities.size(), Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::RED, true, true));
-    // m_entities.push_back(new Debris((int)m_entities.size(), Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::GREEN, true, true));
-
-    if (m_entities.size() <= 4)
-    {
-        // m_entities.push_back(new Shop((int)m_entities.size(), Vec2(g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().x * 0.5f), g_theRNG->RollRandomFloatInRange(0, Window::s_mainWindow->GetScreenDimensions().y * 0.5f)), 0.f, Rgba8::YELLOW, true, true));
-        // Shop* shop = GetShop();
-        // if (shop != nullptr)
-        // {
-        //     shop->MarkAsChildWindowInvisible();
-        // }
-    }
+	// Spawn initial wave of triangles
+	SpawnTriangle();
+	SpawnTriangle();
+	SpawnTriangle();
 }
 
 //----------------------------------------------------------------------------------------------------
 void Game::DestroyEntity()
 {
-    for (Entity* entity : m_entities)
+    for (Entity* entity : m_entityList)
     {
         if (entity == nullptr) continue;
         if (entity->m_name == "You") continue;
@@ -542,11 +571,11 @@ void Game::DestroyShop()
 //----------------------------------------------------------------------------------------------------
 void Game::SpawnPlayer()
 {
-    m_entities.push_back(new Player(s_nextEntityID++, Window::s_mainWindow->GetScreenDimensions() * 0.5f, 0.f, Rgba8::YELLOW, true, true));
+    m_entityList.push_back(new Player(s_nextEntityID++, Window::s_mainWindow->GetScreenDimensions() * 0.5f, 0.f, Rgba8::YELLOW, true, true));
 }
 
 //----------------------------------------------------------------------------------------------------
 void Game::SpawnShop()
 {
-    m_entities.push_back(new Shop(s_nextEntityID++, Vec2(Window::s_mainWindow->GetScreenDimensions().x * 0.5f, Window::s_mainWindow->GetScreenDimensions().y * 0.5f), 0.f, Rgba8::BLACK, true, true));
+    m_entityList.push_back(new Shop(s_nextEntityID++, Vec2(Window::s_mainWindow->GetScreenDimensions().x * 0.5f, Window::s_mainWindow->GetScreenDimensions().y * 0.5f), 0.f, Rgba8::BLACK, true, true));
 }

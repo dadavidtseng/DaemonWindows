@@ -25,7 +25,7 @@
 //----------------------------------------------------------------------------------------------------
 App*             g_app             = nullptr;       // Created and owned by Main_Windows.cpp
 Game*            g_game            = nullptr;       // Created and owned by the App
-WidgetSubsystem* g_widgetSubsystem = nullptr;       // Created and owned by the App
+// g_widgetSubsystem is defined in Engine/Core/EngineCommon.cpp
 WindowSubsystem* g_windowSubsystem = nullptr;       // Created and owned by the App
 
 //----------------------------------------------------------------------------------------------------

@@ -91,9 +91,9 @@ void Triangle::Update(float const deltaSeconds)
     if (m_isDead) return;
 
     // 追蹤玩家的邏輯
-    if (g_game->m_entities[0] && !g_game->m_entities[0]->IsDead())
+    if (g_game->m_entityList[0] && !g_game->m_entityList[0]->IsDead())
     {
-        Vec2 playerShipPos     = g_game->m_entities[0]->m_position;
+        Vec2 playerShipPos     = g_game->m_entityList[0]->m_position;
         Vec2 directionToPlayer = (playerShipPos - m_position).GetNormalized();
         m_orientationDegrees   = directionToPlayer.GetOrientationDegrees();
     }
