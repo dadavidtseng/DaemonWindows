@@ -238,3 +238,6 @@ docs/_build/
 
 Run/Logs
 Run/Saves
+.serena
+.claude
+.spec-workflow
