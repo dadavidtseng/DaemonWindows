@@ -370,6 +370,8 @@
     <ClCompile Include="Gameplay\Player.cpp" />
     <ClCompile Include="Gameplay\Shop.cpp" />
     <ClCompile Include="Gameplay\Triangle.cpp" />
+    <ClCompile Include="Gameplay\UpgradeManager.cpp" />
+    <ClCompile Include="Gameplay\WaveManager.cpp" />
     <ClCompile Include="Subsystem\Widget\ButtonWidget.cpp" />
     <ClCompile Include="Subsystem\Window\WindowSubsystem.cpp" />
   </ItemGroup>
@@ -390,6 +392,8 @@
     <ClInclude Include="Gameplay\Player.hpp" />
     <ClInclude Include="Gameplay\Shop.hpp" />
     <ClInclude Include="Gameplay\Triangle.hpp" />
+    <ClInclude Include="Gameplay\UpgradeManager.hpp" />
+    <ClInclude Include="Gameplay\WaveManager.hpp" />
     <ClInclude Include="Subsystem\Widget\ButtonWidget.hpp" />
     <ClInclude Include="Subsystem\Window\WindowSubsystem.hpp" />
   </ItemGroup>
