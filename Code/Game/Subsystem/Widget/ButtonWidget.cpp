@@ -13,13 +13,13 @@
 #include "Engine/Resource/ResourceSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
-ButtonWidget::ButtonWidget(WidgetSubsystem* owner,
-                           String const&    text,
-                           int              x,
-                           int              y,
-                           int              width,
-                           int              height,
-                           Rgba8 const&     color)
+ButtonWidget::ButtonWidget([[maybe_unused]] WidgetSubsystem* owner,
+                           String const&                    text,
+                           int                              x,
+                           int                              y,
+                           int                              width,
+                           int                              height,
+                           Rgba8 const&                     color)
     : m_text(text),
       m_x(x),
       m_y(y),
@@ -27,33 +27,20 @@ ButtonWidget::ButtonWidget(WidgetSubsystem* owner,
       m_height(height),
       m_color(color)
 {
-    // Note: Owner parameter is kept for backward compatibility but not used
-    // Widgets are now managed by WidgetSubsystem::AddWidget/AddWidgetToOwner
     SetName("ButtonWidget_" + text);
 }
 
 void ButtonWidget::Draw() const
 {
-    // VertexList_PCU verts1;
-    // AddVertsForAABB2D(verts1, AABB2(Vec2(m_x, m_y), Vec2(m_x + m_width, m_y + m_height)), m_color);
-    // g_theRenderer->BindTexture(nullptr);
-    // g_theRenderer->DrawVertexArray(verts1);
-
-    VertexList_PCU verts2;
-    // g_theBitmapFont->AddVertsForText2D(verts, m_text, Vec2(m_x, m_y), 20.f);
-    BitmapFont* bitmapFont = g_resourceSubsystem->CreateOrGetBitmapFontFromFile("Data/Fonts/DaemonFont");
-    bitmapFont->AddVertsForTextInBox2D(verts2, m_text, AABB2(Vec2(m_x, m_y), Vec2(m_x + m_width, m_y + m_height)), 20.f, m_color, 1.f, Vec2(1, 0), eTextBoxMode::OVERRUN);
+    VertexList_PCU verts;
+    BitmapFont*    bitmapFont = g_resourceSubsystem->CreateOrGetBitmapFontFromFile("Data/Fonts/DaemonFont");
+    bitmapFont->AddVertsForTextInBox2D(verts, m_text, AABB2(Vec2(m_x, m_y), Vec2(m_x + m_width, m_y + m_height)), 20.f, m_color, 1.f, Vec2(1, 0), eTextBoxMode::OVERRUN);
     g_renderer->BindTexture(&bitmapFont->GetTexture());
-    g_renderer->DrawVertexArray(verts2);
+    g_renderer->DrawVertexArray(verts);
 }
 
 void ButtonWidget::Update()
 {
-    // 處理按鈕邏輯，例如滑鼠懸停、點擊等
-    // if (Input::IsMouseInRect(m_x, m_y, m_width, m_height))
-    // {
-    //     // 處理懸停邏輯
-    // }
 }
 
 void ButtonWidget::SetText(String const& text)
@@ -68,12 +55,12 @@ String ButtonWidget::GetText() const
 
 void ButtonWidget::SetPosition(Vec2 const& newPosition)
 {
-    m_x = (int)newPosition.x;
-    m_y = (int)newPosition.y;
+    m_x = static_cast<int>(newPosition.x);
+    m_y = static_cast<int>(newPosition.y);
 }
 
 void ButtonWidget::SetDimensions(Vec2 const& newDimensions)
 {
-    m_width  = (int)newDimensions.x;
-    m_height = (int)newDimensions.y;
+    m_width  = static_cast<int>(newDimensions.x);
+    m_height = static_cast<int>(newDimensions.y);
 }

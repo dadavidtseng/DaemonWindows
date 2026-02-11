@@ -5,6 +5,7 @@
 #include "Game/Gameplay/Entity.hpp"
 
 #include "Game.hpp"
+#include "Game/Subsystem/Window/WindowSubsystem.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/EventSystem.hpp"
 
@@ -30,7 +31,15 @@ void Entity::Update(float const deltaSeconds)
 {
     UNUSED(deltaSeconds)
     if (m_health <= 0) MarkAsDead();
-    m_isChildWindowVisible ? g_windowSubsystem->ShowWindowByWindowID(g_windowSubsystem->FindWindowIDByEntityID(m_entityID)) : g_windowSubsystem->HideWindowByWindowID(g_windowSubsystem->FindWindowIDByEntityID(m_entityID));
+    
+    // Only show/hide child window if entity has an associated window
+    WindowID const windowID = g_windowSubsystem->FindWindowIDByEntityID(m_entityID);
+    if (windowID != INVALID_WINDOW_ID)
+    {
+        m_isChildWindowVisible 
+            ? g_windowSubsystem->ShowWindowByWindowID(windowID) 
+            : g_windowSubsystem->HideWindowByWindowID(windowID);
+    }
 }
 
 void Entity::MarkAsDead()
