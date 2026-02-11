@@ -61,7 +61,7 @@ public:
     void     EndFrame();
     void     ShutDown();
 
-    // 核心視窗管理功能
+    // Core window management
     WindowID CreateChildWindow(EntityID owner, String const& windowTitle, int x, int y, int width, int height);
     bool     AddEntityToWindow(WindowID windowID, EntityID entityID);
     bool     RemoveEntityFromWindow(WindowID windowID, EntityID entityID);
@@ -73,7 +73,7 @@ public:
     void ShowWindowByWindowID(WindowID windowID);
     void HideWindowByWindowID(WindowID windowID);
 
-    // 查詢功能
+    // Query functions
     Window*               GetWindow(WindowID windowID);
     WindowData*           GetWindowData(WindowID windowID);
     WindowID              FindWindowIDByEntityID(EntityID entityID);
@@ -83,7 +83,7 @@ public:
     bool                  IsActorInWindow(WindowID windowID, EntityID entityID);
     bool                  WindowExists(WindowID windowID);
 
-    // 視窗操作
+    // Window operations
     void   UpdateWindowPosition(WindowID windowID);
     void   UpdateWindowPosition(WindowID windowID, Vec2 const& newPosition); // DEPRECATED: Use MoveWindowByOffset instead
     void   MoveWindowByOffset(WindowID windowID, Vec2 const& offset);
@@ -103,10 +103,10 @@ public:
 
 private:
     sWindowSubsystemConfig                            m_config;
-    std::unordered_map<WindowID, WindowData>          m_windowList;// 主要資料結構：WindowID -> WindowData
-    std::unordered_map<EntityID, WindowID>            m_actorToWindow;// 快速查找：ActorID -> WindowID (一個actor只能在一個視窗)
+    std::unordered_map<WindowID, WindowData>          m_windowList;
+    std::unordered_map<EntityID, WindowID>            m_actorToWindow;
     std::unordered_map<WindowID, WindowAnimationData> m_windowAnimations;
-    WindowID                                          m_nextWindowID = 1; // 從1開始，0保留為無效ID
+    WindowID                                          m_nextWindowID = 1;
 
     HWND   CreateOSWindow(String const& title, int x, int y, int width, int height);
     void   InitializeWindowClientPosition(Window* window, HWND hwnd);

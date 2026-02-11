@@ -21,7 +21,6 @@ WindowSubsystem::WindowSubsystem(sWindowSubsystemConfig const& config)
 
 void WindowSubsystem::StartUp()
 {
-    // potentially create some default windows.
 }
 
 void WindowSubsystem::BeginFrame()
@@ -35,24 +34,21 @@ void WindowSubsystem::Update()
 
     UpdateWindowAnimations(deltaSeconds);
 
-
     for (auto& [windowId, windowData] : m_windowList)
     {
         if (!windowData.m_isActive || !windowData.m_window) continue;
 
         windowData.m_window->UpdatePosition();
-        windowData.m_window->UpdateDimension();
 
-        if (windowData.m_window->m_shouldUpdateDimension)
-        {
-            HRESULT const hr                             = g_renderer->ResizeWindowSwapChain(*windowData.m_window);
-            windowData.m_window->m_shouldUpdateDimension = false;
+        // NOTE: Swap chain resizing is disabled due to DirectX limitations
+        // The Engine's UpdateDimension() has a bug that causes infinite resize loops
+        // (it compares client rect dimensions to window dimensions, which are never equal)
+        // Additionally, ResizeBuffers fails with DXGI_ERROR_INVALID_CALL when called
+        // during active rendering, which happens constantly in a game loop.
+        // DirectX can render to windows of any size without explicit swap chain resizing.
 
-            if (FAILED(hr))
-            {
-                DebuggerPrintf("Failed to resize window swap chain for WindowID %d: 0x%08X\n", windowId, hr);
-            }
-        }
+        // Clear the flag to prevent resize attempts
+        windowData.m_window->m_shouldUpdateDimension = false;
     }
 }
 
@@ -67,7 +63,6 @@ void WindowSubsystem::Render()
         if (windowData.m_window->m_shouldUpdatePosition)
         {
             g_renderer->RenderViewportToWindow(*windowData.m_window);
-            // g_theRenderer->RenderViewportToWindowDX11(*windowData.m_window);     // TODO: bug fix
         }
     }
 }
@@ -111,7 +106,6 @@ WindowID WindowSubsystem::CreateChildWindow(EntityID const owner,
         return existingIt->second;
     }
 
-    // 創建作業系統視窗
     HWND hwnd = CreateOSWindow(windowTitle, x, y, width, height);
 
     if (!hwnd)
@@ -120,31 +114,25 @@ WindowID WindowSubsystem::CreateChildWindow(EntityID const owner,
         return INVALID_WINDOW_ID;
     }
 
-    // 生成新的視窗ID
     WindowID newId = m_nextWindowID++;
 
-    // 創建視窗配置
     sWindowConfig config;
     config.m_windowType  = eWindowType::WINDOWED;
     config.m_aspectRatio = static_cast<float>(width) / static_cast<float>(height);
     config.m_windowTitle = windowTitle;
 
-    // 創建 Window 物件
     std::unique_ptr<Window> newWindow = std::make_unique<Window>(config);
 
-    // 設定 HWND 和 Display Context
     newWindow->SetWindowHandle(hwnd);
     newWindow->SetDisplayContext(GetDC(hwnd));
 
-    // 設定視窗位置和大小追蹤
     newWindow->SetWindowDimensions(Vec2(static_cast<float>(width), static_cast<float>(height)));
     newWindow->SetWindowPosition(Vec2(static_cast<float>(x), static_cast<float>(y)));
     newWindow->m_shouldUpdatePosition = true;
 
-    // CRITICAL: Initialize client position to prevent crash when GetClientPosition() is called
+    // Initialize client position to prevent crash when GetClientPosition() is called
     InitializeWindowClientPosition(newWindow.get(), hwnd);
 
-    // 創建 WindowData 並添加到容器
     std::unordered_set const ownerSet = {owner};
     WindowData               windowData;
     windowData.m_window = std::move(newWindow);
@@ -152,10 +140,8 @@ WindowID WindowSubsystem::CreateChildWindow(EntityID const owner,
     windowData.m_name   = windowTitle;
     m_windowList.emplace(newId, std::move(windowData));
 
-    // 建立actor到視窗的映射
     m_actorToWindow[owner] = newId;
 
-    // 創建 SwapChain
     if (g_renderer)
     {
         g_renderer->CreateWindowSwapChain(*m_windowList[newId].m_window);
@@ -169,7 +155,6 @@ WindowID WindowSubsystem::CreateChildWindow(EntityID const owner,
 
 bool WindowSubsystem::AddEntityToWindow(WindowID windowID, EntityID entityID)
 {
-    // 檢查視窗是否存在
     auto windowIt = m_windowList.find(windowID);
     if (windowIt == m_windowList.end())
     {
@@ -177,24 +162,20 @@ bool WindowSubsystem::AddEntityToWindow(WindowID windowID, EntityID entityID)
         return false;
     }
 
-    // 檢查actor是否已經在其他視窗中
     auto actorIt = m_actorToWindow.find(entityID);
     if (actorIt != m_actorToWindow.end())
     {
         if (actorIt->second == windowID)
         {
             DebuggerPrintf("AddActorToWindow: Actor %d already in window %d.\n", entityID, windowID);
-            return true; // 已經在該視窗中
+            return true;
         }
-        else
-        {
-            DebuggerPrintf("AddActorToWindow: Actor %d already in window %d, cannot add to window %d.\n",
-                           entityID, actorIt->second, windowID);
-            return false;
-        }
+
+        DebuggerPrintf("AddActorToWindow: Actor %d already in window %d, cannot add to window %d.\n",
+                       entityID, actorIt->second, windowID);
+        return false;
     }
 
-    // 添加映射關係
     windowIt->second.m_owners.insert(entityID);
     m_actorToWindow[entityID] = windowID;
 
@@ -204,7 +185,6 @@ bool WindowSubsystem::AddEntityToWindow(WindowID windowID, EntityID entityID)
 
 bool WindowSubsystem::RemoveEntityFromWindow(WindowID windowID, EntityID entityID)
 {
-    // 檢查視窗是否存在
     auto windowIt = m_windowList.find(windowID);
     if (windowIt == m_windowList.end())
     {
@@ -212,7 +192,6 @@ bool WindowSubsystem::RemoveEntityFromWindow(WindowID windowID, EntityID entityI
         return false;
     }
 
-    // 檢查actor是否在該視窗中
     auto& owners  = windowIt->second.m_owners;
     auto  actorIt = owners.find(entityID);
     if (actorIt == owners.end())
@@ -221,11 +200,10 @@ bool WindowSubsystem::RemoveEntityFromWindow(WindowID windowID, EntityID entityI
         return false;
     }
 
-    // 移除映射關係
     owners.erase(actorIt);
     m_actorToWindow.erase(entityID);
 
-    // 如果視窗沒有任何owner了，自動銷毀視窗
+    // Auto-destroy window when it has no remaining owners
     if (owners.empty())
     {
         DebuggerPrintf("RemoveActorFromWindow: Window %d now empty, destroying.\n", windowID);
@@ -248,19 +226,16 @@ void WindowSubsystem::DestroyWindow(WindowID windowID)
         return;
     }
 
-    // 移除所有相關的actor映射
     for (EntityID actorId : windowIt->second.m_owners)
     {
         m_actorToWindow.erase(actorId);
     }
 
-    // 關閉視窗
     if (windowIt->second.m_window)
     {
         windowIt->second.m_window->Shutdown();
     }
 
-    // 移除視窗資料
     m_windowList.erase(windowIt);
 
     DebuggerPrintf("DestroyWindow: Window %d destroyed.\n", windowID);
@@ -301,7 +276,7 @@ void WindowSubsystem::HideWindowByWindowID(WindowID const windowID)
 }
 
 //----------------------------------------------------------------------------------------------------
-// 查詢功能
+// Query functions
 //----------------------------------------------------------------------------------------------------
 
 Window* WindowSubsystem::GetWindow(WindowID windowID)
@@ -324,16 +299,13 @@ WindowID WindowSubsystem::FindWindowIDByEntityID(EntityID const entityID)
 
 std::vector<EntityID> WindowSubsystem::GetWindowOwners(WindowID const windowID)
 {
-    std::vector<EntityID> result;
-    auto                  it = m_windowList.find(windowID);
+    auto it = m_windowList.find(windowID);
     if (it != m_windowList.end())
     {
-        for (EntityID actorId : it->second.m_owners)
-        {
-            result.push_back(actorId);
-        }
+        auto const& owners = it->second.m_owners;
+        return {owners.begin(), owners.end()};
     }
-    return result;
+    return {};
 }
 
 std::vector<WindowID> WindowSubsystem::GetActorWindows(EntityID const entityID)
@@ -350,7 +322,8 @@ std::vector<WindowID> WindowSubsystem::GetActorWindows(EntityID const entityID)
 std::vector<WindowID> WindowSubsystem::GetAllWindowIDs()
 {
     std::vector<WindowID> result;
-    for (const auto& [windowId, windowData] : m_windowList)
+    result.reserve(m_windowList.size());
+    for (auto const& [windowId, windowData] : m_windowList)
     {
         result.push_back(windowId);
     }
@@ -373,7 +346,7 @@ bool WindowSubsystem::WindowExists(WindowID const windowID)
 }
 
 //----------------------------------------------------------------------------------------------------
-// 視窗操作
+// Window operations
 //----------------------------------------------------------------------------------------------------
 
 void WindowSubsystem::UpdateWindowPosition(WindowID const windowID)
@@ -431,7 +404,7 @@ void WindowSubsystem::SetWindowActive(WindowID windowID, bool active)
     }
 }
 
-void WindowSubsystem::SetWindowName(WindowID windowId, const std::string& name)
+void WindowSubsystem::SetWindowName(WindowID windowId, String const& name)
 {
     auto it = m_windowList.find(windowId);
     if (it != m_windowList.end())
@@ -454,7 +427,7 @@ std::string WindowSubsystem::GetWindowName(WindowID windowId)
 size_t WindowSubsystem::GetActiveWindowCount() const
 {
     size_t count = 0;
-    for (const auto& [windowId, windowData] : m_windowList)
+    for (auto const& [windowId, windowData] : m_windowList)
     {
         if (windowData.m_isActive)
         {
@@ -469,7 +442,6 @@ size_t WindowSubsystem::GetWindowCount() const
 {
     return m_windowList.size();
 }
-
 
 void WindowSubsystem::RemoveEntityFromMappings(EntityID entityID)
 {
@@ -487,33 +459,33 @@ HWND WindowSubsystem::CreateOSWindow(String const& title,
                                      int const     width,
                                      int const     height)
 {
-    // 轉換名稱為寬字符
+    // Convert title to wide string
     std::wstring wTitle;
     wTitle.resize(title.size());
     MultiByteToWideChar(CP_UTF8, 0, title.c_str(), static_cast<int>(title.size()), wTitle.data(), static_cast<int>(wTitle.size()));
 
-    // 註冊視窗類別（只需要註冊一次）
+    // Register window class (only once)
     static bool classRegistered = false;
     if (!classRegistered)
     {
         WNDCLASS wc      = {};
-        wc.lpfnWndProc   = (WNDPROC)GetWindowLongPtr((HWND)Window::s_mainWindow->GetWindowHandle(), GWLP_WNDPROC);
+        wc.lpfnWndProc   = reinterpret_cast<WNDPROC>(GetWindowLongPtr(static_cast<HWND>(Window::s_mainWindow->GetWindowHandle()), GWLP_WNDPROC));
         wc.hInstance     = GetModuleHandle(nullptr);
         wc.lpszClassName = L"ChildWindow";
-        wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+        wc.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
         wc.hCursor       = LoadCursor(nullptr, IDC_ARROW);
-        wc.hIcon         = (HICON)LoadImage(
-            NULL,
+        wc.hIcon         = static_cast<HICON>(LoadImage(
+            nullptr,
             m_config.m_iconFilePath,
             IMAGE_ICON,
             32, 32,
             LR_LOADFROMFILE
-        );
+        ));
         RegisterClass(&wc);
         classRegistered = true;
     }
 
-    // 調整視窗大小，確保客戶區域是指定的 width 和 height
+    // Adjust window size so the client area matches the specified width and height
     RECT rect = {0, 0, width, height};
     AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW, FALSE, 0);
 
@@ -583,14 +555,14 @@ void WindowSubsystem::SetupTransparentMainWindow()
 
     HWND mainHwnd = static_cast<HWND>(Window::s_mainWindow->GetWindowHandle());
 
-    // 設置全螢幕透明主視窗
+    // Set up fullscreen transparent main window
     SetWindowLong(mainHwnd, GWL_EXSTYLE,
                   GetWindowLong(mainHwnd, GWL_EXSTYLE) | WS_EX_LAYERED | WS_EX_TRANSPARENT);
 
-    // 完全透明，滑鼠穿透
+    // Fully transparent, mouse click-through
     SetLayeredWindowAttributes(mainHwnd, 0, 0, LWA_ALPHA);
 
-    // 設置為全螢幕覆蓋
+    // Set to fullscreen overlay
     int screenWidth  = GetSystemMetrics(SM_CXSCREEN);
     int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
@@ -688,13 +660,13 @@ void WindowSubsystem::UpdateSingleWindowAnimation(WindowID id, WindowAnimationDa
 
     if (t >= 1.0f)
     {
-        // 動畫完成
+        // Animation complete
         t                              = 1.0f;
         animData.m_isAnimatingSize     = false;
         animData.m_isAnimatingPosition = false;
     }
 
-    // 使用 SmoothStep5 來創造平滑的動畫效果
+    // Use SmoothStep5 for smooth animation easing
     float easedT = SmoothStep5(t);
 
     if (animData.m_isAnimatingSize)
