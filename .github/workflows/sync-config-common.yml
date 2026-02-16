@@ -14,6 +14,10 @@ name: Sync Config Files from dadavidtseng/ConfigCommon
 permissions:
   contents: write
 on:
+  # Triggered automatically when ConfigCommon repo pushes to main
+  repository_dispatch:
+    types: [config-common-updated]
+
   workflow_dispatch:
     inputs:
       # Option to sync .gitignore file
@@ -82,11 +86,6 @@ on:
         required: false
         default: ''
         type: string
-
-  # Automatic trigger - runs every Monday at 2:00 AM UTC
-  # Cron format: minute(0-59) hour(0-23) day(1-31) month(1-12) weekday(0-6, 0=Sunday)
-  schedule:
-    - cron: '0 2 * * 1'
 
 #-----------------------------------------------------------------------------------------------------
 jobs:
@@ -168,29 +167,29 @@ jobs:
               echo "⚠ Skipping invalid file pair format: $FILE_PAIR"
               continue
             fi
-            
+          
             # Split local and remote file names using colon as delimiter
             IFS=':' read -r LOCAL_FILE REMOTE_FILE <<< "$FILE_PAIR"
-            
+          
             # Remove leading and trailing whitespace
             LOCAL_FILE=$(echo "$LOCAL_FILE" | xargs)
             REMOTE_FILE=$(echo "$REMOTE_FILE" | xargs)
-            
+          
             # Validate file names are not empty
             if [ -z "$LOCAL_FILE" ] || [ -z "$REMOTE_FILE" ]; then
               echo "⚠ Skipping empty file names: '$LOCAL_FILE' : '$REMOTE_FILE'"
               continue
             fi
-            
+          
             echo "📥 Processing $LOCAL_FILE (source: $REMOTE_FILE)"
-            
+          
             # Download file with better error handling
             TEMP_FILE="${LOCAL_FILE}.temp.$$"
             if curl -fsSL --max-time 30 --retry 3 "$BASE_URL/$REMOTE_FILE" -o "$TEMP_FILE"; then
               # Verify downloaded file is not empty
               if [ -s "$TEMP_FILE" ]; then
                 echo "✓ Successfully downloaded $REMOTE_FILE"
-                
+          
                 # Check for changes between existing and downloaded file
                 if [ -f "$LOCAL_FILE" ]; then
                   # Compare files byte by byte
