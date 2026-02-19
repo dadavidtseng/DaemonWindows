@@ -5,7 +5,10 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Triangle.hpp"
 //----------------------------------------------------------------------------------------------------
+#include "Game/Gameplay/EnemyUtils.hpp"
 #include "Game/Gameplay/Game.hpp"
+#include "Game/Gameplay/Player.hpp"
+#include "Game/Gameplay/WaveManager.hpp"
 #include "Game/Subsystem/Widget/ButtonWidget.hpp"
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EngineCommon.hpp"
@@ -24,13 +27,26 @@ Triangle::Triangle(EntityID const entityID,
     : Entity(position, orientationDegrees, color, isVisible, hasChildWindow)
 {
     m_entityID       = entityID;
-    m_health         = g_rng->RollRandomIntInRange(1, 5);
     m_name           = "Triangle";
     m_physicRadius   = 30.f;
     m_thickness      = 10.f;
     m_cosmeticRadius = m_physicRadius + m_thickness;
 
-    // g_theEventSystem->SubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
+    // Health scaling: base 3-5, +1 per 3 waves
+    int const baseHealth  = g_rng->RollRandomIntInRange(3, 5);
+    int       waveBonus   = 0;
+    WaveManager* waveMgr  = g_game->GetWaveManager();
+    if (waveMgr)
+    {
+        waveBonus = waveMgr->GetCurrentWaveNumber() / 3;
+    }
+    m_health = baseHealth + waveBonus;
+
+    // Speed: moderate chase speed (100-150)
+    m_speed = g_rng->RollRandomFloatInRange(100.f, 150.f);
+
+    // Coin drop: proportional to health
+    m_coinToDrop = m_health;
 
     if (m_hasChildWindow)
     {
@@ -52,7 +68,6 @@ Triangle::~Triangle()
         g_windowSubsystem->RemoveEntityFromMappings(m_entityID);
         m_healthWidget->MarkForDestroy();
     }
-    // g_theEventSystem->UnsubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
 }
 
 void Triangle::UpdateWindowFocus()
@@ -62,9 +77,9 @@ void Triangle::UpdateWindowFocus()
 
     if (windowData && windowData->m_window && windowData->m_window->GetWindowHandle())
     {
-        HWND hwnd = (HWND)windowData->m_window->GetWindowHandle();
+        HWND hwnd = static_cast<HWND>(windowData->m_window->GetWindowHandle());
 
-        // 只有在視窗失去焦點時才重新設定
+        // Only reset focus when the window has lost it
         if (GetForegroundWindow() != hwnd)
         {
             SetForegroundWindow(hwnd);
@@ -85,33 +100,33 @@ void Triangle::Update(float const deltaSeconds)
         m_healthWidget->SetPosition(windowData->m_window->GetClientPosition());
         m_healthWidget->SetDimensions(windowData->m_window->GetClientDimensions());
         m_healthWidget->SetText(Stringf("Health=%d", m_health));
-        // 然後用限制後的位置來設定視窗位置
+        // Update window position to follow the clamped entity position
         windowData->m_window->SetClientPosition(m_position - windowData->m_window->GetClientDimensions() * 0.5f);
     }
     if (m_isDead) return;
 
-    // 追蹤玩家的邏輯
-    if (g_game->m_entityList[0] && !g_game->m_entityList[0]->IsDead())
+    // Chase player with smooth movement
+    Player* player = g_game->GetPlayer();
+    if (player && !player->IsDead())
     {
-        Vec2 playerShipPos     = g_game->m_entityList[0]->m_position;
-        Vec2 directionToPlayer = (playerShipPos - m_position).GetNormalized();
-        m_orientationDegrees   = directionToPlayer.GetOrientationDegrees();
+        Vec2 const previousPosition = m_position;
+        EnemyUtils::ChasePlayer(m_position, m_orientationDegrees, player->m_position, m_speed, deltaSeconds);
+
+        // Track velocity for knockback calculations
+        if (deltaSeconds > 0.f)
+        {
+            m_velocity = (m_position - previousPosition) / deltaSeconds;
+        }
     }
-
-    m_velocity = Vec2::MakeFromPolarDegrees(m_orientationDegrees);
-    m_position += m_velocity * deltaSeconds * m_speed;
-
-    // 先限制Triangle位置在螢幕邊界內
-    // BounceOfWindow();
 }
 
 void Triangle::Render() const
 {
-    VertexList_PCU verts2;
+    VertexList_PCU verts;
     Vec2 const     ccw0 = Vec2(m_position.x, m_position.y + m_physicRadius);
     Vec2 const     ccw1 = Vec2(m_position.x - m_physicRadius, m_position.y - m_physicRadius);
     Vec2 const     ccw2 = Vec2(m_position.x + m_physicRadius, m_position.y - m_physicRadius);
-    AddVertsForTriangle2D(verts2, ccw0, ccw1, ccw2, m_color);
+    AddVertsForTriangle2D(verts, ccw0, ccw1, ccw2, m_color);
     g_renderer->SetModelConstants();
     g_renderer->SetBlendMode(eBlendMode::OPAQUE);
     g_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
@@ -119,12 +134,12 @@ void Triangle::Render() const
     g_renderer->SetDepthMode(eDepthMode::DISABLED);
     g_renderer->BindTexture(nullptr);
     g_renderer->BindShader(g_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
-    g_renderer->DrawVertexArray(verts2);
+    g_renderer->DrawVertexArray(verts);
 }
 
 void Triangle::BounceOfWindow()
 {
-    // 使用螢幕邊界，而不是視窗邊界
+    // Use screen bounds instead of window bounds
     Vec2 screenDimensions = Window::s_mainWindow->GetScreenDimensions();
 
     float screenLeft   = 0.0f;
@@ -132,16 +147,15 @@ void Triangle::BounceOfWindow()
     float screenTop    = screenDimensions.y;
     float screenRight  = screenDimensions.x;
 
-    // 限制Triangle在螢幕邊界內
+    // Clamp triangle position within screen bounds
     float clampedX = GetClamped(m_position.x,
-                                screenLeft + m_cosmeticRadius,   // 左邊界
-                                screenRight - m_cosmeticRadius); // 右邊界
+                                screenLeft + m_cosmeticRadius,
+                                screenRight - m_cosmeticRadius);
 
     float clampedY = GetClamped(m_position.y,
-                                screenBottom + m_cosmeticRadius, // 下邊界
-                                screenTop - m_cosmeticRadius);   // 上邊界
+                                screenBottom + m_cosmeticRadius,
+                                screenTop - m_cosmeticRadius);
 
-    // 更新Triangle的位置
     m_position.x = clampedX;
     m_position.y = clampedY;
 }
@@ -163,35 +177,32 @@ void Triangle::ShrinkWindow()
         Vec2 currentClientDimensions = window->GetClientDimensions();
         if (currentClientDimensions.x <= m_physicRadius * 2.5f || currentClientDimensions.y <= m_physicRadius * 2.5f) return;
 
-        // 右邊界：增加寬度
         Vec2 newPos  = currentPos + Vec2(1, 1);
         Vec2 newSize = currentSize + Vec2(-1, -1);
         g_windowSubsystem->AnimateWindowPositionAndDimensions(windowID, newPos, newSize, 0.1f);
-        // g_theWindowSubsystem->AnimateWindowDimensions(windowID,  newSize, 0.1f);
     }
 }
 
 STATIC bool Triangle::OnCollisionEnter(EventArgs& args)
 {
-
-
     String   entityA   = args.GetValue("entityA", "DEFAULT");
     String   entityB   = args.GetValue("entityB", "DEFAULT");
     EntityID entityBID = args.GetValue("entityBID", -1);
-    //Player*  player    = g_theGame->GetPlayer();
     Entity*  entity    = g_game->GetEntityByEntityID(entityBID);
+
     if (entityA == "Bullet" && entityB == "Triangle")
     {
-        if (entity->m_entityID==entityBID)
+        if (entity->m_entityID == entityBID)
         {
             entity->DecreaseHealth(1);
-            entity->m_position = entity->m_position - entity->m_velocity * 30.f;
+
+            // Knockback in opposite direction of movement, clamped for safety
+            Vec2 const knockback = entity->m_velocity.GetClamped(1.f) * 15.f;
+            entity->m_position -= knockback;
         }
 
         DebuggerPrintf("TRIANGLE HIT\n");
     }
-
-
 
     return false;
 }
