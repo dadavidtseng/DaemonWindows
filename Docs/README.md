@@ -1,196 +1,270 @@
-# DaemonWindows - Window-Based Action Game
+<a id="readme-top"></a>
 
-![WindowKills Screenshot](https://img.shields.io/badge/C++-grey?style=for-the-badge&logo=cplusplus)
+<!-- PROJECT SHIELDS -->
+[![Contributors][contributors-shield]][contributors-url]
+[![Forks][forks-shield]][forks-url]
+[![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
+[![Apache 2.0 License][license-shield]][license-url]
+[![LinkedIn][linkedin-shield]][linkedin-url]
 
-## 🎮 Game Overview
-DaemonWindows is an innovative action game that transforms the traditional Windows desktop environment into a dynamic gaming battlefield. Players control a character that can move between multiple windows, creating a unique multi-window gaming experience that blurs the line between game interface and desktop applications. This experimental project explores unconventional game design by utilizing the Windows API to create an immersive gameplay experience that extends beyond the typical single-window constraint.
+<!-- PROJECT TITLE -->
+<div align="center">
+  <h1>Daemon Windows</h1>
+  <p>A multi-window action game that turns the Windows desktop into a shrinking battlefield</p>
+</div>
 
-## 🎯 Core Gameplay
-* **Multi-Window Navigation**: Players can seamlessly move between different game windows, each serving as interconnected game environments
-* **Dynamic Entity System**: Entities spawn and interact across multiple windows, creating complex spatial relationships
-* **Resource Management**: Collect coins and manage health while navigating the window-based battlefield
-* **Progressive Shop System**: Upgrade player abilities using collected currency through an integrated shop interface
+<!-- TODO: Replace with actual gameplay GIF or screenshot -->
+<!-- <div align="center">
+  <img src="docs/images/demo.gif" alt="Daemon Windows Gameplay" width="720">
+</div> -->
 
-## 🌟 Key Features
-* **Windows API Integration**: Advanced utilization of Windows system calls for multi-window management and focus control
-* **Cross-Window Collision System**: Sophisticated physics and collision detection that works across multiple application windows
-* **Real-time Window Manipulation**: Dynamic window resizing, positioning, and focus management as core gameplay mechanics
-* **Entity Lifecycle Management**: Comprehensive system for spawning, updating, and destroying game entities across windows
-* **Audio-Visual Feedback**: Integrated sound system with state-based audio management
-* **Upgrade Progression**: RPG-like character improvement system with speed, health, and maximum health upgrades
+<!-- TECH STACK BADGES -->
+![C++](https://img.shields.io/badge/C%2B%2B-17-00599C?style=for-the-badge&logo=cplusplus&logoColor=white)
+![DirectX](https://img.shields.io/badge/DirectX-11-107C10?style=for-the-badge&logo=xbox&logoColor=white)
+![Windows API](https://img.shields.io/badge/Windows_API-0078D6?style=for-the-badge&logo=windows&logoColor=white)
+![FMOD](https://img.shields.io/badge/FMOD-000000?style=for-the-badge&logo=fmod&logoColor=white)
 
-## 🛠️ Technical Stack
-* **Game Engine:** Custom Daemon Engine (C++)
-* **Programming Languages:** C++, Windows API
-* **Graphics Pipeline:** DirectX 11 with 2D sprite rendering
-* **Audio Engine:** Custom audio system with positional sound
-* **Networking:** Not applicable (single-player focused)
-* **Platform:** Windows (x64) - leverages Windows-specific APIs for multi-window functionality
+## Table of Contents
 
-## 📁 Project Architecture
-```
-├── Code/
-│   └── Game/
-│       ├── Gameplay/
-│       │   ├── Game.cpp/hpp        (Main game controller)
-│       │   ├── Player.cpp/hpp      (Player entity with window management)
-│       │   ├── Entity.cpp/hpp      (Base entity class)
-│       │   ├── Bullet.cpp/hpp      (Projectile system)
-│       │   ├── Circle.cpp/hpp      (Enemy entity type)
-│       │   ├── Triangle.cpp/hpp    (Enemy entity type)
-│       │   ├── Octagon.cpp/hpp     (Enemy entity type)
-│       │   ├── Coin.cpp/hpp        (Collectible currency)
-│       │   ├── Debris.cpp/hpp      (Environmental objects)
-│       │   └── Shop.cpp/hpp        (Upgrade system)
-│       ├── Framework/
-│       └── Subsystem/
-├── Docs/
-│   └── README.md
-├── Run/
-├── Temporary/
-└── DaemonWindows.sln
-```
+- [Overview](#overview)
+- [Features](#features)
+- [How to Install](#how-to-install)
+- [How to Use](#how-to-use)
+- [Project Structure](#project-structure)
+- [Future Roadmap](#future-roadmap)
+- [Acknowledgements](#acknowledgements)
+- [License](#license)
+- [Contact](#contact)
 
-## 🚀 Getting Started
+---
+
+## Overview
+
+Daemon Windows is an experimental action game that breaks out of the traditional single-window paradigm. Instead of rendering everything inside one viewport, the game spawns real OS windows — the player lives inside one, enemies can each have their own, and the shop opens as a separate window. The player's window continuously shrinks, creating mounting pressure to eliminate enemies and collect coins before running out of space.
+
+The core loop is a wave-based survival shooter: triangle-shaped enemies chase the player across the desktop, bullets fly between windows, defeated enemies drop coins, and between waves the player spends coins in a shop to upgrade fire rate, damage, projectile count, piercing, homing, and more. Boss waves arrive every 5 rounds with scaled difficulty.
+
+Built as a personal project exploring unconventional game design, the game runs on a custom [Daemon Engine](https://github.com/dadavidtseng/Engine) providing DirectX 11 rendering, FMOD audio, and a widget UI system — extended here with a WindowSubsystem that manages the creation, animation, positioning, and destruction of native Win32 windows as first-class game objects.
+
+## Features
+
+- [Multi-Window Gameplay](#multi-window-gameplay)
+- [Wave-Based Survival with Shop Upgrades](#wave-based-survival-with-shop-upgrades)
+- [Window Shrinking Mechanic](#window-shrinking-mechanic)
+- [Event-Driven Architecture](#event-driven-architecture)
+
+---
+
+### Multi-Window Gameplay
+
+The WindowSubsystem creates and manages real Win32 child windows at runtime. Each entity can optionally own a window — the player always has one, and enemies spawn with or without windows randomly. Windows track their owning entities, follow entity positions on screen, and support smooth animated resizing and repositioning via interpolation.
+
+Key capabilities:
+- `CreateChildWindow` / `DestroyWindow` — spawn and tear down OS windows tied to entity IDs
+- `AnimateWindowPositionAndDimensions` — smooth lerp-based window transitions
+- Entity-to-window mapping with `WindowID` ↔ `EntityID` bidirectional lookup
+- Transparent main window setup for desktop-as-battlefield rendering
+
+<!-- ![Multi-Window](docs/images/feature-multi-window.png) -->
+
+### Wave-Based Survival with Shop Upgrades
+
+The WaveManager drives progressive difficulty: each wave spawns `base × 1.2^(wave-1)` enemies, with boss waves every 5 rounds. Between waves, the player opens the Shop (a separate window) to spend collected coins on 7 upgrade types managed by the UpgradeManager:
+
+| Upgrade | Effect |
+|---------|--------|
+| Fire Rate | Faster bullet cooldown |
+| Damage | Higher bullet damage |
+| Projectile Count | More bullets per shot |
+| Bullet Spread | Wider shot pattern |
+| Bullet Size | Larger hit area |
+| Piercing | Bullets pass through enemies |
+| Homing | Bullets track nearest enemy |
+
+Each upgrade has 5 levels with 1.5× cost scaling per level.
+
+<!-- ![Shop](docs/images/feature-shop.png) -->
+
+### Window Shrinking Mechanic
+
+The player's window continuously shrinks frame-by-frame via `AnimateWindowPositionAndDimensions`, compressing the playable area. The shrink stops when the client dimensions reach 2.5× the player's physics radius, preventing a zero-size window. Enemy windows with the `hasChildWindow` flag also shrink. This creates a ticking clock — the player must clear enemies and progress before their window becomes too small to maneuver.
+
+<!-- ![Shrink](docs/images/feature-shrink.png) -->
+
+### Event-Driven Architecture
+
+All game state transitions, collisions, wave progression, and upgrades flow through a centralized EventSystem with named events and typed arguments:
+
+- `OnGameStateChanged` — triggers BGM switches, entity cleanup, shop visibility
+- `OnCollisionEnter` — dispatches per-entity collision responses (bullet→triangle, player→coin, player→triangle)
+- `OnWaveStart` / `OnWaveComplete` — wave lifecycle with enemy count and boss flag
+- `OnBossSpawn` — boss wave notification
+- `OnUpgradePurchased` — upgrade confirmation with type and new level
+- `OnEntityDestroyed` — triggers coin drops from killed enemies
+
+This decoupled design allows entities to subscribe/unsubscribe independently without direct references to each other.
+
+<!-- ![Events](docs/images/feature-events.png) -->
+
+---
+
+## How to Install
 
 ### Prerequisites
-* **Visual Studio 2022** or later with C++ development tools
-* **Windows 10 SDK** (10.0.19041.0 or later)
-* **DirectX 11** compatible graphics card
-* **Windows 10/11** (required for advanced window management features)
+
+- Visual Studio 2022 (or 2019) with C++ desktop development workload
+- Windows 10 SDK (10.0.19041.0+)
+- Windows 10/11 (x64) — required for advanced window management
+- DirectX 11 compatible GPU
+- [Daemon Engine](https://github.com/dadavidtseng/Engine) cloned as a sibling directory
 
 ### Installation
-1. Clone the repository
-   ```bash
-   git clone https://github.com/dadavidtseng/DaemonWindows.git
-   cd DaemonWindows
-   ```
 
-2. Open the Visual Studio solution
-   ```bash
-   start DaemonWindows.sln
-   ```
+```bash
+# Clone both repos side by side
+git clone https://github.com/dadavidtseng/Engine.git
+git clone https://github.com/dadavidtseng/DaemonWindows.git
 
-3. Build the project
-   - Set platform to `x64`
-   - Choose `Debug` or `Release` configuration
-   - Press `Ctrl+Shift+B` to build
+# Directory layout should be:
+# ├── Engine/
+# └── DaemonWindows/
+```
 
-4. Run the game
-   - Press `F5` to start with debugging or `Ctrl+F5` to run without debugging
+1. Open `DaemonWindows.sln` in Visual Studio
+2. Set configuration to `Debug | x64`
+3. Build the solution (the Engine project is referenced automatically)
+4. The executable is deployed to `Run/` via post-build event
 
-## 🎮 How to Play
+## How to Use
 
 ### Controls
 
-#### Attract Mode
-* **SPACE:** Enter the game
-* **ESC:** Exit the application
+| Mode | Action | Key |
+|------|--------|-----|
+| Attract | Start game | Space |
+| Attract | Quit | ESC |
+| Game | Move | W / A / S / D |
+| Game | Shoot | Left Mouse Button (hold for auto-fire) |
+| Game | Open shop | Space |
+| Game | Return to title | ESC |
+| Shop | Buy upgrades | 1 / 2 / 3 |
+| Shop | Return to game | ESC |
 
-#### In-Game Mode
-* **WASD:** Move the player character
-* **Left Mouse Button:** Shoot projectiles
-* **SPACE:** Open the upgrade shop
-* **ESC:** Return to attract mode
+### Debug Controls
 
-#### Shop Mode
-* **1:** Increase player movement speed
-* **2:** Restore player health
-* **3:** Increase maximum health capacity
-* **ESC:** Return to the game
+| Action | Key |
+|--------|-----|
+| Pause / Unpause | P |
+| Step single frame | O |
+| Slow-mo (0.1×) | T (hold) |
 
-### Game Modes
-* **Attract Mode:** Main menu with game information and controls
-* **Survival Mode:** Navigate multiple windows while avoiding enemies and collecting coins
-* **Shop Mode:** Spend collected coins on character upgrades
+### Game Flow
 
-## 📈 Development Progress
+1. **Attract Mode** — Title screen with player window visible; press Space to begin
+2. **Game Mode** — Survive waves of triangle enemies, collect coins from kills, window shrinks over time
+3. **Shop Mode** — Spend coins on upgrades between waves (speed, health, max health)
+4. **Death** — Player health reaches 0, returns to Attract Mode
 
-### Current Status: Alpha
+### Running
 
-### Milestones
-* [x] **Phase 1:** Core multi-window system implementation
-* [x] **Phase 2:** Entity management and collision detection across windows
-* [x] **Phase 3:** Player controls and basic game mechanics
-* [x] **Phase 4:** Shop system and progression mechanics
-* [ ] **Phase 5:** Advanced enemy AI and spawn patterns
-* [ ] **Phase 6:** Visual effects and particle systems
-* [ ] **Phase 7:** Performance optimization and polish
+Launch `Run/DaemonWindows_Debug_x64.exe` from the `Run/` directory (working directory must be `Run/` for asset loading).
 
-### Known Issues
-* **Window Focus Management:** Occasional focus conflicts when switching between game windows rapidly
-* **Performance Scaling:** Frame rate may decrease with high entity counts across multiple windows
-* **Window Positioning:** Some edge cases with window boundary collision detection
+## Project Structure
 
-## 🎨 Media
+```
+DaemonWindows/
+├── Code/Game/
+│   ├── Framework/                     # Application framework
+│   │   ├── Main_Windows.cpp           # WinMain entry point
+│   │   ├── App                        # Application lifecycle
+│   │   └── GameCommon                 # Global pointers (g_game, g_windowSubsystem, etc.)
+│   ├── Gameplay/                      # Core game logic
+│   │   ├── Game                       # State machine (Attract → Game → Shop), spawning, collision
+│   │   ├── Entity                     # Base class: position, health, physics/cosmetic radius, window ownership
+│   │   ├── Player                     # Disc-shaped player (10 HP), WASD + mouse, auto-fire bullets
+│   │   ├── Triangle                   # Enemy: chases player, 1–5 HP, optional child window
+│   │   ├── Bullet                     # Projectile fired toward cursor position
+│   │   ├── Coin                       # Dropped by killed enemies, collected on contact
+│   │   ├── Shop                       # Upgrade purchase UI in its own window
+│   │   ├── WaveManager                # Wave progression, difficulty scaling, boss waves
+│   │   ├── UpgradeManager             # 7 upgrade types × 5 levels with cost scaling
+│   │   ├── EnemyUtils                 # Stateless AI helpers (chase, spawn position)
+│   │   ├── Debris                     # Environmental particle
+│   │   ├── Circle                     # Enemy type (stub)
+│   │   └── Octagon                    # Enemy type (stub)
+│   └── Subsystem/
+│       ├── Widget/                    # UI widget framework
+│       │   └── ButtonWidget           # Text label rendered on child windows
+│       └── Window/                    # Multi-window engine
+│           └── WindowSubsystem        # Win32 window lifecycle, animation, entity mapping
+├── Run/                               # Runtime directory
+│   ├── Data/Audio/                    # BGM + SFX (MP3)
+│   ├── Data/Images/                   # Backgrounds, title, icons
+│   ├── Data/Fonts/                    # Bitmap fonts (DaemonFont)
+│   └── Data/Shaders/                  # HLSL shaders (Default)
+├── Docs/                              # Documentation
+└── DaemonWindows.sln                  # Visual Studio solution
+```
 
-### Gameplay Features
-* Multi-window entity movement and interaction
-* Dynamic collision detection across window boundaries
-* Real-time shop interface with upgrade purchasing
-* Smooth player movement with momentum-based physics
+| Module | Description |
+|--------|-------------|
+| Framework | WinMain entry, App lifecycle, global subsystem pointers |
+| Gameplay | Game state machine, entity system, wave/upgrade managers, collision |
+| Widget Subsystem | ButtonWidget UI rendered on child windows via WidgetSubsystem |
+| Window Subsystem | Win32 window creation, animation, entity↔window mapping, focus management |
 
-### Technical Highlights
-* Advanced Windows API integration for window management
-* Custom entity component system with cross-window capabilities
-* Efficient collision detection optimized for multi-window scenarios
+## Future Roadmap
 
-## 📊 Research Focus
-This project explores several innovative areas in game development and human-computer interaction:
+- [x] Core multi-window system with entity ownership
+- [x] Player movement, shooting, and window-bounded physics
+- [x] Triangle enemy AI with chase behavior
+- [x] Coin drop and collection economy
+- [x] Shop system with speed, health, max health upgrades
+- [x] WaveManager with progressive difficulty and boss waves
+- [x] UpgradeManager with 7 upgrade types and cost scaling
+- [ ] Implement Circle and Octagon enemy types with unique behaviors
+- [ ] Advanced enemy spawn patterns driven by WaveManager
+- [ ] Visual effects and particle systems for kills and upgrades
+- [ ] Multi-monitor support and window-to-window teleportation
+- [ ] Performance optimization for high entity counts across windows
 
-### Research Objectives
-* **Multi-Window Game Design:** Investigating how traditional game mechanics can be adapted for multi-window environments
-* **Desktop Integration Gaming:** Exploring the boundaries between game applications and desktop environment interaction
-* **Window Management as Gameplay:** Using operating system window management as a core gameplay mechanic
+See the [open issues](https://github.com/dadavidtseng/DaemonWindows/issues) for a full list of proposed features and known issues.
 
-### Methodology
-The development approach emphasizes experimental game design with focus on:
-- **User Experience Research:** Understanding player behavior when interacting with multi-window game interfaces
-- **Technical Innovation:** Pushing the boundaries of traditional game window constraints
-- **Performance Analysis:** Optimizing game systems for multi-window rendering and event handling
+## Acknowledgements
 
-### Findings
-* **Player Adaptation:** Users quickly adapt to multi-window navigation, finding it intuitive after initial learning curve
-* **Technical Feasibility:** Windows API provides sufficient functionality for advanced window manipulation in games
-* **Design Opportunities:** Multi-window gaming opens new possibilities for puzzle and strategy game mechanics
+- [Daemon Engine](https://github.com/dadavidtseng/Engine) — Custom C++ engine providing DirectX 11 rendering, FMOD audio, input, and widget systems
+- Microsoft Windows API documentation — Foundation for multi-window management
+- SMU Guildhall — Academic environment and engine development curriculum
 
-## 🤝 Contributing
-Contributions are welcome, especially in areas related to Windows API optimization and multi-window game design patterns.
+## License
 
-### Development Workflow
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/window-enhancement`)
-3. Make your changes with clear commit messages
-4. Test on multiple Windows versions if possible
-5. Submit a pull request with detailed description
+Copyright 2025 Yu-Wei Tseng
 
-### Areas for Contribution
-* **Performance Optimization:** Multi-window rendering efficiency improvements
-* **Cross-Platform Exploration:** Investigating similar functionality on macOS/Linux
-* **Advanced Window Effects:** Visual transitions and effects for window interactions
-* **Accessibility Features:** Making multi-window gaming more accessible
+Licensed under the [Apache License, Version 2.0](../LICENSE).
 
-## 📄 Documentation
-* [Technical Design Document](Docs/technical-design.md) *(planned)*
-* [Windows API Integration Guide](Docs/windows-api-guide.md) *(planned)*
-* [Multi-Window Game Design Patterns](Docs/design-patterns.md) *(planned)*
-* [Performance Optimization Guide](Docs/performance.md) *(planned)*
+## Contact
 
-## 📝 License
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+**Yu-Wei Tseng**
+- Portfolio: [dadavidtseng.info](https://dadavidtseng.info)
+- GitHub: [@dadavidtseng](https://github.com/dadavidtseng)
+- LinkedIn: [dadavidtseng](https://www.linkedin.com/in/dadavidtseng/)
+- Email: dadavidtseng@gmail.com
 
-## 🙏 Acknowledgments
-* **Custom Daemon Engine:** Built as part of personal engine development journey
-* **Windows API Documentation:** Microsoft's comprehensive system programming resources
-* **Game Development Community:** Inspiration from experimental and indie game developers
-* **Desktop Application Design:** Insights from modern desktop application UX patterns
+Project Link: [github.com/dadavidtseng/DaemonWindows](https://github.com/dadavidtseng/DaemonWindows)
 
-## 📞 Contact
-For questions about this project, please contact:
-* **Developer:** Yu-Wei Tseng - [dadavidtseng@gmail.com](mailto:dadavidtseng@gmail.com)
-* **GitHub:** [https://github.com/dadavidtseng](https://github.com/dadavidtseng)
-* **Portfolio:** [https://dadavidtseng.info](https://dadavidtseng.info)
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
----
-**Development Period:** 2023 - Present (Active Development)  
-**Last Updated:** August 7, 2025
+<!-- REFERENCE-STYLE LINKS -->
+[contributors-shield]: https://img.shields.io/github/contributors/dadavidtseng/DaemonWindows.svg?style=for-the-badge
+[contributors-url]: https://github.com/dadavidtseng/DaemonWindows/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/dadavidtseng/DaemonWindows.svg?style=for-the-badge
+[forks-url]: https://github.com/dadavidtseng/DaemonWindows/network/members
+[stars-shield]: https://img.shields.io/github/stars/dadavidtseng/DaemonWindows.svg?style=for-the-badge
+[stars-url]: https://github.com/dadavidtseng/DaemonWindows/stargazers
+[issues-shield]: https://img.shields.io/github/issues/dadavidtseng/DaemonWindows.svg?style=for-the-badge
+[issues-url]: https://github.com/dadavidtseng/DaemonWindows/issues
+[license-shield]: https://img.shields.io/github/license/dadavidtseng/DaemonWindows.svg?style=for-the-badge
+[license-url]: https://github.com/dadavidtseng/DaemonWindows/blob/main/LICENSE
+[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
+[linkedin-url]: https://linkedin.com/in/dadavidtseng
