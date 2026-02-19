@@ -67,6 +67,24 @@
     <ClCompile Include="Gameplay\Shop.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
+    <ClCompile Include="Gameplay\EnemyUtils.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Gameplay\UpgradeManager.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Gameplay\WaveManager.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Gameplay\Square.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="Gameplay\Pentagon.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="Gameplay\Hexagon.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineBuildPreferences.hpp">
@@ -114,10 +132,20 @@
     <ClInclude Include="Gameplay\Shop.hpp">
       <Filter>Gameplay</Filter>
     </ClInclude>
+    <ClInclude Include="Gameplay\EnemyUtils.hpp" />
+    <ClInclude Include="Gameplay\UpgradeManager.hpp" />
+    <ClInclude Include="Gameplay\WaveManager.hpp" />
+    <ClInclude Include="Gameplay\Square.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="Gameplay\Pentagon.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="Gameplay\Hexagon.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\Docs\README.md">
-      <Filter>Document</Filter>
-    </None>
+    <None Include="../../Docs/README.md" />
   </ItemGroup>
 </Project>
