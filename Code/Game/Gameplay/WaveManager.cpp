@@ -1,9 +1,17 @@
+//----------------------------------------------------------------------------------------------------
+// WaveManager.cpp
+//----------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/WaveManager.hpp"
-
+//----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Game.hpp"
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/EventSystem.hpp"
 
-//-----------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------------------------
 WaveManager::WaveManager(Game* game)
@@ -39,12 +47,32 @@ void WaveManager::Update(float deltaSeconds)
 //-----------------------------------------------------------------------------------------------
 void WaveManager::StartWave()
 {
-	// TODO: Implement wave start logic
-	// - Increment wave number
-	// - Calculate number of enemies for this wave
-	// - Set wave active flag
-	// - Reset spawn timer
-	// - Fire wave start event
+	++m_currentWaveNumber;
+	m_isWaveActive = true;
+	m_spawnTimer   = 0.0f;
+
+	// Calculate enemies for this wave using difficulty scaling
+	m_totalEnemiesInWave = static_cast<int>(m_baseEnemiesPerWave * powf(m_difficultyScaling, static_cast<float>(m_currentWaveNumber - 1)));
+	m_remainingEnemies   = m_totalEnemiesInWave;
+
+	// Check if this is a boss wave (every 5 waves)
+	constexpr int BOSS_WAVE_INTERVAL = 5;
+	m_isBossActive = (m_currentWaveNumber % BOSS_WAVE_INTERVAL == 0);
+
+	// Fire OnWaveStart event
+	EventArgs args;
+	args.SetValue("waveNumber", std::to_string(m_currentWaveNumber));
+	args.SetValue("totalEnemies", std::to_string(m_totalEnemiesInWave));
+	args.SetValue("isBossWave", m_isBossActive ? "true" : "false");
+	g_eventSystem->FireEvent("OnWaveStart", args);
+
+	// Fire OnBossSpawn event if this is a boss wave
+	if (m_isBossActive)
+	{
+		EventArgs bossArgs;
+		bossArgs.SetValue("waveNumber", std::to_string(m_currentWaveNumber));
+		g_eventSystem->FireEvent("OnBossSpawn", bossArgs);
+	}
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -52,9 +80,12 @@ void WaveManager::StartWave()
 //-----------------------------------------------------------------------------------------------
 void WaveManager::CompleteWave()
 {
-	// TODO: Implement wave completion logic
-	// - Set wave active flag to false
-	// - Fire wave complete event
-	// - Prepare for next wave
-	// - Award wave completion bonus (coins, etc.)
+	m_isWaveActive = false;
+	m_isBossActive = false;
+
+	// Fire OnWaveComplete event
+	EventArgs args;
+	args.SetValue("waveNumber", std::to_string(m_currentWaveNumber));
+	args.SetValue("totalEnemies", std::to_string(m_totalEnemiesInWave));
+	g_eventSystem->FireEvent("OnWaveComplete", args);
 }

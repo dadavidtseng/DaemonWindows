@@ -1,9 +1,17 @@
+//----------------------------------------------------------------------------------------------------
+// UpgradeManager.cpp
+//----------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/UpgradeManager.hpp"
-
+//----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Game.hpp"
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/EventSystem.hpp"
 
-//-----------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------------------------
 UpgradeManager::UpgradeManager(Game* game)
@@ -40,22 +48,51 @@ void UpgradeManager::Update(float deltaSeconds)
 }
 
 //-----------------------------------------------------------------------------------------------
+// UpgradeTypeToString - Converts upgrade type enum to string for event args
+//-----------------------------------------------------------------------------------------------
+static char const* UpgradeTypeToString(eUpgradeType type)
+{
+	switch (type)
+	{
+	case eUpgradeType::FIRE_RATE:        return "FireRate";
+	case eUpgradeType::DAMAGE:           return "Damage";
+	case eUpgradeType::PROJECTILE_COUNT: return "ProjectileCount";
+	case eUpgradeType::BULLET_SPREAD:    return "BulletSpread";
+	case eUpgradeType::BULLET_SIZE:      return "BulletSize";
+	case eUpgradeType::PIERCING:         return "Piercing";
+	case eUpgradeType::HOMING:           return "Homing";
+	default:                             return "Unknown";
+	}
+}
+
+//-----------------------------------------------------------------------------------------------
 // PurchaseUpgrade - Attempts to purchase an upgrade level
 //-----------------------------------------------------------------------------------------------
 bool UpgradeManager::PurchaseUpgrade(eUpgradeType type)
 {
-	UNUSED(type)
+	// TODO: Implement full purchase logic (coin check, deduction, effect application)
+	// For now, only the event firing is implemented as part of Task 1.11
 
-	// TODO: Implement upgrade purchase logic
-	// - Check if upgrade is available (not maxed)
-	// - Check if player has enough coins
-	// - Deduct cost from player coins
-	// - Increment upgrade level
-	// - Apply upgrade effects to player
-	// - Fire "UpgradePurchased" event
-	// - Return true if successful, false otherwise
+	int index = static_cast<int>(type);
+	if (index < 0 || index >= static_cast<int>(eUpgradeType::COUNT))
+	{
+		return false;
+	}
 
-	return false;
+	Upgrade& upgrade = m_upgrades[index];
+	if (upgrade.m_level >= upgrade.m_maxLevel)
+	{
+		return false;
+	}
+
+	// Fire OnUpgradePurchased event
+	EventArgs args;
+	args.SetValue("upgradeType", UpgradeTypeToString(type));
+	args.SetValue("newLevel", std::to_string(upgrade.m_level + 1));
+	args.SetValue("cost", std::to_string(GetUpgradeCost(type)));
+	g_eventSystem->FireEvent("OnUpgradePurchased", args);
+
+	return false; // TODO: Return true once full purchase logic is implemented
 }
 
 //-----------------------------------------------------------------------------------------------
