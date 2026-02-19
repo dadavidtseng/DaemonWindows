@@ -1,11 +1,10 @@
 //----------------------------------------------------------------------------------------------------
-// Octagon.cpp
+// Hexagon.cpp
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-#include "Game/Gameplay/Octagon.hpp"
+#include "Game/Gameplay/Hexagon.hpp"
 //----------------------------------------------------------------------------------------------------
-#include "Game/Gameplay/Bullet.hpp"
 #include "Game/Gameplay/EnemyUtils.hpp"
 #include "Game/Gameplay/Game.hpp"
 #include "Game/Gameplay/Player.hpp"
@@ -20,38 +19,47 @@
 
 
 //----------------------------------------------------------------------------------------------------
-Octagon::Octagon(EntityID const entityID,
+Hexagon::Hexagon(EntityID const entityID,
                  Vec2 const&    position,
                  float const    orientationDegrees,
                  Rgba8 const&   color,
                  bool const     isVisible,
-                 bool const     hasChildWindow)
+                 bool const     hasChildWindow,
+                 bool           canSplit)
     : Entity(position, orientationDegrees, color, isVisible, hasChildWindow)
+    , m_canSplit(canSplit)
 {
     m_entityID       = entityID;
-    m_name           = "Octagon";
-    m_physicRadius   = 30.f;
+    m_name           = "Hexagon";
     m_thickness      = 8.f;
-    m_cosmeticRadius = m_physicRadius + m_thickness;
 
-    // Health scaling: base 3-5, +1 per 3 waves
-    int const baseHealth  = g_rng->RollRandomIntInRange(3, 5);
-    int       waveBonus   = 0;
-    WaveManager* waveMgr  = g_game->GetWaveManager();
-    if (waveMgr)
+    if (m_canSplit)
     {
-        waveBonus = waveMgr->GetCurrentWaveNumber() / 3;
+        // Large hexagon: full stats
+        m_physicRadius = 30.f;
+
+        int const baseHealth  = g_rng->RollRandomIntInRange(4, 6);
+        int       waveBonus   = 0;
+        WaveManager* waveMgr  = g_game->GetWaveManager();
+        if (waveMgr)
+        {
+            waveBonus = waveMgr->GetCurrentWaveNumber() / 3;
+        }
+        m_health     = baseHealth + waveBonus;
+        m_speed      = 100.f;
+        m_splitCount = g_rng->RollRandomIntInRange(2, 3);
+        m_coinToDrop = m_health;
     }
-    m_health = baseHealth + waveBonus;
+    else
+    {
+        // Small hexagon: reduced stats, no splitting
+        m_physicRadius = 18.f;
+        m_health       = g_rng->RollRandomIntInRange(1, 2);
+        m_speed        = 130.f;
+        m_coinToDrop   = 1;
+    }
 
-    // Speed: slower than chasers (design spec: 80)
-    m_speed = 80.f;
-
-    // Coin drop: proportional to health
-    m_coinToDrop = m_health;
-
-    // Randomize shoot cooldown slightly for variety
-    m_shootCooldown = g_rng->RollRandomFloatInRange(1.2f, 1.8f);
+    m_cosmeticRadius = m_physicRadius + m_thickness;
 
     if (m_hasChildWindow)
     {
@@ -66,7 +74,7 @@ Octagon::Octagon(EntityID const entityID,
     }
 }
 
-Octagon::~Octagon()
+Hexagon::~Hexagon()
 {
     if (m_hasChildWindow)
     {
@@ -75,7 +83,42 @@ Octagon::~Octagon()
     }
 }
 
-void Octagon::Update(float const deltaSeconds)
+void Hexagon::MarkAsDead()
+{
+    if (!m_isDead && m_canSplit)
+    {
+        SpawnSplitHexagons();
+    }
+
+    Entity::MarkAsDead();
+}
+
+void Hexagon::SpawnSplitHexagons()
+{
+    for (int i = 0; i < m_splitCount; ++i)
+    {
+        // Scatter children around the death position
+        float const scatterAngle = 360.f / static_cast<float>(m_splitCount) * static_cast<float>(i);
+        Vec2 const  offset       = Vec2::MakeFromPolarDegrees(scatterAngle, m_physicRadius * 1.5f);
+        Vec2 const  spawnPos     = m_position + offset;
+
+        int const randomType = g_rng->RollRandomIntInRange(0, 1);
+
+        Hexagon* child = new Hexagon(
+            g_rng->RollRandomIntInRange(100, 1000),
+            spawnPos,
+            0.f,
+            Rgba8::YELLOW,
+            true,
+            randomType,
+            false    // small hexagons cannot split
+        );
+
+        g_game->m_entityList.push_back(child);
+    }
+}
+
+void Hexagon::Update(float const deltaSeconds)
 {
     if (g_game->GetCurrentGameState() == eGameState::SHOP || g_game->GetCurrentGameState() == eGameState::ATTRACT) return;
     Entity::Update(deltaSeconds);
@@ -91,69 +134,25 @@ void Octagon::Update(float const deltaSeconds)
     }
     if (m_isDead) return;
 
+    // Chase player
     Player* player = g_game->GetPlayer();
-    if (!player || player->IsDead()) return;
-
-    // Distance maintenance: keep preferred distance from player
-    float const distToPlayer = GetDistance2D(m_position, player->m_position);
-    Vec2 const  dirToPlayer  = EnemyUtils::GetDirectionToPlayer(m_position, player->m_position);
-
-    if (distToPlayer < m_preferredDist * 0.8f)
+    if (player && !player->IsDead())
     {
-        // Too close — retreat away from player
-        m_position -= dirToPlayer * m_speed * deltaSeconds;
-    }
-    else if (distToPlayer > m_shootRange)
-    {
-        // Too far — approach player
-        m_position += dirToPlayer * m_speed * deltaSeconds;
-    }
+        Vec2 const previousPosition = m_position;
+        EnemyUtils::ChasePlayer(m_position, m_orientationDegrees, player->m_position, m_speed, deltaSeconds);
 
-    // Always face the player
-    if (dirToPlayer != Vec2::ZERO)
-    {
-        float const goalDegrees = dirToPlayer.GetOrientationDegrees();
-        m_orientationDegrees    = GetTurnedTowardDegrees(m_orientationDegrees, goalDegrees, 180.f * deltaSeconds);
-    }
-
-    // Track velocity for knockback
-    m_velocity = dirToPlayer * m_speed;
-
-    // Shoot at player when in range and cooldown is ready
-    if (EnemyUtils::ShouldShootAtPlayer(m_position, player->m_position, m_shootRange, m_shootCooldown, m_shootTimer, deltaSeconds))
-    {
-        FireBulletAtPlayer();
+        if (deltaSeconds > 0.f)
+        {
+            m_velocity = (m_position - previousPosition) / deltaSeconds;
+        }
     }
 }
 
-void Octagon::FireBulletAtPlayer()
+void Hexagon::Render() const
 {
-    Player* player = g_game->GetPlayer();
-    if (!player) return;
-
-    Vec2 const direction = EnemyUtils::GetDirectionToPlayer(m_position, player->m_position);
-    if (direction == Vec2::ZERO) return;
-
-    // Spawn bullet at octagon's position, aimed at player
-    Bullet* bullet = new Bullet(
-        g_rng->RollRandomIntInRange(100, 1000),
-        m_position,
-        direction.GetOrientationDegrees(),
-        Rgba8::RED,
-        true,
-        false
-    );
-    bullet->m_velocity = direction;
-    bullet->m_name     = "EnemyBullet";
-
-    g_game->m_entityList.push_back(bullet);
-}
-
-void Octagon::Render() const
-{
-    // Render as an 8-sided polygon
+    // Render as a 6-sided polygon
     VertexList_PCU verts;
-    constexpr int  NUM_SIDES = 8;
+    constexpr int  NUM_SIDES = 6;
 
     for (int i = 0; i < NUM_SIDES; ++i)
     {
@@ -176,28 +175,25 @@ void Octagon::Render() const
     g_renderer->DrawVertexArray(verts);
 }
 
-void Octagon::BounceOfWindow()
+void Hexagon::BounceOfWindow()
 {
     Vec2 screenDimensions = Window::s_mainWindow->GetScreenDimensions();
 
-    float clampedX = GetClamped(m_position.x,
-                                m_cosmeticRadius,
-                                screenDimensions.x - m_cosmeticRadius);
+    m_position.x = GetClamped(m_position.x,
+                              m_cosmeticRadius,
+                              screenDimensions.x - m_cosmeticRadius);
 
-    float clampedY = GetClamped(m_position.y,
-                                m_cosmeticRadius,
-                                screenDimensions.y - m_cosmeticRadius);
-
-    m_position.x = clampedX;
-    m_position.y = clampedY;
+    m_position.y = GetClamped(m_position.y,
+                              m_cosmeticRadius,
+                              screenDimensions.y - m_cosmeticRadius);
 }
 
-void Octagon::UpdateFromInput(float deltaSeconds)
+void Hexagon::UpdateFromInput(float deltaSeconds)
 {
     UNUSED(deltaSeconds)
 }
 
-void Octagon::ShrinkWindow()
+void Hexagon::ShrinkWindow()
 {
     WindowID windowID = g_windowSubsystem->FindWindowIDByEntityID(m_entityID);
     Window*  window   = g_windowSubsystem->GetWindow(windowID);
@@ -215,14 +211,14 @@ void Octagon::ShrinkWindow()
     }
 }
 
-STATIC bool Octagon::OnCollisionEnter(EventArgs& args)
+STATIC bool Hexagon::OnCollisionEnter(EventArgs& args)
 {
     String   entityA   = args.GetValue("entityA", "DEFAULT");
     String   entityB   = args.GetValue("entityB", "DEFAULT");
     EntityID entityBID = args.GetValue("entityBID", -1);
     Entity*  entity    = g_game->GetEntityByEntityID(entityBID);
 
-    if (entityA == "Bullet" && entityB == "Octagon")
+    if (entityA == "Bullet" && entityB == "Hexagon")
     {
         if (entity->m_entityID == entityBID)
         {
@@ -233,7 +229,7 @@ STATIC bool Octagon::OnCollisionEnter(EventArgs& args)
             entity->m_position -= knockback;
         }
 
-        DebuggerPrintf("OCTAGON HIT\n");
+        DebuggerPrintf("HEXAGON HIT\n");
     }
 
     return false;

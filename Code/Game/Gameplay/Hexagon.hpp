@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------------------------------
-// Circle.hpp
+// Hexagon.hpp
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
@@ -12,11 +12,12 @@
 class ButtonWidget;
 
 //----------------------------------------------------------------------------------------------------
-class Circle : public Entity
+class Hexagon : public Entity
 {
 public:
-    explicit Circle(EntityID entityID, Vec2 const& position, float orientationDegrees, Rgba8 const& color, bool isVisible, bool hasChildWindow);
-    ~Circle() override;
+    explicit Hexagon(EntityID entityID, Vec2 const& position, float orientationDegrees, Rgba8 const& color, bool isVisible, bool hasChildWindow, bool canSplit = true);
+    ~Hexagon() override;
+    void MarkAsDead() override;
     void Update(float deltaSeconds) override;
     void Render() const override;
     void BounceOfWindow();
@@ -24,11 +25,12 @@ public:
     void ShrinkWindow();
 
 private:
+    void SpawnSplitHexagons();
+
     static bool OnCollisionEnter(EventArgs& args);
     std::shared_ptr<ButtonWidget> m_healthWidget;
 
-    // Orbit-specific state
-    float m_orbitAngle       = 0.f;
-    float m_orbitRadius      = 200.f;
-    float m_orbitAngularSpeed = 90.f;   // degrees per second
+    // Split behavior
+    bool m_canSplit  = true;
+    int  m_splitCount = 2;    // number of children to spawn on death
 };

@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------------------------------
-// Circle.hpp
+// Square.hpp
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
@@ -12,11 +12,11 @@
 class ButtonWidget;
 
 //----------------------------------------------------------------------------------------------------
-class Circle : public Entity
+class Square : public Entity
 {
 public:
-    explicit Circle(EntityID entityID, Vec2 const& position, float orientationDegrees, Rgba8 const& color, bool isVisible, bool hasChildWindow);
-    ~Circle() override;
+    explicit Square(EntityID entityID, Vec2 const& position, float orientationDegrees, Rgba8 const& color, bool isVisible, bool hasChildWindow);
+    ~Square() override;
     void Update(float deltaSeconds) override;
     void Render() const override;
     void BounceOfWindow();
@@ -26,9 +26,4 @@ public:
 private:
     static bool OnCollisionEnter(EventArgs& args);
     std::shared_ptr<ButtonWidget> m_healthWidget;
-
-    // Orbit-specific state
-    float m_orbitAngle       = 0.f;
-    float m_orbitRadius      = 200.f;
-    float m_orbitAngularSpeed = 90.f;   // degrees per second
 };
