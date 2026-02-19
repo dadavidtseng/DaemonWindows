@@ -52,15 +52,14 @@ void Bullet::Update(float const deltaSeconds)
     WindowID windowID = g_windowSubsystem->FindWindowIDByEntityID(g_game->GetPlayer()->m_entityID);
     Window*  window   = g_windowSubsystem->GetWindow(windowID);
 
-    // 檢查碰撞，但只在不在動畫中時才觸發新的動畫
-    // if (!g_theWindowSubsystem->IsWindowAnimating(windowID))
+    // Check collision with window edges and expand the window accordingly
     {
         Vec2 currentPos  = window->GetWindowPosition();
         Vec2 currentSize = window->GetWindowDimensions();
 
         if (m_position.x + m_physicRadius * 2.f > currentPos.x + currentSize.x)
         {
-            // 右邊界：增加寬度
+            // Right edge: expand width
             Vec2 newPos  = currentPos + Vec2(10, 0);
             Vec2 newSize = currentSize + Vec2(10, 0);
             g_windowSubsystem->AnimateWindowPositionAndDimensions(windowID, newPos, newSize, 0.1f);
@@ -68,7 +67,7 @@ void Bullet::Update(float const deltaSeconds)
         }
         else if (m_position.x - m_physicRadius * 2.f < currentPos.x)
         {
-            // 左邊界：向左移動並增加寬度
+            // Left edge: shift left and expand width
             Vec2 newPos  = currentPos + Vec2(-20, 0);
             Vec2 newSize = currentSize + Vec2(10, 0);
             g_windowSubsystem->AnimateWindowPositionAndDimensions(windowID, newPos, newSize, 0.1f);
@@ -76,7 +75,7 @@ void Bullet::Update(float const deltaSeconds)
         }
         else if (m_position.y + m_physicRadius * 2.f > currentPos.y + currentSize.y)
         {
-            // 上邊界：向上移動並增加高度
+            // Top edge: shift up and expand height
             Vec2 newPos  = currentPos + Vec2(0, 10);
             Vec2 newSize = currentSize + Vec2(0, 10);
             g_windowSubsystem->AnimateWindowPositionAndDimensions(windowID, newPos, newSize, 0.1f);
@@ -84,7 +83,7 @@ void Bullet::Update(float const deltaSeconds)
         }
         else if (m_position.y - m_physicRadius * 2.f < currentPos.y)
         {
-            // 下邊界：增加高度
+            // Bottom edge: shift down and expand height
             Vec2 newPos  = currentPos + Vec2(0, -20);
             Vec2 newSize = currentSize + Vec2(0, 10);
             g_windowSubsystem->AnimateWindowPositionAndDimensions(windowID, newPos, newSize, 0.1f);

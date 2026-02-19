@@ -8,9 +8,15 @@
 #include "Game/Framework/App.hpp"
 #include "Game/Framework/GameCommon.hpp"
 #include "Game/Gameplay/Bullet.hpp"
+#include "Game/Gameplay/Circle.hpp"
 #include "Game/Gameplay/Coin.hpp"
+#include "Game/Gameplay/EnemyUtils.hpp"
+#include "Game/Gameplay/Hexagon.hpp"
+#include "Game/Gameplay/Octagon.hpp"
+#include "Game/Gameplay/Pentagon.hpp"
 #include "Game/Gameplay/Player.hpp"
 #include "Game/Gameplay/Shop.hpp"
+#include "Game/Gameplay/Square.hpp"
 #include "Game/Gameplay/Triangle.hpp"
 #include "Game/Gameplay/UpgradeManager.hpp"
 #include "Game/Gameplay/WaveManager.hpp"
@@ -38,6 +44,10 @@ Game::Game()
 {
     g_eventSystem->SubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
     g_eventSystem->SubscribeEventCallbackFunction("OnEntityDestroyed", OnEntityDestroyed);
+    g_eventSystem->SubscribeEventCallbackFunction("OnWaveStart", OnWaveStart);
+    g_eventSystem->SubscribeEventCallbackFunction("OnWaveComplete", OnWaveComplete);
+    g_eventSystem->SubscribeEventCallbackFunction("OnBossSpawn", OnBossSpawn);
+    g_eventSystem->SubscribeEventCallbackFunction("OnUpgradePurchased", OnUpgradePurchased);
     m_screenCamera = new Camera();
 
     Vec2 const bottomLeft     = Vec2::ZERO;
@@ -68,6 +78,11 @@ Game::Game()
 Game::~Game()
 {
     g_eventSystem->UnsubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
+    g_eventSystem->UnsubscribeEventCallbackFunction("OnEntityDestroyed", OnEntityDestroyed);
+    g_eventSystem->UnsubscribeEventCallbackFunction("OnWaveStart", OnWaveStart);
+    g_eventSystem->UnsubscribeEventCallbackFunction("OnWaveComplete", OnWaveComplete);
+    g_eventSystem->UnsubscribeEventCallbackFunction("OnBossSpawn", OnBossSpawn);
+    g_eventSystem->UnsubscribeEventCallbackFunction("OnUpgradePurchased", OnUpgradePurchased);
     GAME_SAFE_RELEASE(m_upgradeManager);
     GAME_SAFE_RELEASE(m_waveManager);
     GAME_SAFE_RELEASE(m_screenCamera);
@@ -184,6 +199,53 @@ STATIC bool Game::OnEntityDestroyed(EventArgs& args)
     if (entity == nullptr) return true;
 
     g_game->m_entityList.push_back(new Coin((int)g_game->m_entityList.size(), entity->m_position, 0.f, Rgba8::RED, true, false));
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+STATIC bool Game::OnWaveStart(EventArgs& args)
+{
+    int const waveNumber = atoi(args.GetValue("waveNumber", "0").c_str());
+    bool const isBossWave = args.GetValue("isBossWave", "false") == "true";
+
+    if (isBossWave)
+    {
+        DebuggerPrintf("Wave %d started (BOSS WAVE)!\n", waveNumber);
+    }
+    else
+    {
+        DebuggerPrintf("Wave %d started.\n", waveNumber);
+    }
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+STATIC bool Game::OnWaveComplete(EventArgs& args)
+{
+    int const waveNumber = atoi(args.GetValue("waveNumber", "0").c_str());
+    DebuggerPrintf("Wave %d completed!\n", waveNumber);
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+STATIC bool Game::OnBossSpawn(EventArgs& args)
+{
+    int const waveNumber = atoi(args.GetValue("waveNumber", "0").c_str());
+    DebuggerPrintf("Boss spawned on wave %d!\n", waveNumber);
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+STATIC bool Game::OnUpgradePurchased(EventArgs& args)
+{
+    String const upgradeType = args.GetValue("upgradeType", "Unknown");
+    int const newLevel = atoi(args.GetValue("newLevel", "0").c_str());
+
+    DebuggerPrintf("Upgrade purchased: %s -> Level %d\n", upgradeType.c_str(), newLevel);
 
     return true;
 }
@@ -510,15 +572,8 @@ void Game::RenderGame() const
 //----------------------------------------------------------------------------------------------------
 Triangle* Game::SpawnTriangle()
 {
-    float const screenWidth  = Window::s_mainWindow->GetScreenDimensions().x;
-    float const screenHeight = Window::s_mainWindow->GetScreenDimensions().y;
-
-    Vec2 const randomPos = Vec2(
-        g_rng->RollRandomFloatInRange(0.f, screenWidth * 0.5f),
-        g_rng->RollRandomFloatInRange(0.f, screenHeight * 0.5f)
-    );
-
-    int const randomType = g_rng->RollRandomIntInRange(0, 1);
+    Vec2 const randomPos  = EnemyUtils::GetRandomSpawnPosition(Window::s_mainWindow->GetScreenDimensions());
+    int const  randomType = g_rng->RollRandomIntInRange(0, 1);
 
     Triangle* triangle = new Triangle(
         s_nextEntityID++,
@@ -534,11 +589,110 @@ Triangle* Game::SpawnTriangle()
 }
 
 //----------------------------------------------------------------------------------------------------
+Circle* Game::SpawnCircle()
+{
+    Vec2 const randomPos  = EnemyUtils::GetRandomSpawnPosition(Window::s_mainWindow->GetScreenDimensions());
+    int const  randomType = g_rng->RollRandomIntInRange(0, 1);
+
+    Circle* circle = new Circle(
+        s_nextEntityID++,
+        randomPos,
+        0.f,
+        Rgba8::GREEN,
+        true,
+        randomType
+    );
+
+    m_entityList.push_back(circle);
+    return circle;
+}
+
+//----------------------------------------------------------------------------------------------------
+Octagon* Game::SpawnOctagon()
+{
+    Vec2 const randomPos  = EnemyUtils::GetRandomSpawnPosition(Window::s_mainWindow->GetScreenDimensions());
+    int const  randomType = g_rng->RollRandomIntInRange(0, 1);
+
+    Octagon* octagon = new Octagon(
+        s_nextEntityID++,
+        randomPos,
+        0.f,
+        Rgba8::MAGENTA,
+        true,
+        randomType
+    );
+
+    m_entityList.push_back(octagon);
+    return octagon;
+}
+
+//----------------------------------------------------------------------------------------------------
+Square* Game::SpawnSquare()
+{
+    Vec2 const randomPos  = EnemyUtils::GetRandomSpawnPosition(Window::s_mainWindow->GetScreenDimensions());
+    int const  randomType = g_rng->RollRandomIntInRange(0, 1);
+
+    Square* square = new Square(
+        s_nextEntityID++,
+        randomPos,
+        0.f,
+        Rgba8::ORANGE,
+        true,
+        randomType
+    );
+
+    m_entityList.push_back(square);
+    return square;
+}
+
+//----------------------------------------------------------------------------------------------------
+Pentagon* Game::SpawnPentagon()
+{
+    Vec2 const randomPos  = EnemyUtils::GetRandomSpawnPosition(Window::s_mainWindow->GetScreenDimensions());
+    int const  randomType = g_rng->RollRandomIntInRange(0, 1);
+
+    Pentagon* pentagon = new Pentagon(
+        s_nextEntityID++,
+        randomPos,
+        0.f,
+        Rgba8::CYAN,
+        true,
+        randomType
+    );
+
+    m_entityList.push_back(pentagon);
+    return pentagon;
+}
+
+//----------------------------------------------------------------------------------------------------
+Hexagon* Game::SpawnHexagon()
+{
+    Vec2 const randomPos  = EnemyUtils::GetRandomSpawnPosition(Window::s_mainWindow->GetScreenDimensions());
+    int const  randomType = g_rng->RollRandomIntInRange(0, 1);
+
+    Hexagon* hexagon = new Hexagon(
+        s_nextEntityID++,
+        randomPos,
+        0.f,
+        Rgba8::YELLOW,
+        true,
+        randomType,
+        true    // large hexagon can split
+    );
+
+    m_entityList.push_back(hexagon);
+    return hexagon;
+}
+
+//----------------------------------------------------------------------------------------------------
 void Game::SpawnEntity()
 {
     SpawnTriangle();
-    SpawnTriangle();
-    SpawnTriangle();
+    SpawnCircle();
+    SpawnOctagon();
+    SpawnSquare();
+    SpawnPentagon();
+    SpawnHexagon();
 }
 
 //----------------------------------------------------------------------------------------------------

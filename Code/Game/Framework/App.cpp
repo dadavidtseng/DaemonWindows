@@ -85,7 +85,6 @@ void App::Shutdown()
 
     GEngine::Get().Shutdown();
 
-
     g_widgetSubsystem->ShutDown();
     g_windowSubsystem->ShutDown();
 }

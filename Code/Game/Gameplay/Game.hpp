@@ -18,6 +18,11 @@ class Camera;
 class Clock;
 class Player;
 class Bullet;
+class Circle;
+class Hexagon;
+class Octagon;
+class Pentagon;
+class Square;
 class Triangle;
 class Coin;
 class WaveManager;
@@ -71,6 +76,10 @@ private:
     static int  s_nextEntityID;
     static bool OnGameStateChanged(EventArgs& args);
     static bool OnEntityDestroyed(EventArgs& args);
+    static bool OnWaveStart(EventArgs& args);
+    static bool OnWaveComplete(EventArgs& args);
+    static bool OnBossSpawn(EventArgs& args);
+    static bool OnUpgradePurchased(EventArgs& args);
 
     //------------------------------------------------------------------------------------------------
     // Update / Render
@@ -92,6 +101,11 @@ private:
     void      SpawnShop();
     void      SpawnEntity();
     Triangle* SpawnTriangle();
+    Circle*   SpawnCircle();
+    Octagon*  SpawnOctagon();
+    Square*   SpawnSquare();
+    Pentagon* SpawnPentagon();
+    Hexagon*  SpawnHexagon();
     void      DestroyEntity();
     void      ShowShop();
     void      DestroyShop();

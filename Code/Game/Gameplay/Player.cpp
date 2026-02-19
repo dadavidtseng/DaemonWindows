@@ -125,18 +125,18 @@ void Player::UpdateFromInput(float const deltaSeconds)
     if (g_input->IsKeyDown(KEYCODE_S)) m_position.y -= deltaSeconds * m_speed;
     if (g_input->IsKeyDown(KEYCODE_D)) m_position.x += deltaSeconds * m_speed;
 
-    // 連發射擊（持續按住）
+    // Continuous fire (hold to shoot)
     if (g_input->IsKeyDown(KEYCODE_LEFT_MOUSE))
     {
-        // 檢查計時器是否已經停止（第一次射擊）或時間已到
+        // Check if timer is stopped (first shot) or period has elapsed
         if (m_bulletFireTimer.IsStopped() || m_bulletFireTimer.HasPeriodElapsed())
         {
             FireBullet();
-            // m_isFiringBullet = true;
-            // 重新啟動計時器
+
+            // Restart the fire timer
             m_bulletFireTimer.Start();
 
-            // 如果計時器期間已過，減去一個週期
+            // If the timer period has elapsed, decrement one period
             if (m_bulletFireTimer.HasPeriodElapsed())
             {
                 m_bulletFireTimer.DecrementPeriodIfElapsed();
@@ -145,13 +145,12 @@ void Player::UpdateFromInput(float const deltaSeconds)
     }
     else
     {
-        // 當滑鼠鬆開時停止計時器
+        // Stop the fire timer when mouse is released
         m_bulletFireTimer.Stop();
     }
 
     if (g_input->WasKeyJustReleased(KEYCODE_LEFT_MOUSE))
     {
-        // m_isFiringBullet = false;
     }
 }
 
@@ -163,9 +162,9 @@ void Player::UpdateWindowFocus()
 
     if (windowData && windowData->m_window && windowData->m_window->GetWindowHandle())
     {
-        HWND hwnd = (HWND)windowData->m_window->GetWindowHandle();
+        HWND hwnd = static_cast<HWND>(windowData->m_window->GetWindowHandle());
 
-        // 只有在視窗失去焦點時才重新設定
+        // Only reset focus when the window has lost it
         if (GetForegroundWindow() != hwnd)
         {
             SetForegroundWindow(hwnd);
@@ -182,7 +181,6 @@ void Player::FireBullet()
     Vec2 velocity      = (Window::s_mainWindow->GetCursorPositionOnScreen() - m_position).GetNormalized();
     bullet->m_velocity = velocity;
 
-    // g_theWindowSubsystem->CreateChildWindow(bullet->m_actorID, bullet->m_name);
     g_game->m_entityList.push_back(bullet);
     SoundID const attractBGM = g_audio->CreateOrGetSound("Data/Audio/shoot.mp3", eAudioSystemSoundDimension::Sound2D);
     g_audio->StartSound(attractBGM, false, 1.f, 0.f, 1.f);
@@ -195,7 +193,7 @@ void Player::BounceOfWindow()
 
     if (windowData == nullptr) return;
 
-    // 取得視窗的邊界
+    // Get window bounds
     float windowLeft   = windowData->m_window->GetClientPosition().x;
     float windowBottom = windowData->m_window->GetClientPosition().y;
     float windowTop    = windowData->m_window->GetClientPosition().y + windowData->m_window->GetClientDimensions().y;
@@ -203,14 +201,14 @@ void Player::BounceOfWindow()
 
 
     float clampedX = GetClamped(m_position.x,
-                                windowLeft + m_physicRadius,   // 左邊界
-                                windowRight - m_physicRadius); // 右邊界
+                                windowLeft + m_physicRadius,
+                                windowRight - m_physicRadius);
 
     float clampedY = GetClamped(m_position.y,
-                                windowBottom + m_physicRadius, // 下邊界（在遊戲座標系中較小）
-                                windowTop - m_physicRadius);   // 上邊界（在遊戲座標系中較大）
+                                windowBottom + m_physicRadius,
+                                windowTop - m_physicRadius);
 
-    // 更新 Player 的位置
+    // Update player position
     m_position.x = clampedX;
     m_position.y = clampedY;
 }
@@ -227,7 +225,6 @@ void Player::ShrinkWindow()
         Vec2 currentClientDimensions = window->GetClientDimensions();
         if (currentClientDimensions.x <= m_physicRadius * 2.5f || currentClientDimensions.y <= m_physicRadius * 2.5f) return;
 
-        // 右邊界：增加寬度
         Vec2 newPos  = currentPos + Vec2(1, 1);
         Vec2 newSize = currentSize + Vec2(-1, -1);
         g_windowSubsystem->AnimateWindowPositionAndDimensions(windowID, newPos, newSize, 0.1f);
