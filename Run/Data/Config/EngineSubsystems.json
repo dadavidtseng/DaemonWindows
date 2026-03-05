@@ -48,6 +48,7 @@
                 "windowType": "FULLSCREEN_CROP",
                 "aspectRatio": 2.0,
                 "windowTitle": "DaemonWindows",
+                "supportMultipleWindows": true,
                 "_available_windowTypes": [
                     "WINDOWED",
                     "BORDERLESS",
