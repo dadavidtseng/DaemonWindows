@@ -1,0 +1,22 @@
+{
+  "filePath": ".spec-workflow/specs/windowkill-enhancement/design.md",
+  "currentVersion": 2,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2026-01-30T02:07:07.506Z",
+      "trigger": "initial",
+      "approvalId": "approval_1769738827495_afx4z44eq",
+      "approvalTitle": "Design Document - Windowkill Enhancement"
+    },
+    {
+      "version": 2,
+      "filename": "snapshot-002.json",
+      "timestamp": "2026-01-30T02:24:59.262Z",
+      "trigger": "approved",
+      "approvalId": "approval_1769738827495_afx4z44eq",
+      "approvalTitle": "Design Document - Windowkill Enhancement"
+    }
+  ]
+}
