@@ -11,13 +11,6 @@
         "ENABLE_GUI": "true",
         "WEB_PORT": "3000"
       }
-    },
-    "spec-workflow-DaemonWindows": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@pimzino/spec-workflow-mcp@latest"
-      ]
     }
   }
 }
