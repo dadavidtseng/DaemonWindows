@@ -99,7 +99,7 @@ Sprint 2 focuses on implementing 3 new Tier 1 enemy types and redesigning the 3 
   - _Requirements: Requirement 3 (Wave-Based Enemy Spawning System), Requirement 4 (Tier 1 Enemy Types)_
   - _Prompt: Implement the task for spec windowkill-enhancement, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C++ Developer with expertise in factory patterns and dynamic object creation | Task: Update SpawnEntity() to support dynamic enemy type spawning following Requirements 3 and 4, integrating with WaveManager | Restrictions: Maintain existing spawn functionality, ensure proper entity ID assignment, handle invalid enemy type strings gracefully | Success: SpawnEntity() accepts enemy type parameter, spawns correct enemy class, integrates with WaveManager, all 6 Tier 1 enemy types can be spawned dynamically | Instructions: After completing this task, use log-implementation tool to record spawn system changes (parameter added, type selection logic, WaveManager integration), then mark task as [x] in tasks.md_
 
-- [ ] 2.9. Update collision handling for new enemy types
+- [x] 2.9. Update collision handling for new enemy types
   - Files: Code/Game/Gameplay/Game.cpp (or CollisionUtils if refactored)
   - Add collision handlers for Square, Pentagon, Hexagon
   - Ensure bullet-enemy collisions work for all types
@@ -110,7 +110,7 @@ Sprint 2 focuses on implementing 3 new Tier 1 enemy types and redesigning the 3 
   - _Requirements: Requirement 4 (Tier 1 Enemy Types)_
   - _Prompt: Implement the task for spec windowkill-enhancement, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Game Developer with expertise in collision detection and physics | Task: Update collision handling for new enemy types following Requirement 4, ensuring all enemy types interact correctly with bullets and player | Restrictions: Maintain existing collision behavior for Triangle/Circle/Octagon, use same collision detection method (DoDiscsOverlap2D), ensure performance with multiple enemy types | Success: All 6 Tier 1 enemy types collide correctly with bullets, all enemy types collide correctly with player, collision detection is performant, no collision bugs or edge cases | Instructions: After completing this task, use log-implementation tool to record collision updates (handlers added, enemy types supported, collision testing results), then mark task as [x] in tasks.md_
 
-- [ ] 2.10. Add visual variety to enemy types
+- [x] 2.10. Add visual variety to enemy types
   - Files: Code/Game/Gameplay/[Enemy].cpp files
   - Set unique colors for each enemy type
   - Adjust cosmetic radius for visual distinction
@@ -121,7 +121,7 @@ Sprint 2 focuses on implementing 3 new Tier 1 enemy types and redesigning the 3 
   - _Requirements: Requirement 4 (Tier 1 Enemy Types)_
   - _Prompt: Implement the task for spec windowkill-enhancement, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Game Developer with expertise in visual design and rendering | Task: Add visual variety to enemy types following Requirement 4, making each enemy type easily distinguishable | Restrictions: Use existing rendering system, maintain performance, ensure colors are distinct and readable | Success: Each enemy type has unique color, sizes are visually distinct, health widgets display correctly, players can easily identify enemy types at a glance | Instructions: After completing this task, use log-implementation tool to record visual changes (colors assigned, sizes adjusted, rendering verified), then mark task as [x] in tasks.md_
 
-- [ ] 2.11. Test all 6 Tier 1 enemy types
+- [x] 2.11. Test all 6 Tier 1 enemy types
   - Files: N/A (testing)
   - Spawn each enemy type individually and verify behavior
   - Test enemy health, movement, and collision
@@ -133,7 +133,7 @@ Sprint 2 focuses on implementing 3 new Tier 1 enemy types and redesigning the 3 
   - _Requirements: Requirement 4 (Tier 1 Enemy Types)_
   - _Prompt: Implement the task for spec windowkill-enhancement, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Engineer with expertise in gameplay testing and enemy behavior verification | Task: Test all 6 Tier 1 enemy types following Requirement 4 acceptance criteria, verifying each enemy behaves correctly | Restrictions: Do not modify code during testing, document all issues found, test each enemy type thoroughly | Success: All 6 enemy types spawn correctly, behaviors match design specifications, health/damage/coins work correctly, no crashes or visual bugs, enemies create interesting gameplay variety | Instructions: After completing this task, use log-implementation tool to record testing results (enemies tested, behaviors verified, issues found), then mark task as [x] in tasks.md_
 
-- [ ] 2.12. Sprint 2 integration testing
+- [x] 2.12. Sprint 2 integration testing
   - Files: N/A (testing)
   - Test multiple enemy types spawning together
   - Test enemy variety in gameplay
