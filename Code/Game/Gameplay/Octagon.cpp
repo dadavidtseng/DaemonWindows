@@ -139,7 +139,7 @@ void Octagon::FireBulletAtPlayer()
         g_rng->RollRandomIntInRange(100, 1000),
         m_position,
         direction.GetOrientationDegrees(),
-        Rgba8::RED,
+        m_color,
         true,
         false
     );

@@ -46,7 +46,7 @@ void Entity::MarkAsDead()
 {
     m_isDead = true;
 
-    if (m_name == "Bullet") return;
+    if (m_name == "Bullet" || m_name == "EnemyBullet") return;
 
     if (g_game->GetCurrentGameState() == eGameState::GAME)
     {

@@ -100,11 +100,12 @@ void Game::Update()
         {
             m_waveManager->Update(gameDeltaSeconds);
         }
+
+        HandleEntityCollision();
     }
 
     UpdateFromInput();
     AdjustForPauseAndTimeDistortion();
-    HandleEntityCollision();
     for (size_t i = 0; i < m_entityList.size(); ++i)
     {
         Entity* entity = m_entityList[i];
@@ -193,6 +194,9 @@ STATIC bool Game::OnEntityDestroyed(EventArgs& args)
     Entity* entity = g_game->GetEntityByEntityID(entityID);
     if (entity == nullptr) return true;
 
+    // Only enemies drop coins
+    if (!IsEnemy(entity)) return true;
+
     // Spawn coins based on m_coinToDrop (minimum 1)
     int const coinCount = (entity->m_coinToDrop > 0) ? entity->m_coinToDrop : 1;
     for (int i = 0; i < coinCount; ++i)
@@ -202,7 +206,7 @@ STATIC bool Game::OnEntityDestroyed(EventArgs& args)
         Vec2 const  offset       = Vec2::MakeFromPolarDegrees(scatterAngle, 10.f * static_cast<float>(i > 0));
         Vec2 const  coinPos      = entity->m_position + offset;
 
-        g_game->m_entityList.push_back(new Coin((int)g_game->m_entityList.size(), coinPos, 0.f, Rgba8::RED, true, false));
+        g_game->m_entityList.push_back(new Coin((int)g_game->m_entityList.size(), coinPos, 0.f, Rgba8::YELLOW, true, false));
     }
 
     return true;
@@ -455,6 +459,20 @@ void Game::HandlePlayerEnemyCollision(Player* player, Entity* enemy)
 }
 
 //----------------------------------------------------------------------------------------------------
+void Game::HandleEnemyBulletPlayerCollision(Bullet* enemyBullet, Player* player)
+{
+    FireCollisionEvent(player, enemyBullet);
+
+    enemyBullet->MarkAsDead();
+
+    player->DecreaseHealth(1);
+    player->m_healthWidget->SetText(Stringf("Health=%d/%d", player->m_health, player->m_maxHealth));
+
+    SoundID const hitSound = g_audio->CreateOrGetSound("Data/Audio/hit.mp3", eAudioSystemSoundDimension::Sound2D);
+    g_audio->StartSound(hitSound, false, 1.f, 0.f, 1.f);
+}
+
+//----------------------------------------------------------------------------------------------------
 void Game::HandleEntityCollision()
 {
     for (int i = 0; i < (int)m_entityList.size(); ++i)
@@ -491,6 +509,11 @@ void Game::HandleEntityCollision()
                 HandlePlayerEnemyCollision(playerA, entityB);
             else if (playerB && IsEnemy(entityA))
                 HandlePlayerEnemyCollision(playerB, entityA);
+            // EnemyBullet vs Player
+            else if (bulletA && bulletA->m_name == "EnemyBullet" && playerB)
+                HandleEnemyBulletPlayerCollision(bulletA, playerB);
+            else if (bulletB && bulletB->m_name == "EnemyBullet" && playerA)
+                HandleEnemyBulletPlayerCollision(bulletB, playerA);
 
             // If entityA died during collision handling (e.g., bullet hit enemy),
             // stop checking it against remaining entities

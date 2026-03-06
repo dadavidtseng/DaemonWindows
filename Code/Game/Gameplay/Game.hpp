@@ -92,6 +92,7 @@ private:
     void HandleEntityCollision();
     void FireCollisionEvent(Entity* entityA, Entity* entityB);
     void HandleBulletEnemyCollision(Bullet* bullet, Entity* enemy);
+    void HandleEnemyBulletPlayerCollision(Bullet* enemyBullet, Player* player);
     void HandlePlayerCoinCollision(Player* player, Coin* coin);
     void HandlePlayerEnemyCollision(Player* player, Entity* enemy);
     void AdjustForPauseAndTimeDistortion() const;
