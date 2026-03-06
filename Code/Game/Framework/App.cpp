@@ -162,7 +162,7 @@ void App::Update()
 //
 void App::Render() const
 {
-    // g_theRenderer->ClearScreen(Rgba8::BLUE);
+    g_renderer->ClearScreen(Rgba8::BLACK);
     g_game->Render();
 
 
