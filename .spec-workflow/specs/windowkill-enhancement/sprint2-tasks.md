@@ -77,7 +77,7 @@ Sprint 2 focuses on implementing 3 new Tier 1 enemy types and redesigning the 3 
   - _Requirements: Requirement 4 (Tier 1 Enemy Types - Hexagon)_
   - _Prompt: Implement the task for spec windowkill-enhancement, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Game Developer with expertise in complex enemy behaviors and spawning systems | Task: Implement Hexagon enemy with split-on-death behavior following Requirement 4 acceptance criteria for Hexagon, creating tactical splitting mechanic | Restrictions: Inherit from Entity base class, use separate window, ensure split spawning doesn't cause performance issues or spawn failures | Success: Hexagon enemy spawns correctly, chases player, splits into 2-3 smaller hexagons on death, smaller hexagons don't split further, splitting creates interesting tactical challenge | Instructions: After completing this task, use log-implementation tool to record implementation details (class created, split behavior, size tracking, spawn prevention logic), then mark task as [x] in tasks.md_
 
-- [ ] 2.7. Add enemy type spawn weights to WaveManager
+- [x] 2.7. Add enemy type spawn weights to WaveManager
   - Files: Code/Game/Gameplay/WaveManager.cpp/hpp
   - Define spawn weight system for enemy types
   - Create spawn tables for Tier 1 enemies
@@ -88,7 +88,7 @@ Sprint 2 focuses on implementing 3 new Tier 1 enemy types and redesigning the 3 
   - _Requirements: Requirement 3 (Wave-Based Enemy Spawning System)_
   - _Prompt: Implement the task for spec windowkill-enhancement, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Game Developer with expertise in procedural generation and spawn systems | Task: Implement spawn weight system in WaveManager following Requirement 3, enabling controlled random enemy selection | Restrictions: Use existing g_rng for randomization, ensure spawn weights are balanced, maintain performance with frequent random selections | Success: Spawn weight system works correctly, enemy types spawn with appropriate frequency, random selection is fair and balanced, system is extensible for Tier 2 enemies | Instructions: After completing this task, use log-implementation tool to record spawn system details (weight system design, spawn tables, selection algorithm), then mark task as [x] in tasks.md_
 
-- [ ] 2.8. Update Game::SpawnEntity() to use enemy types
+- [x] 2.8. Update Game::SpawnEntity() to use enemy types
   - Files: Code/Game/Gameplay/Game.cpp
   - Modify SpawnEntity() to accept enemy type string parameter
   - Add switch/if-else to spawn correct enemy class
