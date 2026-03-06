@@ -24,6 +24,5 @@ public:
     void ShrinkWindow();
 
 private:
-    static bool OnCollisionEnter(EventArgs& args);
     std::shared_ptr<ButtonWidget> m_healthWidget;
 };

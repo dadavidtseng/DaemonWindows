@@ -108,7 +108,7 @@ void Hexagon::SpawnSplitHexagons()
             g_rng->RollRandomIntInRange(100, 1000),
             spawnPos,
             0.f,
-            Rgba8::YELLOW,
+            Rgba8(255, 100, 80, 255),  // lighter red - distinguishes split children from parent
             true,
             randomType,
             false    // small hexagons cannot split
@@ -211,26 +211,3 @@ void Hexagon::ShrinkWindow()
     }
 }
 
-STATIC bool Hexagon::OnCollisionEnter(EventArgs& args)
-{
-    String   entityA   = args.GetValue("entityA", "DEFAULT");
-    String   entityB   = args.GetValue("entityB", "DEFAULT");
-    EntityID entityBID = args.GetValue("entityBID", -1);
-    Entity*  entity    = g_game->GetEntityByEntityID(entityBID);
-
-    if (entityA == "Bullet" && entityB == "Hexagon")
-    {
-        if (entity->m_entityID == entityBID)
-        {
-            entity->DecreaseHealth(1);
-
-            // Knockback in opposite direction of movement, clamped for safety
-            Vec2 const knockback = entity->m_velocity.GetClamped(1.f) * 15.f;
-            entity->m_position -= knockback;
-        }
-
-        DebuggerPrintf("HEXAGON HIT\n");
-    }
-
-    return false;
-}

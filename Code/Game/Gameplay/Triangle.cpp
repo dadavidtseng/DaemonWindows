@@ -28,7 +28,7 @@ Triangle::Triangle(EntityID const entityID,
 {
     m_entityID       = entityID;
     m_name           = "Triangle";
-    m_physicRadius   = 30.f;
+    m_physicRadius   = 28.f;  // medium chaser
     m_thickness      = 10.f;
     m_cosmeticRadius = m_physicRadius + m_thickness;
 
@@ -183,26 +183,3 @@ void Triangle::ShrinkWindow()
     }
 }
 
-STATIC bool Triangle::OnCollisionEnter(EventArgs& args)
-{
-    String   entityA   = args.GetValue("entityA", "DEFAULT");
-    String   entityB   = args.GetValue("entityB", "DEFAULT");
-    EntityID entityBID = args.GetValue("entityBID", -1);
-    Entity*  entity    = g_game->GetEntityByEntityID(entityBID);
-
-    if (entityA == "Bullet" && entityB == "Triangle")
-    {
-        if (entity->m_entityID == entityBID)
-        {
-            entity->DecreaseHealth(1);
-
-            // Knockback in opposite direction of movement, clamped for safety
-            Vec2 const knockback = entity->m_velocity.GetClamped(1.f) * 15.f;
-            entity->m_position -= knockback;
-        }
-
-        DebuggerPrintf("TRIANGLE HIT\n");
-    }
-
-    return false;
-}

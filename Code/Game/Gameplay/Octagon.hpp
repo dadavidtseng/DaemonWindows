@@ -26,7 +26,6 @@ public:
 private:
     void FireBulletAtPlayer();
 
-    static bool OnCollisionEnter(EventArgs& args);
     std::shared_ptr<ButtonWidget> m_healthWidget;
 
     // Ranged combat state

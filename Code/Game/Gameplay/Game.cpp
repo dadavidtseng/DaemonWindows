@@ -92,16 +92,10 @@ Game::~Game()
 void Game::Update()
 {
     float const gameDeltaSeconds = static_cast<float>(m_gameClock->GetDeltaSeconds());
-    m_spawnTimer += gameDeltaSeconds;
 
     if (m_gameState == eGameState::GAME)
     {
-        if (m_spawnTimer >= m_spawnInterval)
-        {
-            SpawnEntity();
-            m_spawnTimer = 0.0f;
-        }
-
+        // WaveManager handles all enemy spawning (timing, type selection, wave progression)
         if (m_waveManager)
         {
             m_waveManager->Update(gameDeltaSeconds);
@@ -161,7 +155,7 @@ STATIC bool Game::OnGameStateChanged(EventArgs& args)
 
     if (preGameState == "ATTRACT" && curGameState == "GAME")
     {
-        g_game->SpawnEntity();
+        // WaveManager auto-starts wave 1 on its first Update() call
         g_audio->StopSound(g_game->m_attractPlaybackID);
         SoundID const ingameBGM       = g_audio->CreateOrGetSound("Data/Audio/ingame.mp3", eAudioSystemSoundDimension::Sound2D);
         g_game->m_ingamePlaybackID = g_audio->StartSound(ingameBGM, true, 1.f, 0.f, 1.f);
@@ -169,6 +163,7 @@ STATIC bool Game::OnGameStateChanged(EventArgs& args)
     else if (preGameState == "GAME" && curGameState == "ATTRACT")
     {
         g_game->DestroyEntity();
+        if (g_game->GetWaveManager()) g_game->GetWaveManager()->Reset();
 
         if (g_game->GetPlayer() == nullptr) g_game->SpawnPlayer();
         g_audio->StopSound(g_game->m_ingamePlaybackID);
@@ -198,7 +193,17 @@ STATIC bool Game::OnEntityDestroyed(EventArgs& args)
     Entity* entity = g_game->GetEntityByEntityID(entityID);
     if (entity == nullptr) return true;
 
-    g_game->m_entityList.push_back(new Coin((int)g_game->m_entityList.size(), entity->m_position, 0.f, Rgba8::RED, true, false));
+    // Spawn coins based on m_coinToDrop (minimum 1)
+    int const coinCount = (entity->m_coinToDrop > 0) ? entity->m_coinToDrop : 1;
+    for (int i = 0; i < coinCount; ++i)
+    {
+        // Scatter coins slightly around death position for visual variety
+        float const scatterAngle = 360.f / static_cast<float>(coinCount) * static_cast<float>(i);
+        Vec2 const  offset       = Vec2::MakeFromPolarDegrees(scatterAngle, 10.f * static_cast<float>(i > 0));
+        Vec2 const  coinPos      = entity->m_position + offset;
+
+        g_game->m_entityList.push_back(new Coin((int)g_game->m_entityList.size(), coinPos, 0.f, Rgba8::RED, true, false));
+    }
 
     return true;
 }
@@ -388,12 +393,45 @@ void Game::FireCollisionEvent(Entity* entityA, Entity* entityB)
 }
 
 //----------------------------------------------------------------------------------------------------
-void Game::HandleBulletTriangleCollision(Bullet* bullet, Triangle* triangle)
+// IsEnemy - Returns true if the entity is an enemy type (not player, bullet, coin, shop, debris)
+//----------------------------------------------------------------------------------------------------
+bool Game::IsEnemy(Entity const* entity)
 {
-    FireCollisionEvent(bullet, triangle);
+    if (!entity) return false;
 
-    triangle->DecreaseHealth(1);
-    triangle->m_position = triangle->m_position - triangle->m_velocity * 30.f;
+    String const& name = entity->m_name;
+    return name != "You"
+        && name != "Bullet"
+        && name != "EnemyBullet"
+        && name != "Coin"
+        && name != "Shop"
+        && name != "Debris"
+        && name != "DEFAULT";
+}
+
+//----------------------------------------------------------------------------------------------------
+void Game::HandleBulletEnemyCollision(Bullet* bullet, Entity* enemy)
+{
+    FireCollisionEvent(bullet, enemy);
+
+    // Kill bullet immediately so it can't hit multiple enemies in the same frame
+    bullet->MarkAsDead();
+
+    enemy->DecreaseHealth(1);
+
+    // Per-type knockback: tanky enemies resist, others get moderate pushback
+    float knockbackDist = 15.f;
+    if (enemy->m_name == "Square")
+    {
+        knockbackDist = 5.f;   // tanky — minimal knockback
+    }
+
+    // Apply knockback in direction opposite to enemy velocity, clamped to prevent teleporting
+    if (enemy->m_velocity.GetLengthSquared() > 0.f)
+    {
+        Vec2 const knockbackDir = enemy->m_velocity.GetNormalized();
+        enemy->m_position -= knockbackDir * knockbackDist;
+    }
 
     SoundID const hitSound = g_audio->CreateOrGetSound("Data/Audio/hit.mp3", eAudioSystemSoundDimension::Sound2D);
     g_audio->StartSound(hitSound, false, 1.f, 0.f, 1.f);
@@ -411,9 +449,9 @@ void Game::HandlePlayerCoinCollision(Player* player, Coin* coin)
 }
 
 //----------------------------------------------------------------------------------------------------
-void Game::HandlePlayerTriangleCollision(Player* player, Triangle* triangle)
+void Game::HandlePlayerEnemyCollision(Player* player, Entity* enemy)
 {
-    FireCollisionEvent(player, triangle);
+    FireCollisionEvent(player, enemy);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -431,27 +469,32 @@ void Game::HandleEntityCollision()
             if (!DoDiscsOverlap2D(entityA->m_position, entityA->m_physicRadius, entityB->m_position, entityB->m_physicRadius))
                 continue;
 
-            Bullet*   bulletA   = dynamic_cast<Bullet*>(entityA);
-            Bullet*   bulletB   = dynamic_cast<Bullet*>(entityB);
-            Triangle* triangleA = dynamic_cast<Triangle*>(entityA);
-            Triangle* triangleB = dynamic_cast<Triangle*>(entityB);
-            Player*   playerA   = dynamic_cast<Player*>(entityA);
-            Player*   playerB   = dynamic_cast<Player*>(entityB);
-            Coin*     coinA     = dynamic_cast<Coin*>(entityA);
-            Coin*     coinB     = dynamic_cast<Coin*>(entityB);
+            Bullet* bulletA = dynamic_cast<Bullet*>(entityA);
+            Bullet* bulletB = dynamic_cast<Bullet*>(entityB);
+            Player* playerA = dynamic_cast<Player*>(entityA);
+            Player* playerB = dynamic_cast<Player*>(entityB);
+            Coin*   coinA   = dynamic_cast<Coin*>(entityA);
+            Coin*   coinB   = dynamic_cast<Coin*>(entityB);
 
-            if (bulletA != nullptr && triangleB != nullptr)
-                HandleBulletTriangleCollision(bulletA, triangleB);
-            else if (bulletB != nullptr && triangleA != nullptr)
-                HandleBulletTriangleCollision(bulletB, triangleA);
-            else if (playerA != nullptr && coinB != nullptr)
+            // Player bullet vs Enemy (all enemy types; excludes EnemyBullets)
+            if (bulletA && bulletA->m_name == "Bullet" && IsEnemy(entityB))
+                HandleBulletEnemyCollision(bulletA, entityB);
+            else if (bulletB && bulletB->m_name == "Bullet" && IsEnemy(entityA))
+                HandleBulletEnemyCollision(bulletB, entityA);
+            // Player vs Coin
+            else if (playerA && coinB)
                 HandlePlayerCoinCollision(playerA, coinB);
-            else if (playerB != nullptr && coinA != nullptr)
+            else if (playerB && coinA)
                 HandlePlayerCoinCollision(playerB, coinA);
-            else if (playerA != nullptr && triangleB != nullptr)
-                HandlePlayerTriangleCollision(playerA, triangleB);
-            else if (playerB != nullptr && triangleA != nullptr)
-                HandlePlayerTriangleCollision(playerB, triangleA);
+            // Player vs Enemy (all enemy types)
+            else if (playerA && IsEnemy(entityB))
+                HandlePlayerEnemyCollision(playerA, entityB);
+            else if (playerB && IsEnemy(entityA))
+                HandlePlayerEnemyCollision(playerB, entityA);
+
+            // If entityA died during collision handling (e.g., bullet hit enemy),
+            // stop checking it against remaining entities
+            if (entityA->IsDead()) break;
         }
     }
 }
@@ -674,7 +717,7 @@ Hexagon* Game::SpawnHexagon()
         s_nextEntityID++,
         randomPos,
         0.f,
-        Rgba8::YELLOW,
+        Rgba8(220, 50, 50, 255),  // dark red - distinct from Player's yellow
         true,
         randomType,
         true    // large hexagon can split
@@ -685,14 +728,46 @@ Hexagon* Game::SpawnHexagon()
 }
 
 //----------------------------------------------------------------------------------------------------
+// SpawnEntity - Uses WaveManager to select a random enemy type based on spawn weights,
+// then delegates to SpawnEnemyByType(). Falls back to spawning one of each type if
+// WaveManager is unavailable (pre-wave-system behavior).
+//----------------------------------------------------------------------------------------------------
 void Game::SpawnEntity()
 {
-    SpawnTriangle();
-    SpawnCircle();
-    SpawnOctagon();
-    SpawnSquare();
-    SpawnPentagon();
-    SpawnHexagon();
+    if (m_waveManager)
+    {
+        eEnemyType const enemyType = m_waveManager->SelectRandomEnemyType();
+        SpawnEnemyByType(enemyType);
+    }
+    else
+    {
+        // Fallback: spawn one of each (legacy behavior)
+        SpawnTriangle();
+        SpawnCircle();
+        SpawnOctagon();
+        SpawnSquare();
+        SpawnPentagon();
+        SpawnHexagon();
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
+// SpawnEnemyByType - Factory method that spawns the correct enemy class based on eEnemyType
+//----------------------------------------------------------------------------------------------------
+Entity* Game::SpawnEnemyByType(eEnemyType enemyType)
+{
+    switch (enemyType)
+    {
+    case eEnemyType::TRIANGLE:  return SpawnTriangle();
+    case eEnemyType::CIRCLE:    return SpawnCircle();
+    case eEnemyType::OCTAGON:   return SpawnOctagon();
+    case eEnemyType::SQUARE:    return SpawnSquare();
+    case eEnemyType::PENTAGON:  return SpawnPentagon();
+    case eEnemyType::HEXAGON:   return SpawnHexagon();
+    default:
+        DebuggerPrintf("SpawnEnemyByType: Unknown enemy type %d, falling back to Triangle.\n", static_cast<int>(enemyType));
+        return SpawnTriangle();
+    }
 }
 
 //----------------------------------------------------------------------------------------------------

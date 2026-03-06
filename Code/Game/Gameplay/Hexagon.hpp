@@ -27,7 +27,6 @@ public:
 private:
     void SpawnSplitHexagons();
 
-    static bool OnCollisionEnter(EventArgs& args);
     std::shared_ptr<ButtonWidget> m_healthWidget;
 
     // Split behavior

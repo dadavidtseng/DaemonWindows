@@ -7,6 +7,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Entity.hpp"
 #include "Game/Gameplay/Shop.hpp"
+#include "Game/Gameplay/WaveManager.hpp"
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Core/EventSystem.hpp"
@@ -25,7 +26,6 @@ class Pentagon;
 class Square;
 class Triangle;
 class Coin;
-class WaveManager;
 class UpgradeManager;
 
 //----------------------------------------------------------------------------------------------------
@@ -64,6 +64,10 @@ public:
     UpgradeManager*      GetUpgradeManager() const;
     Entity*              GetEntityByEntityID(EntityID const& entityID) const;
 
+    // Enemy spawning (used by WaveManager)
+    Entity*              SpawnEnemyByType(eEnemyType enemyType);
+    static bool          IsEnemy(Entity const* entity);
+
     //------------------------------------------------------------------------------------------------
     // Public data
     //------------------------------------------------------------------------------------------------
@@ -87,9 +91,9 @@ private:
     void UpdateFromInput();
     void HandleEntityCollision();
     void FireCollisionEvent(Entity* entityA, Entity* entityB);
-    void HandleBulletTriangleCollision(Bullet* bullet, Triangle* triangle);
+    void HandleBulletEnemyCollision(Bullet* bullet, Entity* enemy);
     void HandlePlayerCoinCollision(Player* player, Coin* coin);
-    void HandlePlayerTriangleCollision(Player* player, Triangle* triangle);
+    void HandlePlayerEnemyCollision(Player* player, Entity* enemy);
     void AdjustForPauseAndTimeDistortion() const;
     void RenderAttractMode() const;
     void RenderGame() const;

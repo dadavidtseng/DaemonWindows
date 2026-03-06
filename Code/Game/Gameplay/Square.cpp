@@ -12,7 +12,6 @@
 #include "Game/Subsystem/Widget/ButtonWidget.hpp"
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Widget/WidgetSubsystem.hpp"
@@ -29,7 +28,7 @@ Square::Square(EntityID const entityID,
 {
     m_entityID       = entityID;
     m_name           = "Square";
-    m_physicRadius   = 35.f;
+    m_physicRadius   = 40.f;  // largest enemy - tanky role
     m_thickness      = 10.f;
     m_cosmeticRadius = m_physicRadius + m_thickness;
 
@@ -154,26 +153,3 @@ void Square::ShrinkWindow()
     }
 }
 
-STATIC bool Square::OnCollisionEnter(EventArgs& args)
-{
-    String   entityA   = args.GetValue("entityA", "DEFAULT");
-    String   entityB   = args.GetValue("entityB", "DEFAULT");
-    EntityID entityBID = args.GetValue("entityBID", -1);
-    Entity*  entity    = g_game->GetEntityByEntityID(entityBID);
-
-    if (entityA == "Bullet" && entityB == "Square")
-    {
-        if (entity->m_entityID == entityBID)
-        {
-            entity->DecreaseHealth(1);
-
-            // Minimal knockback — tanky enemies resist pushback
-            Vec2 const knockback = entity->m_velocity.GetClamped(1.f) * 5.f;
-            entity->m_position -= knockback;
-        }
-
-        DebuggerPrintf("SQUARE HIT\n");
-    }
-
-    return false;
-}

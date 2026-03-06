@@ -25,8 +25,6 @@ Bullet::Bullet(EntityID const& entityID,
     m_speed        = 500.f;
     m_health       = 1;
 
-    g_eventSystem->SubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
-
     if (m_hasChildWindow)
     {
         g_windowSubsystem->CreateChildWindow(m_entityID, m_name, static_cast<int>(m_position.x), static_cast<int>(m_position.y), 100, 100);
@@ -39,7 +37,6 @@ Bullet::~Bullet()
     {
         g_windowSubsystem->RemoveEntityFromMappings(m_entityID);
     }
-    g_eventSystem->UnsubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
 }
 
 void Bullet::Update(float const deltaSeconds)
@@ -118,11 +115,3 @@ void Bullet::UpdateFromInput(float deltaSeconds)
     UNUSED(deltaSeconds)
 }
 
-STATIC bool Bullet::OnCollisionEnter(EventArgs& args)
-{
-    EntityID entityAID = args.GetValue("entityAID", -1);
-    Entity*  entity    = g_game->GetEntityByEntityID(entityAID);
-    entity->DecreaseHealth(1);
-
-    return false;
-}

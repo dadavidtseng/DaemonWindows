@@ -37,6 +37,13 @@ private:
     void        DecreaseCoin(int amount);
     void        BounceOfWindow();
     void        ShrinkWindow();
+    void        StartScaleInAnimation();
 
     Timer m_bulletFireTimer;
+
+    // Scale-in animation state (attract mode entrance effect)
+    bool  m_isScalingIn            = false;
+    float m_scaleInTimer           = 0.f;
+    float m_scaleInDuration        = 0.8f;
+    Vec2  m_targetClientDimensions = Vec2::ZERO;
 };

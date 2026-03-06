@@ -19,5 +19,4 @@ public:
     void UpdateFromInput(float deltaSeconds) override;
 
 private:
-    static bool OnCollisionEnter(EventArgs& args);
 };

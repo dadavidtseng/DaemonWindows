@@ -7,6 +7,7 @@
 
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Input/InputSystem.hpp"
+#include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Widget/WidgetSubsystem.hpp"
@@ -51,6 +52,8 @@ Player::Player(EntityID const entityID,
 
     m_coinWidget->SetVisible(false);
     m_healthWidget->SetVisible(false);
+
+    StartScaleInAnimation();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -98,6 +101,23 @@ void Player::Update(float const deltaSeconds)
 
     if (g_game->GetCurrentGameState() == eGameState::ATTRACT)
     {
+        // Scale-in animation: interpolate window dimensions from tiny to full size
+        if (m_isScalingIn)
+        {
+            m_scaleInTimer += deltaSeconds;
+            float t      = GetClampedZeroToOne(m_scaleInTimer / m_scaleInDuration);
+            float easedT = SmoothStep5(t);
+
+            Vec2 currentDim = Interpolate(Vec2(1.f, 1.f), m_targetClientDimensions, easedT);
+            windowData->m_window->SetClientDimensions(currentDim);
+
+            if (t >= 1.0f)
+            {
+                windowData->m_window->SetClientDimensions(m_targetClientDimensions);
+                m_isScalingIn = false;
+            }
+        }
+
         windowData->m_window->SetClientPosition(m_position - windowData->m_window->GetClientDimensions() * 0.5f);
     }
 }
@@ -120,6 +140,8 @@ void Player::Render() const
 //----------------------------------------------------------------------------------------------------
 void Player::UpdateFromInput(float const deltaSeconds)
 {
+    if (g_game->GetCurrentGameState() == eGameState::ATTRACT) return;
+
     if (g_input->IsKeyDown(KEYCODE_W)) m_position.y += deltaSeconds * m_speed;
     if (g_input->IsKeyDown(KEYCODE_A)) m_position.x -= deltaSeconds * m_speed;
     if (g_input->IsKeyDown(KEYCODE_S)) m_position.y -= deltaSeconds * m_speed;
@@ -231,6 +253,22 @@ void Player::ShrinkWindow()
     }
 }
 
+//----------------------------------------------------------------------------------------------------
+void Player::StartScaleInAnimation()
+{
+    m_targetClientDimensions = Vec2(static_cast<float>((int)(1445 * 0.6f)), 248.f);
+    m_isScalingIn            = true;
+    m_scaleInTimer           = 0.f;
+
+    WindowID windowID = g_windowSubsystem->FindWindowIDByEntityID(m_entityID);
+    Window*  window   = g_windowSubsystem->GetWindow(windowID);
+    if (window)
+    {
+        window->SetClientDimensions(Vec2(1.f, 1.f));
+    }
+}
+
+//----------------------------------------------------------------------------------------------------
 bool Player::OnGameStateChanged(EventArgs& args)
 {
     String const preGameState = args.GetValue("preGameState", "DEFAULT");
@@ -244,9 +282,7 @@ bool Player::OnGameStateChanged(EventArgs& args)
     {
         g_game->GetPlayer()->m_coinWidget->SetVisible(false);
         g_game->GetPlayer()->m_healthWidget->SetVisible(false);
-        WindowID windowID = g_windowSubsystem->FindWindowIDByEntityID(g_game->GetPlayer()->m_entityID);
-        Window*  window   = g_windowSubsystem->GetWindow(windowID);
-        window->SetClientDimensions(Vec2((int)(1445 * 0.6f), (int)(248)));
+        g_game->GetPlayer()->StartScaleInAnimation();
     }
 
     return false;
@@ -264,7 +300,7 @@ STATIC bool Player::OnCollisionEnter(EventArgs& args)
         player->IncreaseCoin(1);
         player->m_coinWidget->SetText(Stringf("Coin=%d", player->m_coin));
     }
-    else if (entityA == "You" && entityB == "Triangle")
+    else if (entityA == "You" && Game::IsEnemy(entity))
     {
         player->DecreaseHealth(1);
         player->m_healthWidget->SetText(Stringf("Health=%d/%d", player->m_health, player->m_maxHealth));

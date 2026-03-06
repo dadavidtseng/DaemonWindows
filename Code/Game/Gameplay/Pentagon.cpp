@@ -29,7 +29,7 @@ Pentagon::Pentagon(EntityID const entityID,
 {
     m_entityID       = entityID;
     m_name           = "Pentagon";
-    m_physicRadius   = 25.f;
+    m_physicRadius   = 22.f;  // smallest - fast zigzag role
     m_thickness      = 8.f;
     m_cosmeticRadius = m_physicRadius + m_thickness;
 
@@ -168,26 +168,3 @@ void Pentagon::ShrinkWindow()
     }
 }
 
-STATIC bool Pentagon::OnCollisionEnter(EventArgs& args)
-{
-    String   entityA   = args.GetValue("entityA", "DEFAULT");
-    String   entityB   = args.GetValue("entityB", "DEFAULT");
-    EntityID entityBID = args.GetValue("entityBID", -1);
-    Entity*  entity    = g_game->GetEntityByEntityID(entityBID);
-
-    if (entityA == "Bullet" && entityB == "Pentagon")
-    {
-        if (entity->m_entityID == entityBID)
-        {
-            entity->DecreaseHealth(1);
-
-            // Knockback in opposite direction of movement, clamped for safety
-            Vec2 const knockback = entity->m_velocity.GetClamped(1.f) * 15.f;
-            entity->m_position -= knockback;
-        }
-
-        DebuggerPrintf("PENTAGON HIT\n");
-    }
-
-    return false;
-}

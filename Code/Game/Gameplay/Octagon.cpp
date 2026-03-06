@@ -215,26 +215,3 @@ void Octagon::ShrinkWindow()
     }
 }
 
-STATIC bool Octagon::OnCollisionEnter(EventArgs& args)
-{
-    String   entityA   = args.GetValue("entityA", "DEFAULT");
-    String   entityB   = args.GetValue("entityB", "DEFAULT");
-    EntityID entityBID = args.GetValue("entityBID", -1);
-    Entity*  entity    = g_game->GetEntityByEntityID(entityBID);
-
-    if (entityA == "Bullet" && entityB == "Octagon")
-    {
-        if (entity->m_entityID == entityBID)
-        {
-            entity->DecreaseHealth(1);
-
-            // Knockback in opposite direction of movement, clamped for safety
-            Vec2 const knockback = entity->m_velocity.GetClamped(1.f) * 15.f;
-            entity->m_position -= knockback;
-        }
-
-        DebuggerPrintf("OCTAGON HIT\n");
-    }
-
-    return false;
-}
