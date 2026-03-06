@@ -19,6 +19,5 @@ public:
     void Render() const override;
 
 private:
-    static bool OnCollisionEnter(EventArgs& args);
     void UpdateFromInput(float deltaSeconds) override;
 };

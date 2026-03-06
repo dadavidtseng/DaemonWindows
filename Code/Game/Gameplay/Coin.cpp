@@ -26,8 +26,6 @@ Coin::Coin(EntityID const entityID,
     m_thickness      = 10.f;
     m_cosmeticRadius = m_physicRadius + m_thickness;
 
-    // g_theEventSystem->SubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
-
     if (m_hasChildWindow)
     {
         g_windowSubsystem->CreateChildWindow(m_entityID, m_name, static_cast<int>(m_position.x), static_cast<int>(m_position.y), 200, 200);
@@ -41,7 +39,6 @@ Coin::~Coin()
     {
         g_windowSubsystem->RemoveEntityFromMappings(m_entityID);
     }
-    // g_theEventSystem->UnsubscribeEventCallbackFunction("OnCollisionEnter", OnCollisionEnter);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -69,23 +66,6 @@ void Coin::Render() const
     g_renderer->BindTexture(nullptr);
     g_renderer->BindShader(g_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
     g_renderer->DrawVertexArray(verts);
-}
-
-STATIC bool Coin::OnCollisionEnter(EventArgs& args)
-{
-    String   entityA   = args.GetValue("entityA", "DEFAULT");
-    String   entityB   = args.GetValue("entityB", "DEFAULT");
-    EntityID entityBID = args.GetValue("entityBID", -1);
-    //Player*  player    = g_theGame->GetPlayer();
-    Entity*  entity    = g_game->GetEntityByEntityID(entityBID);
-    if (entityA == "You" && entityB == "Coin")
-    {
-        entity->DecreaseHealth(1);
-        SoundID const attractBGM = g_audio->CreateOrGetSound("Data/Audio/coin.mp3", eAudioSystemSoundDimension::Sound2D);
-        g_audio->StartSound(attractBGM, false, 1.f, 0.f, 1.f);
-    }
-
-    return false;
 }
 
 //----------------------------------------------------------------------------------------------------
