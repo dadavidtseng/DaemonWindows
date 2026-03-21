@@ -63,6 +63,7 @@ public:
 
     // Core window management
     WindowID CreateChildWindow(EntityID owner, String const& windowTitle, int x, int y, int width, int height);
+    WindowID CreateBossWindow(EntityID owner, String const& windowTitle, int width = 300, int height = 300);
     bool     AddEntityToWindow(WindowID windowID, EntityID entityID);
     bool     RemoveEntityFromWindow(WindowID windowID, EntityID entityID);
     void     RemoveEntityFromMappings(EntityID entityID);

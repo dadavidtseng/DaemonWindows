@@ -62,7 +62,7 @@ void WindowSubsystem::Render()
 
         if (windowData.m_window->m_shouldUpdatePosition)
         {
-            g_renderer->RenderViewportToWindow(*windowData.m_window);
+            g_renderer->RenderViewportToWindowDX11(*windowData.m_window);
         }
     }
 }
@@ -153,6 +153,31 @@ WindowID WindowSubsystem::CreateChildWindow(EntityID const owner,
     return newId;
 }
 
+//----------------------------------------------------------------------------------------------------
+WindowID WindowSubsystem::CreateBossWindow(EntityID const owner,
+                                           String const&  windowTitle,
+                                           int const      width,
+                                           int const      height)
+{
+    // Center the boss window on screen
+    int const screenWidth  = GetSystemMetrics(SM_CXSCREEN);
+    int const screenHeight = GetSystemMetrics(SM_CYSCREEN);
+    int const x            = (screenWidth - width) / 2;
+    int const y            = (screenHeight - height) / 2;
+
+    WindowID const bossWindowID = CreateChildWindow(owner, windowTitle, x, y, width, height);
+
+    if (bossWindowID != INVALID_WINDOW_ID)
+    {
+        DebuggerPrintf("CreateBossWindow: Created boss window %d '%s' (%dx%d) centered at (%d,%d) for entity %llu.\n",
+                       bossWindowID, windowTitle.c_str(), width, height, x, y,
+                       static_cast<unsigned long long>(owner));
+    }
+
+    return bossWindowID;
+}
+
+//----------------------------------------------------------------------------------------------------
 bool WindowSubsystem::AddEntityToWindow(WindowID windowID, EntityID entityID)
 {
     auto windowIt = m_windowList.find(windowID);
