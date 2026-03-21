@@ -9,6 +9,7 @@
 #include "Player.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Resource/ResourceSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
 Bullet::Bullet(EntityID const& entityID,
@@ -106,7 +107,7 @@ void Bullet::Render() const
     g_renderer->SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
     g_renderer->SetDepthMode(eDepthMode::DISABLED);
     g_renderer->BindTexture(nullptr);
-    g_renderer->BindShader(g_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
+    g_renderer->BindShader(g_resourceSubsystem->CreateOrGetShaderFromFile("Data/Shaders/Default"));
     g_renderer->DrawVertexArray(verts);
 }
 

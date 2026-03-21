@@ -8,9 +8,6 @@
 #include "Engine/Core/EventSystem.hpp"
 #include "Game/Subsystem/Window/WindowSubsystem.hpp"
 
-//-Forward-Declaration--------------------------------------------------------------------------------
-class ButtonWidget;
-
 //----------------------------------------------------------------------------------------------------
 class Pentagon : public Entity
 {
@@ -19,13 +16,9 @@ public:
     ~Pentagon() override;
     void Update(float deltaSeconds) override;
     void Render() const override;
-    void BounceOfWindow();
     void UpdateFromInput(float deltaSeconds) override;
-    void ShrinkWindow();
 
 private:
-    std::shared_ptr<ButtonWidget> m_healthWidget;
-
     // Zigzag-specific state
     float m_zigzagPhase     = 0.f;
     float m_zigzagAmplitude = 50.f;

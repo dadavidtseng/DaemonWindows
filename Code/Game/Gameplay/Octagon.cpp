@@ -13,6 +13,7 @@
 #include "Game/Subsystem/Widget/ButtonWidget.hpp"
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Resource/ResourceSubsystem.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
@@ -80,15 +81,7 @@ void Octagon::Update(float const deltaSeconds)
     if (g_game->GetCurrentGameState() == eGameState::SHOP || g_game->GetCurrentGameState() == eGameState::ATTRACT) return;
     Entity::Update(deltaSeconds);
 
-    if (m_hasChildWindow)
-    {
-        WindowID    windowID   = g_windowSubsystem->FindWindowIDByEntityID(m_entityID);
-        WindowData* windowData = g_windowSubsystem->GetWindowData(windowID);
-        m_healthWidget->SetPosition(windowData->m_window->GetClientPosition());
-        m_healthWidget->SetDimensions(windowData->m_window->GetClientDimensions());
-        m_healthWidget->SetText(Stringf("Health=%d", m_health));
-        windowData->m_window->SetClientPosition(m_position - windowData->m_window->GetClientDimensions() * 0.5f);
-    }
+    SyncWindowWidgetToPosition();
     if (m_isDead) return;
 
     Player* player = g_game->GetPlayer();
@@ -172,46 +165,12 @@ void Octagon::Render() const
     g_renderer->SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
     g_renderer->SetDepthMode(eDepthMode::DISABLED);
     g_renderer->BindTexture(nullptr);
-    g_renderer->BindShader(g_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
+    g_renderer->BindShader(g_resourceSubsystem->CreateOrGetShaderFromFile("Data/Shaders/Default"));
     g_renderer->DrawVertexArray(verts);
-}
-
-void Octagon::BounceOfWindow()
-{
-    Vec2 screenDimensions = Window::s_mainWindow->GetScreenDimensions();
-
-    float clampedX = GetClamped(m_position.x,
-                                m_cosmeticRadius,
-                                screenDimensions.x - m_cosmeticRadius);
-
-    float clampedY = GetClamped(m_position.y,
-                                m_cosmeticRadius,
-                                screenDimensions.y - m_cosmeticRadius);
-
-    m_position.x = clampedX;
-    m_position.y = clampedY;
 }
 
 void Octagon::UpdateFromInput(float deltaSeconds)
 {
     UNUSED(deltaSeconds)
-}
-
-void Octagon::ShrinkWindow()
-{
-    WindowID windowID = g_windowSubsystem->FindWindowIDByEntityID(m_entityID);
-    Window*  window   = g_windowSubsystem->GetWindow(windowID);
-
-    if (!g_windowSubsystem->IsWindowAnimating(windowID))
-    {
-        Vec2 currentPos              = window->GetWindowPosition();
-        Vec2 currentSize             = window->GetWindowDimensions();
-        Vec2 currentClientDimensions = window->GetClientDimensions();
-        if (currentClientDimensions.x <= m_physicRadius * 2.5f || currentClientDimensions.y <= m_physicRadius * 2.5f) return;
-
-        Vec2 newPos  = currentPos + Vec2(1, 1);
-        Vec2 newSize = currentSize + Vec2(-1, -1);
-        g_windowSubsystem->AnimateWindowPositionAndDimensions(windowID, newPos, newSize, 0.1f);
-    }
 }
 

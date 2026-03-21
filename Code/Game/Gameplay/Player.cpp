@@ -7,6 +7,7 @@
 
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Input/InputSystem.hpp"
+#include "Engine/Resource/ResourceSubsystem.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
@@ -78,7 +79,7 @@ void Player::Update(float const deltaSeconds)
     if (g_game->GetCurrentGameState() != eGameState::ATTRACT)
     {
         UpdateFromInput(deltaSeconds);
-        BounceOfWindow();
+        BounceOffWindow();
         ShrinkWindow();
     }
 
@@ -133,7 +134,7 @@ void Player::Render() const
     g_renderer->SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
     g_renderer->SetDepthMode(eDepthMode::DISABLED);
     g_renderer->BindTexture(nullptr);
-    g_renderer->BindShader(g_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
+    g_renderer->BindShader(g_resourceSubsystem->CreateOrGetShaderFromFile("Data/Shaders/Default"));
     g_renderer->DrawVertexArray(verts2);
 }
 
@@ -208,7 +209,7 @@ void Player::FireBullet()
     g_audio->StartSound(attractBGM, false, 1.f, 0.f, 1.f);
 }
 
-void Player::BounceOfWindow()
+void Player::BounceOffWindow()
 {
     WindowID    windowID   = g_windowSubsystem->FindWindowIDByEntityID(m_entityID);
     WindowData* windowData = g_windowSubsystem->GetWindowData(windowID);

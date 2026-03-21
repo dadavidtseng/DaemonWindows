@@ -25,7 +25,6 @@ public:
     void                          UpdateFromInput(float deltaSeconds) override;
     void                          UpdateWindowFocus();
     void                          FireBullet();
-    std::shared_ptr<ButtonWidget> m_healthWidget;
     std::shared_ptr<ButtonWidget> m_coinWidget;
     int                           m_maxHealth = 0;
     int                           m_coin      = 50;
@@ -35,7 +34,7 @@ private:
     static bool OnCollisionEnter(EventArgs& args);
     void        IncreaseCoin(int amount);
     void        DecreaseCoin(int amount);
-    void        BounceOfWindow();
+    void        BounceOffWindow();
     void        ShrinkWindow();
     void        StartScaleInAnimation();
 

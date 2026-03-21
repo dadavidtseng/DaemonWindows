@@ -6,6 +6,7 @@
 
 #include "Game.hpp"
 #include "Game/Subsystem/Window/WindowSubsystem.hpp"
+#include "Game/Subsystem/Widget/ButtonWidget.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/EventSystem.hpp"
 
@@ -110,4 +111,18 @@ void Entity::IncreaseHealth(int const amount)
 void Entity::DecreaseHealth(int const amount)
 {
     m_health -= amount;
+}
+
+void Entity::SyncWindowWidgetToPosition()
+{
+    if (!m_hasChildWindow || !m_healthWidget) return;
+
+    WindowID    windowID   = g_windowSubsystem->FindWindowIDByEntityID(m_entityID);
+    WindowData* windowData = g_windowSubsystem->GetWindowData(windowID);
+    if (!windowData || !windowData->m_window) return;
+
+    m_healthWidget->SetPosition(windowData->m_window->GetClientPosition());
+    m_healthWidget->SetDimensions(windowData->m_window->GetClientDimensions());
+    m_healthWidget->SetText(Stringf("Health=%d", m_health));
+    windowData->m_window->SetClientPosition(m_position - windowData->m_window->GetClientDimensions() * 0.5f);
 }

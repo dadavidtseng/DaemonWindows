@@ -8,6 +8,11 @@
 #include "Game/Framework/GameCommon.hpp"
 #include "Game/Subsystem/Window/WindowSubsystem.hpp"
 
+#include <memory>
+
+//-Forward-Declaration--------------------------------------------------------------------------------
+class ButtonWidget;
+
 //----------------------------------------------------------------------------------------------------
 class Entity
 {
@@ -44,8 +49,10 @@ public:
     virtual bool IsEntityVisible() const;
 
     void  IncreaseHealth(int amount);
-    void  DecreaseHealth(int amount);
+    virtual void  DecreaseHealth(int amount);
+    void  SyncWindowWidgetToPosition();
     float m_speed = 100.f;
+    std::shared_ptr<ButtonWidget> m_healthWidget;
 
 protected:
     bool m_isDead               = false;

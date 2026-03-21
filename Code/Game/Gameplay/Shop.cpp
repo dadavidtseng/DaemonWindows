@@ -11,6 +11,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Input/InputSystem.hpp"
+#include "Engine/Resource/ResourceSubsystem.hpp"
 #include "Engine/Widget/WidgetSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
@@ -111,7 +112,7 @@ void Shop::Render() const
     g_renderer->SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
     g_renderer->SetDepthMode(eDepthMode::DISABLED);
     g_renderer->BindTexture(nullptr);
-    g_renderer->BindShader(g_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
+    g_renderer->BindShader(g_resourceSubsystem->CreateOrGetShaderFromFile("Data/Shaders/Default"));
     g_renderer->DrawVertexArray(verts);
 
 
