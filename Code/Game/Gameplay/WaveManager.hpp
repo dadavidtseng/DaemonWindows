@@ -25,11 +25,10 @@ enum class eEnemyType
 	PENTAGON,
 	HEXAGON,
 
-	// Tier 2 - Elite enemies (reserved for future sprints)
-	// SPAWNER,
-	// TELEPORTER,
-	// SHIELDED,
-	// KAMIKAZE,
+	// Bosses (spawn in own windows)
+	SPIKER,
+	// WYRM,     // reserved for task 3.3
+	// SLIMEST,  // reserved for task 3.4
 
 	NUM_ENEMY_TYPES
 };

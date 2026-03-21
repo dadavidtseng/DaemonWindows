@@ -14,6 +14,7 @@
 #include "Game/Gameplay/Hexagon.hpp"
 #include "Game/Gameplay/Octagon.hpp"
 #include "Game/Gameplay/Pentagon.hpp"
+#include "Game/Gameplay/Spiker.hpp"
 #include "Game/Gameplay/Player.hpp"
 #include "Game/Gameplay/Shop.hpp"
 #include "Game/Gameplay/Square.hpp"
@@ -374,6 +375,12 @@ void Game::UpdateFromInput()
             ChangeGameState(eGameState::SHOP);
             g_audio->StartSound(clickSound, false, 10.f, 0.f, 1.f);
         }
+        // DEBUG: F1 spawns a Spiker boss for testing
+        if (g_input->WasKeyJustPressed(KEYCODE_F1))
+        {
+            SpawnSpiker();
+            DebuggerPrintf("DEBUG: Spawned Spiker boss via F1.\n");
+        }
     }
     else if (m_gameState == eGameState::SHOP)
     {
@@ -557,7 +564,7 @@ void Game::RenderAttractMode() const
     g_renderer->SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
     g_renderer->SetDepthMode(eDepthMode::DISABLED);
     g_renderer->BindTexture(g_resourceSubsystem->CreateOrGetTextureFromFile("Data/Images/serenity.png"));
-    g_renderer->BindShader(g_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
+    g_renderer->BindShader(g_resourceSubsystem->CreateOrGetShaderFromFile("Data/Shaders/Default"));
     g_renderer->DrawVertexArray(verts1);
 
     HWND hwnd        = GetFocus();
@@ -620,7 +627,7 @@ void Game::RenderGame() const
     g_renderer->SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
     g_renderer->SetDepthMode(eDepthMode::DISABLED);
     g_renderer->BindTexture(g_resourceSubsystem->CreateOrGetTextureFromFile("Data/Images/ripple.png"));
-    g_renderer->BindShader(g_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
+    g_renderer->BindShader(g_resourceSubsystem->CreateOrGetShaderFromFile("Data/Shaders/Default"));
     g_renderer->DrawVertexArray(verts1);
 
     for (Entity* entity : m_entityList)
@@ -751,6 +758,22 @@ Hexagon* Game::SpawnHexagon()
 }
 
 //----------------------------------------------------------------------------------------------------
+Entity* Game::SpawnSpiker()
+{
+    Spiker* spiker = new Spiker(
+        s_nextEntityID++,
+        Vec2(150.f, 150.f),  // position within boss window
+        0.f,
+        Rgba8(200, 0, 200, 255),  // purple - boss color
+        true,
+        true  // always has own window
+    );
+
+    m_entityList.push_back(spiker);
+    return spiker;
+}
+
+//----------------------------------------------------------------------------------------------------
 // SpawnEntity - Uses WaveManager to select a random enemy type based on spawn weights,
 // then delegates to SpawnEnemyByType(). Falls back to spawning one of each type if
 // WaveManager is unavailable (pre-wave-system behavior).
@@ -787,6 +810,7 @@ Entity* Game::SpawnEnemyByType(eEnemyType enemyType)
     case eEnemyType::SQUARE:    return SpawnSquare();
     case eEnemyType::PENTAGON:  return SpawnPentagon();
     case eEnemyType::HEXAGON:   return SpawnHexagon();
+    case eEnemyType::SPIKER:    return SpawnSpiker();
     default:
         DebuggerPrintf("SpawnEnemyByType: Unknown enemy type %d, falling back to Triangle.\n", static_cast<int>(enemyType));
         return SpawnTriangle();

@@ -111,6 +111,7 @@ private:
     Square*   SpawnSquare();
     Pentagon* SpawnPentagon();
     Hexagon*  SpawnHexagon();
+    Entity*   SpawnSpiker();
     void      DestroyEntity();
     void      ShowShop();
     void      DestroyShop();
