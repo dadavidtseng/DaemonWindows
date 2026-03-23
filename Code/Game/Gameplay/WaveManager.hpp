@@ -27,7 +27,7 @@ enum class eEnemyType
 
 	// Bosses (spawn in own windows)
 	SPIKER,
-	// WYRM,     // reserved for task 3.3
+	WYRM,
 	// SLIMEST,  // reserved for task 3.4
 
 	NUM_ENEMY_TYPES

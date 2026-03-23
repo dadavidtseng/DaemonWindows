@@ -25,6 +25,7 @@ class Octagon;
 class Pentagon;
 class Square;
 class Triangle;
+class Wyrm;
 class Coin;
 class UpgradeManager;
 
@@ -112,6 +113,7 @@ private:
     Pentagon* SpawnPentagon();
     Hexagon*  SpawnHexagon();
     Entity*   SpawnSpiker();
+    Entity*   SpawnWyrm();
     void      DestroyEntity();
     void      ShowShop();
     void      DestroyShop();

@@ -85,6 +85,12 @@
     <ClCompile Include="Gameplay\Hexagon.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
+    <ClCompile Include="Gameplay\Wyrm.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="Gameplay\WyrmSegment.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineBuildPreferences.hpp">
@@ -142,6 +148,12 @@
       <Filter>Gameplay</Filter>
     </ClInclude>
     <ClInclude Include="Gameplay\Hexagon.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="Gameplay\Wyrm.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="Gameplay\WyrmSegment.hpp">
       <Filter>Gameplay</Filter>
     </ClInclude>
   </ItemGroup>

@@ -369,6 +369,8 @@
     <ClCompile Include="Gameplay\Game.cpp" />
     <ClCompile Include="Gameplay\Hexagon.cpp" />
     <ClCompile Include="Gameplay\Spiker.cpp" />
+    <ClCompile Include="Gameplay\Wyrm.cpp" />
+    <ClCompile Include="Gameplay\WyrmSegment.cpp" />
     <ClCompile Include="Gameplay\Octagon.cpp" />
     <ClCompile Include="Gameplay\Pentagon.cpp" />
     <ClCompile Include="Gameplay\Player.cpp" />
@@ -396,6 +398,8 @@
     <ClInclude Include="Gameplay\Game.hpp" />
     <ClInclude Include="Gameplay\Hexagon.hpp" />
     <ClInclude Include="Gameplay\Spiker.hpp" />
+    <ClInclude Include="Gameplay\Wyrm.hpp" />
+    <ClInclude Include="Gameplay\WyrmSegment.hpp" />
     <ClInclude Include="Gameplay\Octagon.hpp" />
     <ClInclude Include="Gameplay\Pentagon.hpp" />
     <ClInclude Include="Gameplay\Player.hpp" />

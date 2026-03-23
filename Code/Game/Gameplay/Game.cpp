@@ -15,6 +15,7 @@
 #include "Game/Gameplay/Octagon.hpp"
 #include "Game/Gameplay/Pentagon.hpp"
 #include "Game/Gameplay/Spiker.hpp"
+#include "Game/Gameplay/Wyrm.hpp"
 #include "Game/Gameplay/Player.hpp"
 #include "Game/Gameplay/Shop.hpp"
 #include "Game/Gameplay/Square.hpp"
@@ -774,6 +775,25 @@ Entity* Game::SpawnSpiker()
 }
 
 //----------------------------------------------------------------------------------------------------
+// SpawnWyrm - Spawns a Wyrm boss (head entity). The head automatically spawns its 7 segments
+// as separate entities, each with their own window.
+//----------------------------------------------------------------------------------------------------
+Entity* Game::SpawnWyrm()
+{
+    Wyrm* wyrm = new Wyrm(
+        s_nextEntityID++,
+        Vec2(150.f, 150.f),  // position within boss window
+        0.f,
+        Rgba8(0, 200, 80, 255),  // green - wyrm color
+        true,
+        true  // always has own window
+    );
+
+    m_entityList.push_back(wyrm);
+    return wyrm;
+}
+
+//----------------------------------------------------------------------------------------------------
 // SpawnEntity - Uses WaveManager to select a random enemy type based on spawn weights,
 // then delegates to SpawnEnemyByType(). Falls back to spawning one of each type if
 // WaveManager is unavailable (pre-wave-system behavior).
@@ -811,6 +831,7 @@ Entity* Game::SpawnEnemyByType(eEnemyType enemyType)
     case eEnemyType::PENTAGON:  return SpawnPentagon();
     case eEnemyType::HEXAGON:   return SpawnHexagon();
     case eEnemyType::SPIKER:    return SpawnSpiker();
+    case eEnemyType::WYRM:      return SpawnWyrm();
     default:
         DebuggerPrintf("SpawnEnemyByType: Unknown enemy type %d, falling back to Triangle.\n", static_cast<int>(enemyType));
         return SpawnTriangle();
