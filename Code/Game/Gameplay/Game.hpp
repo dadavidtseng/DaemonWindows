@@ -24,6 +24,7 @@ class Hexagon;
 class Octagon;
 class Pentagon;
 class Square;
+class Slimest;
 class Triangle;
 class Wyrm;
 class Coin;
@@ -114,6 +115,7 @@ private:
     Hexagon*  SpawnHexagon();
     Entity*   SpawnSpiker();
     Entity*   SpawnWyrm();
+    Entity*   SpawnSlimest();
     void      DestroyEntity();
     void      ShowShop();
     void      DestroyShop();

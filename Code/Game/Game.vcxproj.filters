@@ -85,6 +85,15 @@
     <ClCompile Include="Gameplay\Hexagon.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
+    <ClCompile Include="Gameplay\Slime.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="Gameplay\Slimer.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="Gameplay\Slimest.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
     <ClCompile Include="Gameplay\Wyrm.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
@@ -148,6 +157,15 @@
       <Filter>Gameplay</Filter>
     </ClInclude>
     <ClInclude Include="Gameplay\Hexagon.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="Gameplay\Slime.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="Gameplay\Slimer.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="Gameplay\Slimest.hpp">
       <Filter>Gameplay</Filter>
     </ClInclude>
     <ClInclude Include="Gameplay\Wyrm.hpp">

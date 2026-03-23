@@ -16,6 +16,7 @@
 #include "Game/Gameplay/Pentagon.hpp"
 #include "Game/Gameplay/Spiker.hpp"
 #include "Game/Gameplay/Wyrm.hpp"
+#include "Game/Gameplay/Slimest.hpp"
 #include "Game/Gameplay/Player.hpp"
 #include "Game/Gameplay/Shop.hpp"
 #include "Game/Gameplay/Square.hpp"
@@ -794,6 +795,24 @@ Entity* Game::SpawnWyrm()
 }
 
 //----------------------------------------------------------------------------------------------------
+// SpawnSlimest - Spawns a Slimest boss. On death it cascades: Slimest -> 3 Slimers -> 9 Slimes.
+//----------------------------------------------------------------------------------------------------
+Entity* Game::SpawnSlimest()
+{
+    Slimest* slimest = new Slimest(
+        s_nextEntityID++,
+        Vec2(150.f, 150.f),  // position within boss window
+        0.f,
+        Rgba8(50, 180, 30, 255),  // green - slime color
+        true,
+        true  // always has own window
+    );
+
+    m_entityList.push_back(slimest);
+    return slimest;
+}
+
+//----------------------------------------------------------------------------------------------------
 // SpawnEntity - Uses WaveManager to select a random enemy type based on spawn weights,
 // then delegates to SpawnEnemyByType(). Falls back to spawning one of each type if
 // WaveManager is unavailable (pre-wave-system behavior).
@@ -832,6 +851,7 @@ Entity* Game::SpawnEnemyByType(eEnemyType enemyType)
     case eEnemyType::HEXAGON:   return SpawnHexagon();
     case eEnemyType::SPIKER:    return SpawnSpiker();
     case eEnemyType::WYRM:      return SpawnWyrm();
+    case eEnemyType::SLIMEST:   return SpawnSlimest();
     default:
         DebuggerPrintf("SpawnEnemyByType: Unknown enemy type %d, falling back to Triangle.\n", static_cast<int>(enemyType));
         return SpawnTriangle();
