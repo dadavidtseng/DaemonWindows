@@ -6,6 +6,7 @@
 #include "Game/Gameplay/Slime.hpp"
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Bullet.hpp"
+#include "Game/Gameplay/Residue.hpp"
 #include "Game/Gameplay/EnemyUtils.hpp"
 #include "Game/Gameplay/Game.hpp"
 #include "Game/Gameplay/Player.hpp"
@@ -74,6 +75,14 @@ void Slime::Update(float const deltaSeconds)
 	if (player && !player->IsDead())
 	{
 		EnemyUtils::ChasePlayer(m_position, m_orientationDegrees, player->m_position, m_speed, deltaSeconds);
+	}
+
+	// Residue trail
+	m_trailTimer += deltaSeconds;
+	if (m_trailTimer >= m_trailCooldown)
+	{
+		m_trailTimer = 0.f;
+		SpawnResidue();
 	}
 
 	// Lob residue blobs
@@ -164,4 +173,16 @@ void Slime::LobResidueBlobs()
 
 		g_game->m_entityList.push_back(blob);
 	}
+}
+
+//----------------------------------------------------------------------------------------------------
+void Slime::SpawnResidue()
+{
+	Residue* residue = new Residue(
+		g_rng->RollRandomIntInRange(100, 10000),
+		m_position,
+		Rgba8(80, 180, 40, 180)  // light green puddle
+	);
+
+	g_game->m_entityList.push_back(residue);
 }

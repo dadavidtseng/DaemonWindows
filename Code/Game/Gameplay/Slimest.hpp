@@ -35,6 +35,11 @@ private:
 	float m_lobTimer    = 0.f;
 	int   m_blobCount   = 3;
 
+	// Residue trail
+	void  SpawnResidue();
+	float m_trailCooldown = 0.6f;
+	float m_trailTimer    = 0.f;
+
 	// Split
 	int m_splitCount = 3;
 };

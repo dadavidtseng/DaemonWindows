@@ -17,6 +17,7 @@
 #include "Game/Gameplay/Spiker.hpp"
 #include "Game/Gameplay/Wyrm.hpp"
 #include "Game/Gameplay/Slimest.hpp"
+#include "Game/Gameplay/Residue.hpp"
 #include "Game/Gameplay/Player.hpp"
 #include "Game/Gameplay/Shop.hpp"
 #include "Game/Gameplay/Square.hpp"
@@ -419,6 +420,7 @@ bool Game::IsEnemy(Entity const* entity)
         && name != "Coin"
         && name != "Shop"
         && name != "Debris"
+        && name != "Residue"
         && name != "DEFAULT";
 }
 
@@ -468,6 +470,19 @@ void Game::HandlePlayerEnemyCollision(Player* player, Entity* enemy)
 }
 
 //----------------------------------------------------------------------------------------------------
+void Game::HandlePlayerResidueCollision(Player* player, Residue* residue)
+{
+    if (!residue->CanDamage()) return;
+
+    residue->ResetDamageCooldown();
+    player->DecreaseHealth(1);
+    player->m_healthWidget->SetText(Stringf("Health=%d/%d", player->m_health, player->m_maxHealth));
+
+    SoundID const hitSound = g_audio->CreateOrGetSound("Data/Audio/hit.mp3", eAudioSystemSoundDimension::Sound2D);
+    g_audio->StartSound(hitSound, false, 1.f, 0.f, 1.f);
+}
+
+//----------------------------------------------------------------------------------------------------
 void Game::HandleEnemyBulletPlayerCollision(Bullet* enemyBullet, Player* player)
 {
     FireCollisionEvent(player, enemyBullet);
@@ -513,6 +528,11 @@ void Game::HandleEntityCollision()
                 HandlePlayerCoinCollision(playerA, coinB);
             else if (playerB && coinA)
                 HandlePlayerCoinCollision(playerB, coinA);
+            // Player vs Residue (damaging puddle with cooldown)
+            else if (playerA && dynamic_cast<Residue*>(entityB))
+                HandlePlayerResidueCollision(playerA, dynamic_cast<Residue*>(entityB));
+            else if (playerB && dynamic_cast<Residue*>(entityA))
+                HandlePlayerResidueCollision(playerB, dynamic_cast<Residue*>(entityA));
             // Player vs Enemy (all enemy types)
             else if (playerA && IsEnemy(entityB))
                 HandlePlayerEnemyCollision(playerA, entityB);
@@ -759,6 +779,7 @@ Hexagon* Game::SpawnHexagon()
     return hexagon;
 }
 
+
 //----------------------------------------------------------------------------------------------------
 Entity* Game::SpawnSpiker()
 {
@@ -795,7 +816,7 @@ Entity* Game::SpawnWyrm()
 }
 
 //----------------------------------------------------------------------------------------------------
-// SpawnSlimest - Spawns a Slimest boss. On death it cascades: Slimest -> 3 Slimers -> 9 Slimes.
+// SpawnSlimest - Spawns a Slimest boss. On death it cascades: Slimest → 3 Slimers → 9 Slimes.
 //----------------------------------------------------------------------------------------------------
 Entity* Game::SpawnSlimest()
 {

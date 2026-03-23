@@ -6,6 +6,7 @@
 #include "Game/Gameplay/Slimest.hpp"
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Bullet.hpp"
+#include "Game/Gameplay/Residue.hpp"
 #include "Game/Gameplay/EnemyUtils.hpp"
 #include "Game/Gameplay/Game.hpp"
 #include "Game/Gameplay/Player.hpp"
@@ -90,6 +91,14 @@ void Slimest::Update(float const deltaSeconds)
 	if (player && !player->IsDead())
 	{
 		EnemyUtils::ChasePlayer(m_position, m_orientationDegrees, player->m_position, m_speed, deltaSeconds);
+	}
+
+	// Residue trail
+	m_trailTimer += deltaSeconds;
+	if (m_trailTimer >= m_trailCooldown)
+	{
+		m_trailTimer = 0.f;
+		SpawnResidue();
 	}
 
 	// Lob residue blobs
@@ -207,4 +216,16 @@ void Slimest::SpawnSlimers()
 	}
 
 	DebuggerPrintf("Slimest (ID=%d): Split into %d Slimers.\n", m_entityID, m_splitCount);
+}
+
+//----------------------------------------------------------------------------------------------------
+void Slimest::SpawnResidue()
+{
+	Residue* residue = new Residue(
+		g_rng->RollRandomIntInRange(100, 10000),
+		m_position,
+		Rgba8(40, 140, 20, 180)  // dark green puddle
+	);
+
+	g_game->m_entityList.push_back(residue);
 }

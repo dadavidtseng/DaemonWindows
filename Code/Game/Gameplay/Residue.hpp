@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------------------------------
-// Slime.hpp
+// Residue.hpp
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
@@ -8,30 +8,25 @@
 #include "Game/Gameplay/Entity.hpp"
 
 //----------------------------------------------------------------------------------------------------
-// Slime (Smallest tier of Slimest boss)
-// Chases player, lobs 1 residue blob, dies normally and drops coins.
+// Residue - Stationary damaging puddle left behind by Slimest/Slimer/Slime as they move.
+// Damages the player on contact with a cooldown. Fades and self-destructs after a lifetime.
 //----------------------------------------------------------------------------------------------------
-class Slime : public Entity
+class Residue : public Entity
 {
 public:
-	Slime(EntityID entityID, Vec2 const& position, float orientationDegrees, Rgba8 const& color, bool isVisible, bool hasChildWindow);
-	~Slime() override;
+	Residue(EntityID entityID, Vec2 const& position, Rgba8 const& color);
+	~Residue() override;
 
 	void Update(float deltaSeconds) override;
 	void Render() const override;
 	void UpdateFromInput(float deltaSeconds) override;
-	void DecreaseHealth(int amount) override;
+
+	bool CanDamage() const;
+	void ResetDamageCooldown();
 
 private:
-	void LobResidueBlobs();
-
-	// Attack
-	float m_lobCooldown = 2.5f;
-	float m_lobTimer    = 0.f;
-	int   m_blobCount   = 1;
-
-	// Residue trail
-	void  SpawnResidue();
-	float m_trailCooldown = 0.4f;
-	float m_trailTimer    = 0.f;
+	float m_lifetime        = 4.f;    // seconds before self-destruct
+	float m_age             = 0.f;
+	float m_damageCooldown  = 1.0f;   // seconds between damage ticks
+	float m_damageTimer     = 0.f;
 };

@@ -24,6 +24,7 @@ class Hexagon;
 class Octagon;
 class Pentagon;
 class Square;
+class Residue;
 class Slimest;
 class Triangle;
 class Wyrm;
@@ -97,6 +98,7 @@ private:
     void HandleEnemyBulletPlayerCollision(Bullet* enemyBullet, Player* player);
     void HandlePlayerCoinCollision(Player* player, Coin* coin);
     void HandlePlayerEnemyCollision(Player* player, Entity* enemy);
+    void HandlePlayerResidueCollision(Player* player, Residue* residue);
     void AdjustForPauseAndTimeDistortion() const;
     void RenderAttractMode() const;
     void RenderGame() const;
