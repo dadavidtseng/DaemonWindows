@@ -384,6 +384,18 @@ void Game::UpdateFromInput()
             SpawnSpiker();
             DebuggerPrintf("DEBUG: Spawned Spiker boss via F1.\n");
         }
+        // DEBUG: F2 spawns a Wyrm boss for testing
+        if (g_input->WasKeyJustPressed(KEYCODE_F2))
+        {
+            SpawnWyrm();
+            DebuggerPrintf("DEBUG: Spawned Wyrm boss via F2.\n");
+        }
+        // DEBUG: F3 spawns a Slimest boss for testing
+        if (g_input->WasKeyJustPressed(KEYCODE_F3))
+        {
+            SpawnSlimest();
+            DebuggerPrintf("DEBUG: Spawned Slimest boss via F3.\n");
+        }
     }
     else if (m_gameState == eGameState::SHOP)
     {
