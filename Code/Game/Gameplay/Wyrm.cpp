@@ -70,7 +70,14 @@ Wyrm::~Wyrm()
 		m_healthWidget->MarkForDestroy();
 	}
 
-	// Segments are managed by Game's entity list — don't delete here
+	// Null out leader pointers in surviving segments to prevent dangling pointer access
+	for (WyrmSegment* seg : m_segments)
+	{
+		if (seg && !seg->IsDead() && seg->GetLeader() == this)
+		{
+			seg->SetLeader(nullptr);
+		}
+	}
 	m_segments.clear();
 }
 

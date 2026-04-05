@@ -61,6 +61,12 @@ WyrmSegment::~WyrmSegment()
 		g_windowSubsystem->RemoveEntityFromMappings(m_entityID);
 		m_healthWidget->MarkForDestroy();
 	}
+
+	// Prevent dangling pointer: null out follower's leader reference
+	if (m_follower && !m_follower->IsDead())
+	{
+		m_follower->SetLeader(m_leader);  // re-link follower to our leader (may be null)
+	}
 }
 
 //----------------------------------------------------------------------------------------------------
