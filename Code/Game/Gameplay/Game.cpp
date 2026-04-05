@@ -237,8 +237,41 @@ STATIC bool Game::OnWaveStart(EventArgs& args)
 //----------------------------------------------------------------------------------------------------
 STATIC bool Game::OnWaveComplete(EventArgs& args)
 {
-    int const waveNumber = atoi(args.GetValue("waveNumber", "0").c_str());
-    DebuggerPrintf("Wave %d completed!\n", waveNumber);
+    int const waveNumber  = atoi(args.GetValue("waveNumber", "0").c_str());
+    bool const wasBoss    = args.GetValue("wasBossWave", "false") == "true";
+    DebuggerPrintf("Wave %d completed!%s\n", waveNumber, wasBoss ? " (BOSS)" : "");
+
+    // Calculate coin reward: base + scaling per wave, boss waves get a bigger bonus
+    int coinReward = 5 + waveNumber * 2;
+    if (wasBoss)
+    {
+        coinReward = 10 + waveNumber * 3;
+    }
+
+    // Spawn reward coins at center of player's window
+    Player* player = g_game->GetPlayer();
+    if (player)
+    {
+        Window* playerWindow = g_windowSubsystem->GetWindow(g_windowSubsystem->FindWindowIDByEntityID(player->m_entityID));
+        Vec2    spawnCenter  = player->m_position;
+        if (playerWindow)
+        {
+            Vec2 const clientPos = playerWindow->GetClientPosition();
+            Vec2 const clientDim = playerWindow->GetClientDimensions();
+            spawnCenter = clientPos + clientDim * 0.5f;
+        }
+
+        for (int i = 0; i < coinReward; ++i)
+        {
+            float const scatterAngle = 360.f / static_cast<float>(coinReward) * static_cast<float>(i);
+            Vec2 const  offset       = Vec2::MakeFromPolarDegrees(scatterAngle, 20.f + g_rng->RollRandomFloatInRange(0.f, 30.f));
+            Vec2 const  coinPos      = spawnCenter + offset;
+
+            g_game->m_entityList.push_back(new Coin((int)g_game->m_entityList.size(), coinPos, 0.f, Rgba8::YELLOW, true, false));
+        }
+
+        DebuggerPrintf("Wave %d reward: %d coins spawned.\n", waveNumber, coinReward);
+    }
 
     return true;
 }
@@ -674,6 +707,35 @@ void Game::RenderGame() const
 
     DebugAddScreenText(Stringf("Time: %.2f\nFPS: %.2f\nScale: %.1f", m_gameClock->GetTotalSeconds(), 1.f / m_gameClock->GetDeltaSeconds(), m_gameClock->GetTimeScale()), m_screenCamera->GetOrthographicTopRight() - Vec2(200.f, 60.f), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
     DebugAddScreenText(Stringf("Time: %.2f\nFPS: %.2f\nScale: %.1f", m_gameClock->GetTotalSeconds(), 1.f / m_gameClock->GetDeltaSeconds(), m_gameClock->GetTimeScale()), m_screenCamera->GetOrthographicBottomLeft(), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
+
+    // Wave UI display — positioned inside the player's child window
+    if (m_waveManager && GetPlayer())
+    {
+        Window* playerWindow = g_windowSubsystem->GetWindow(g_windowSubsystem->FindWindowIDByEntityID(GetPlayer()->m_entityID));
+        if (!playerWindow) return;
+
+        Vec2 const clientPos = playerWindow->GetClientPosition();
+        Vec2 const clientDim = playerWindow->GetClientDimensions();
+        Vec2 const topLeft   = Vec2(clientPos.x + 10.f, clientPos.y + clientDim.y - 25.f);
+
+        if (m_waveManager->IsBossActive())
+        {
+            // Boss phase indicator
+            DebugAddScreenText(Stringf("BOSS WAVE %d", m_waveManager->GetCurrentWaveNumber()), topLeft, 22.f, Vec2::ZERO, 0.f, Rgba8::RED, Rgba8::RED);
+            DebugAddScreenText(Stringf("Enemies remaining: %d", m_waveManager->GetRemainingEnemies()), topLeft - Vec2(0.f, 25.f), 18.f, Vec2::ZERO, 0.f, Rgba8::RED, Rgba8::RED);
+        }
+        else if (m_waveManager->IsWaveActive())
+        {
+            // Normal wave display
+            DebugAddScreenText(Stringf("Wave %d", m_waveManager->GetCurrentWaveNumber()), topLeft, 22.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
+            DebugAddScreenText(Stringf("Enemies: %d", m_waveManager->GetRemainingEnemies()), topLeft - Vec2(0.f, 25.f), 18.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
+        }
+        else
+        {
+            // Wave transition
+            DebugAddScreenText(Stringf("Wave %d complete!", m_waveManager->GetCurrentWaveNumber()), topLeft, 22.f, Vec2::ZERO, 0.f, Rgba8::YELLOW, Rgba8::YELLOW);
+        }
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
