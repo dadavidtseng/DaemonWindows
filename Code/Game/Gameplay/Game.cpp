@@ -956,12 +956,23 @@ Entity* Game::SpawnEnemyByType(eEnemyType enemyType)
 //----------------------------------------------------------------------------------------------------
 void Game::DestroyEntity()
 {
-    for (Entity* entity : m_entityList)
+    // Use index-based loop because MarkAsDead() may push_back new entities
+    // (e.g. Slimest spawns Slimers on death). Repeat until no new entities appear.
+    size_t prevSize = 0;
+    while (prevSize != m_entityList.size())
     {
-        if (entity == nullptr) continue;
-        if (entity->m_name == "You") continue;
-        if (entity->m_name == "Shop") continue;
-        entity->MarkAsDead();
+        prevSize = m_entityList.size();
+        for (size_t i = 0; i < m_entityList.size(); ++i)
+        {
+            Entity* entity = m_entityList[i];
+            if (entity == nullptr) continue;
+            if (entity->m_name == "You") continue;
+            if (entity->m_name == "Shop") continue;
+            if (!entity->IsDead())
+            {
+                entity->MarkAsDead();
+            }
+        }
     }
 }
 

@@ -27,8 +27,8 @@ Player::Player(EntityID const entityID,
       m_bulletFireTimer(0.3f)
 {
     m_entityID       = entityID;
-    m_health         = 10;
-    m_maxHealth      = 10;
+    m_health         = 10000;
+    m_maxHealth      = 10000;
     m_physicRadius   = 30.f;
     m_thickness      = 10.f;
     m_cosmeticRadius = m_physicRadius + m_thickness;
