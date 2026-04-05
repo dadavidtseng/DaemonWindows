@@ -54,6 +54,19 @@ void WaveManager::Update(float deltaSeconds)
 
 	if (!m_isWaveActive) return;
 
+	// Boss phase: no regular enemy spawning, just wait for all entities to die
+	if (m_isBossActive)
+	{
+		int const aliveEnemies = CountAliveEnemies();
+		m_remainingEnemies = aliveEnemies;
+
+		if (aliveEnemies == 0)
+		{
+			CompleteWave();
+		}
+		return;
+	}
+
 	// Spawn enemies on timer until all enemies for this wave have been spawned
 	if (m_enemiesSpawnedThisWave < m_totalEnemiesInWave)
 	{
@@ -89,9 +102,13 @@ void WaveManager::StartWave()
 	// Build spawn weight table for this wave
 	BuildSpawnTable();
 
-	// Calculate enemies for this wave using difficulty scaling
-	m_totalEnemiesInWave = static_cast<int>(m_baseEnemiesPerWave * powf(m_difficultyScaling, static_cast<float>(m_currentWaveNumber - 1)));
-	m_remainingEnemies   = m_totalEnemiesInWave;
+	// Calculate enemies for this wave: linear growth with hard cap
+	m_totalEnemiesInWave = m_baseEnemiesPerWave + (m_currentWaveNumber - 1) * m_enemiesPerWaveGrowth;
+	if (m_totalEnemiesInWave > m_maxEnemiesPerWave)
+	{
+		m_totalEnemiesInWave = m_maxEnemiesPerWave;
+	}
+	m_remainingEnemies = m_totalEnemiesInWave;
 
 	// Scale spawn interval: faster spawns in later waves (min capped)
 	m_spawnInterval = m_baseSpawnInterval / (1.0f + 0.1f * static_cast<float>(m_currentWaveNumber - 1));
@@ -104,20 +121,28 @@ void WaveManager::StartWave()
 	constexpr int BOSS_WAVE_INTERVAL = 5;
 	m_isBossActive = (m_currentWaveNumber % BOSS_WAVE_INTERVAL == 0);
 
+	// Boss wave: spawn boss, no regular enemies
+	if (m_isBossActive)
+	{
+		m_totalEnemiesInWave     = 0;  // no regular enemies during boss phase
+		m_enemiesSpawnedThisWave = 0;
+
+		eEnemyType const bossType = SelectBossType();
+		m_game->SpawnEnemyByType(bossType);
+
+		// Fire OnBossSpawn event with boss type info
+		EventArgs bossArgs;
+		bossArgs.SetValue("waveNumber", std::to_string(m_currentWaveNumber));
+		bossArgs.SetValue("bossType", std::to_string(static_cast<int>(bossType)));
+		g_eventSystem->FireEvent("OnBossSpawn", bossArgs);
+	}
+
 	// Fire OnWaveStart event
 	EventArgs args;
 	args.SetValue("waveNumber", std::to_string(m_currentWaveNumber));
 	args.SetValue("totalEnemies", std::to_string(m_totalEnemiesInWave));
 	args.SetValue("isBossWave", m_isBossActive ? "true" : "false");
 	g_eventSystem->FireEvent("OnWaveStart", args);
-
-	// Fire OnBossSpawn event if this is a boss wave
-	if (m_isBossActive)
-	{
-		EventArgs bossArgs;
-		bossArgs.SetValue("waveNumber", std::to_string(m_currentWaveNumber));
-		g_eventSystem->FireEvent("OnBossSpawn", bossArgs);
-	}
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -125,6 +150,9 @@ void WaveManager::StartWave()
 //-----------------------------------------------------------------------------------------------
 void WaveManager::CompleteWave()
 {
+	// Capture boss state before clearing it
+	bool const wasBossWave = m_isBossActive;
+
 	m_isWaveActive = false;
 	m_isBossActive = false;
 
@@ -136,6 +164,7 @@ void WaveManager::CompleteWave()
 	EventArgs args;
 	args.SetValue("waveNumber", std::to_string(m_currentWaveNumber));
 	args.SetValue("totalEnemies", std::to_string(m_totalEnemiesInWave));
+	args.SetValue("wasBossWave", wasBossWave ? "true" : "false");
 	g_eventSystem->FireEvent("OnWaveComplete", args);
 }
 
@@ -155,6 +184,7 @@ void WaveManager::Reset()
 	m_isInTransition         = false;
 	m_waveTransitionTimer    = 0.0f;
 	m_spawnTable.clear();
+	m_bossSpawnCount = 0;
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -184,31 +214,40 @@ void WaveManager::BuildSpawnTable()
 {
 	m_spawnTable.clear();
 
-	// Triangle - basic chaser, always available, high weight early
-	m_spawnTable.push_back({eEnemyType::TRIANGLE, 30});
+	int const wave = m_currentWaveNumber;
+
+	// Basic enemies: high weight early, taper off as harder enemies appear
+	// Triangle - basic chaser, always available
+	int const triangleWeight = (wave <= 3) ? 30 : 20;
+	m_spawnTable.push_back({eEnemyType::TRIANGLE, triangleWeight});
 
 	// Circle - orbiter, always available
-	m_spawnTable.push_back({eEnemyType::CIRCLE, 25});
+	int const circleWeight = (wave <= 3) ? 25 : 15;
+	m_spawnTable.push_back({eEnemyType::CIRCLE, circleWeight});
 
 	// Octagon - ranged shooter, always available
-	m_spawnTable.push_back({eEnemyType::OCTAGON, 20});
+	int const octagonWeight = (wave <= 3) ? 20 : 15;
+	m_spawnTable.push_back({eEnemyType::OCTAGON, octagonWeight});
 
 	// Square - tanky slow chaser, introduced from wave 2
-	if (m_currentWaveNumber >= 2)
+	if (wave >= 2)
 	{
-		m_spawnTable.push_back({eEnemyType::SQUARE, 10});
+		int const squareWeight = (wave >= 6) ? 15 : 10;
+		m_spawnTable.push_back({eEnemyType::SQUARE, squareWeight});
 	}
 
 	// Pentagon - fast zigzag, introduced from wave 3
-	if (m_currentWaveNumber >= 3)
+	if (wave >= 3)
 	{
-		m_spawnTable.push_back({eEnemyType::PENTAGON, 15});
+		int const pentagonWeight = (wave >= 6) ? 20 : 12;
+		m_spawnTable.push_back({eEnemyType::PENTAGON, pentagonWeight});
 	}
 
 	// Hexagon - splits on death, introduced from wave 4
-	if (m_currentWaveNumber >= 4)
+	if (wave >= 4)
 	{
-		m_spawnTable.push_back({eEnemyType::HEXAGON, 10});
+		int const hexagonWeight = (wave >= 8) ? 15 : 8;
+		m_spawnTable.push_back({eEnemyType::HEXAGON, hexagonWeight});
 	}
 }
 
@@ -250,4 +289,21 @@ eEnemyType WaveManager::SelectRandomEnemyType() const
 
 	// Should never reach here, but fallback to last entry
 	return m_spawnTable.back().type;
+}
+
+//-----------------------------------------------------------------------------------------------
+// SelectBossType - Rotates through boss types: Spiker -> Wyrm -> Slimest -> repeat
+//-----------------------------------------------------------------------------------------------
+eEnemyType WaveManager::SelectBossType()
+{
+	constexpr eEnemyType BOSS_ROTATION[] = {
+		eEnemyType::SPIKER,
+		eEnemyType::WYRM,
+		eEnemyType::SLIMEST,
+	};
+	constexpr int NUM_BOSSES = 3;
+
+	eEnemyType const bossType = BOSS_ROTATION[m_bossSpawnCount % NUM_BOSSES];
+	++m_bossSpawnCount;
+	return bossType;
 }

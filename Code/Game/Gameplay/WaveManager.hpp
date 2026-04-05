@@ -74,9 +74,10 @@ public:
 
 private:
 	// Spawn table management
-	void BuildSpawnTable();
-	int  GetTotalSpawnWeight() const;
-	int  CountAliveEnemies() const;
+	void       BuildSpawnTable();
+	int        GetTotalSpawnWeight() const;
+	int        CountAliveEnemies() const;
+	eEnemyType SelectBossType();
 
 	// Game reference
 	Game* m_game = nullptr;
@@ -102,7 +103,11 @@ private:
 
 	// Wave configuration
 	int   m_baseEnemiesPerWave    = 5;      // Base number of enemies per wave
-	float m_difficultyScaling     = 1.5f;   // Multiplier for difficulty increase per wave
+	int   m_enemiesPerWaveGrowth  = 2;      // Additional enemies per wave (linear)
+	int   m_maxEnemiesPerWave     = 30;     // Hard cap to avoid overwhelming player
+
+	// Boss rotation: Spiker(0) -> Wyrm(1) -> Slimest(2) -> repeat
+	int m_bossSpawnCount          = 0;      // Tracks which boss to spawn next
 
 	// Spawn weight table for current wave
 	std::vector<SpawnWeightEntry> m_spawnTable;
