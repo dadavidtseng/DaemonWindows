@@ -28,8 +28,8 @@ Player::Player(EntityID const entityID,
       m_bulletFireTimer(0.3f)
 {
     m_entityID       = entityID;
-    m_health         = 10000;
-    m_maxHealth      = 10000;
+    m_health         = 10;
+    m_maxHealth      = 10;
     m_physicRadius   = 30.f;
     m_thickness      = 10.f;
     m_cosmeticRadius = m_physicRadius + m_thickness;
@@ -99,6 +99,24 @@ void Player::Update(float const deltaSeconds)
     m_coinWidget->SetDimensions(windowData->m_window->GetClientDimensions());
     m_healthWidget->SetPosition(windowData->m_window->GetClientPosition() + Vec2(0, 20));
     m_healthWidget->SetDimensions(windowData->m_window->GetClientDimensions());
+
+    // Game-mode transition: animate window from attract rectangle to game square
+    if (m_isTransitioningToGame)
+    {
+        m_gameTransitionTimer += deltaSeconds;
+        float t      = GetClampedZeroToOne(m_gameTransitionTimer / m_gameTransitionDuration);
+        float easedT = SmoothStep5(t);
+
+        Vec2 currentDim = Interpolate(m_transitionStartDims, m_gameClientDimensions, easedT);
+        windowData->m_window->SetClientDimensions(currentDim);
+        windowData->m_window->SetClientPosition(m_position - currentDim * 0.5f);
+
+        if (t >= 1.0f)
+        {
+            windowData->m_window->SetClientDimensions(m_gameClientDimensions);
+            m_isTransitioningToGame = false;
+        }
+    }
 
 
     if (g_game->GetCurrentGameState() == eGameState::ATTRACT)
@@ -257,7 +275,6 @@ void Player::BounceOffWindow()
     float windowTop    = windowData->m_window->GetClientPosition().y + windowData->m_window->GetClientDimensions().y;
     float windowRight  = windowData->m_window->GetClientPosition().x + windowData->m_window->GetClientDimensions().x;
 
-
     float clampedX = GetClamped(m_position.x,
                                 windowLeft + m_physicRadius,
                                 windowRight - m_physicRadius);
@@ -266,7 +283,6 @@ void Player::BounceOffWindow()
                                 windowBottom + m_physicRadius,
                                 windowTop - m_physicRadius);
 
-    // Update player position
     m_position.x = clampedX;
     m_position.y = clampedY;
 }
@@ -281,10 +297,20 @@ void Player::ShrinkWindow()
         Vec2 currentPos              = window->GetWindowPosition();
         Vec2 currentSize             = window->GetWindowDimensions();
         Vec2 currentClientDimensions = window->GetClientDimensions();
-        if (currentClientDimensions.x <= m_physicRadius * 2.5f || currentClientDimensions.y <= m_physicRadius * 2.5f) return;
 
-        Vec2 newPos  = currentPos + Vec2(1, 1);
-        Vec2 newSize = currentSize + Vec2(-1, -1);
+        float minDim = m_physicRadius * 2.5f;
+        if (currentClientDimensions.x <= minDim && currentClientDimensions.y <= minDim) return;
+
+        // Shrink toward 1:1 ratio: shrink the longer axis faster
+        float shrinkX = (currentClientDimensions.x > currentClientDimensions.y) ? 1.5f : 1.f;
+        float shrinkY = (currentClientDimensions.y > currentClientDimensions.x) ? 1.5f : 1.f;
+
+        // Don't shrink below minimum
+        if (currentClientDimensions.x <= minDim) shrinkX = 0.f;
+        if (currentClientDimensions.y <= minDim) shrinkY = 0.f;
+
+        Vec2 newPos  = currentPos + Vec2(shrinkX * 0.5f, shrinkY * 0.5f);
+        Vec2 newSize = currentSize + Vec2(-shrinkX, -shrinkY);
         g_windowSubsystem->AnimateWindowPositionAndDimensions(windowID, newPos, newSize, 0.1f);
     }
 }
@@ -292,7 +318,7 @@ void Player::ShrinkWindow()
 //----------------------------------------------------------------------------------------------------
 void Player::StartScaleInAnimation()
 {
-    m_targetClientDimensions = Vec2(static_cast<float>((int)(1445 * 0.6f)), 248.f);
+    m_targetClientDimensions = Vec2(867.f, 248.f);
     m_isScalingIn            = true;
     m_scaleInTimer           = 0.f;
 
@@ -313,6 +339,17 @@ bool Player::OnGameStateChanged(EventArgs& args)
     {
         g_game->GetPlayer()->m_coinWidget->SetVisible(true);
         g_game->GetPlayer()->m_healthWidget->SetVisible(true);
+
+        // Start transition animation from attract rectangle to game square
+        Player* player = g_game->GetPlayer();
+        WindowID wid = g_windowSubsystem->FindWindowIDByEntityID(player->m_entityID);
+        WindowData* wd = g_windowSubsystem->GetWindowData(wid);
+        if (wd && wd->m_window)
+        {
+            player->m_transitionStartDims   = wd->m_window->GetClientDimensions();
+            player->m_isTransitioningToGame  = true;
+            player->m_gameTransitionTimer    = 0.f;
+        }
     }
     else if (preGameState == "GAME" && curGameState == "ATTRACT")
     {
@@ -340,7 +377,11 @@ STATIC bool Player::OnCollisionEnter(EventArgs& args)
     {
         player->DecreaseHealth(1);
         player->m_healthWidget->SetText(Stringf("Health=%d/%d", player->m_health, player->m_maxHealth));
-        player->m_position += (player->m_position - entity->m_position);
+        // Smooth separation: push player just outside enemy's disc
+        if (entity)
+        {
+            PushDiscOutOfDisc2D(player->m_position, player->m_physicRadius, entity->m_position, entity->m_physicRadius);
+        }
     }
 
     return false;

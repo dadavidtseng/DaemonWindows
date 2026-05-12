@@ -45,4 +45,11 @@ private:
     float m_scaleInTimer           = 0.f;
     float m_scaleInDuration        = 0.8f;
     Vec2  m_targetClientDimensions = Vec2::ZERO;
+
+    // Game-mode transition: animate from attract rectangle to game square
+    bool  m_isTransitioningToGame  = false;
+    float m_gameTransitionTimer    = 0.f;
+    float m_gameTransitionDuration = 0.5f;
+    Vec2  m_transitionStartDims    = Vec2::ZERO;
+    Vec2  m_gameClientDimensions   = Vec2(400.f, 400.f);
 };
