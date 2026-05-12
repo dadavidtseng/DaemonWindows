@@ -7,9 +7,12 @@
 
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/NamedStrings.hpp"
-#include "Engine/Resource/ResourceSubsystem.hpp"
+#include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
+#include "Engine/Resource/ResourceSubsystem.hpp"
 #include "Game/Gameplay/Game.hpp"
+#include "Game/Gameplay/Player.hpp"
+#include "Game/Gameplay/UpgradeManager.hpp"
 
 //----------------------------------------------------------------------------------------------------
 Coin::Coin(EntityID const entityID,
@@ -46,6 +49,27 @@ Coin::~Coin()
 void Coin::Update(float const deltaSeconds)
 {
     Entity::Update(deltaSeconds);
+
+    // Coin attraction toward player
+    Player* player = g_game->GetPlayer();
+    if (player && !player->IsDead())
+    {
+        UpgradeManager* upgradeMgr = g_game->GetUpgradeManager();
+        int wealthLevel = upgradeMgr ? upgradeMgr->GetUpgradeLevel(eUpgradeType::WEALTH) : 0;
+
+        // Base attraction: radius 80, speed 100
+        // Per wealth level: +40 radius, +80 speed
+        float attractRadius = 80.f + 40.f * static_cast<float>(wealthLevel);
+        float attractSpeed  = 100.f + 80.f * static_cast<float>(wealthLevel);
+
+        float dist = GetDistance2D(m_position, player->m_position);
+        if (dist < attractRadius && dist > 1.f)
+        {
+            Vec2 dirToPlayer = (player->m_position - m_position).GetNormalized();
+            m_position += dirToPlayer * attractSpeed * deltaSeconds;
+        }
+    }
+
     if (m_hasChildWindow)
     {
         WindowID    windowID   = g_windowSubsystem->FindWindowIDByEntityID(m_entityID);
