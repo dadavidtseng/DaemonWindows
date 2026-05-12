@@ -85,6 +85,7 @@ void Bullet::Update(float const deltaSeconds)
     {
         Vec2 currentPos  = window->GetWindowPosition();
         Vec2 currentSize = window->GetWindowDimensions();
+        Vec2 screenDims  = Window::s_mainWindow->GetScreenDimensions();
 
         bool hitEdge = false;
 
@@ -95,6 +96,9 @@ void Bullet::Update(float const deltaSeconds)
             {
                 Vec2 newPos  = currentPos + Vec2(10, 0);
                 Vec2 newSize = currentSize + Vec2(10, 0);
+                // Clamp: don't expand past right screen edge
+                if (newPos.x + newSize.x > screenDims.x)
+                    newSize.x = screenDims.x - newPos.x;
                 g_windowSubsystem->AnimateWindowPositionAndDimensions(windowID, newPos, newSize, 0.1f);
             }
         }
@@ -105,6 +109,12 @@ void Bullet::Update(float const deltaSeconds)
             {
                 Vec2 newPos  = currentPos + Vec2(-20, 0);
                 Vec2 newSize = currentSize + Vec2(10, 0);
+                // Clamp: don't expand past left screen edge
+                if (newPos.x < 0.f)
+                {
+                    newSize.x += newPos.x; // reduce size by overshoot
+                    newPos.x = 0.f;
+                }
                 g_windowSubsystem->AnimateWindowPositionAndDimensions(windowID, newPos, newSize, 0.1f);
             }
         }
@@ -115,6 +125,9 @@ void Bullet::Update(float const deltaSeconds)
             {
                 Vec2 newPos  = currentPos + Vec2(0, 10);
                 Vec2 newSize = currentSize + Vec2(0, 10);
+                // Clamp: don't expand past bottom screen edge
+                if (newPos.y + newSize.y > screenDims.y)
+                    newSize.y = screenDims.y - newPos.y;
                 g_windowSubsystem->AnimateWindowPositionAndDimensions(windowID, newPos, newSize, 0.1f);
             }
         }
@@ -125,6 +138,12 @@ void Bullet::Update(float const deltaSeconds)
             {
                 Vec2 newPos  = currentPos + Vec2(0, -20);
                 Vec2 newSize = currentSize + Vec2(0, 10);
+                // Clamp: don't expand past top screen edge
+                if (newPos.y < 0.f)
+                {
+                    newSize.y += newPos.y; // reduce size by overshoot
+                    newPos.y = 0.f;
+                }
                 g_windowSubsystem->AnimateWindowPositionAndDimensions(windowID, newPos, newSize, 0.1f);
             }
         }
@@ -164,13 +183,14 @@ void Bullet::Render() const
     AddVertsForDisc2D(verts, m_position, m_physicRadius, bulletColor);
 
     // Homing ring indicator
-    if (hasHoming && m_name == "Bullet")
+    bool drawRing = (hasHoming && m_name == "Bullet");
+    if (drawRing)
     {
         AddVertsForDisc2D(verts, m_position, m_physicRadius + 4.f, 2.f, Rgba8(0, 255, 100, 120));
     }
 
     g_renderer->SetModelConstants();
-    g_renderer->SetBlendMode(eBlendMode::ALPHA);
+    g_renderer->SetBlendMode(drawRing ? eBlendMode::ALPHA : eBlendMode::OPAQUE);
     g_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
     g_renderer->SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
     g_renderer->SetDepthMode(eDepthMode::DISABLED);
