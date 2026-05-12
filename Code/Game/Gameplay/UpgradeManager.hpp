@@ -6,37 +6,41 @@
 #pragma once
 //----------------------------------------------------------------------------------------------------
 #include "Game/Framework/GameCommon.hpp"
+//----------------------------------------------------------------------------------------------------
+#include <string>
 
 //----------------------------------------------------------------------------------------------------
 class Game;
 
 //----------------------------------------------------------------------------------------------------
 // Upgrade Types Enumeration
-// Defines all available upgrade types that can be purchased in the shop
+// Matches original WindowKill upgrade list
 //-----------------------------------------------------------------------------------------------
 enum class eUpgradeType : int8_t
 {
-	FIRE_RATE,        // Increases player's fire rate
-	DAMAGE,           // Increases bullet damage
-	PROJECTILE_COUNT, // Increases number of bullets per shot
-	BULLET_SPREAD,    // Modifies bullet spread pattern
-	BULLET_SIZE,      // Increases bullet size
-	PIERCING,         // Allows bullets to pierce through enemies
-	HOMING,           // Makes bullets home towards enemies
-	
-	COUNT             // Total number of upgrade types
+	SPEED,          // Increases player movement speed
+	FIRE_RATE,      // Increases player's fire rate
+	MULTI_SHOT,     // +1 bullet per shot
+	HOMING,         // Makes bullets home towards enemies
+	WEALTH,         // Increases coin drops from enemies
+	MAX_HEALTH,     // +5 max HP and heals 5 HP
+	SPLASH_DAMAGE,  // Bullets deal area damage on hit
+	PIERCING,       // Bullets pierce through enemies
+	HEAL,           // Heals player for 20 HP (instant, consumable)
+
+	COUNT           // Total number of upgrade types
 };
 
+//-----------------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------------
 // Upgrade Data Structure
 // Stores information about a single upgrade instance
 //-----------------------------------------------------------------------------------------------
 struct Upgrade
 {
-	eUpgradeType m_type;
-	int          m_level = 0;      // Current upgrade level (0 = not purchased)
-	int          m_maxLevel = 5;   // Maximum upgrade level
-	int          m_baseCost = 100; // Base cost for level 1
+	eUpgradeType m_type     = eUpgradeType::SPEED;
+	int          m_level    = 0;      // Current upgrade level (0 = not purchased)
+	int          m_baseCost = 10;     // Base cost for level 1
 };
 
 //-----------------------------------------------------------------------------------------------
@@ -58,12 +62,29 @@ public:
 	int  GetUpgradeCost(eUpgradeType type) const;
 	bool IsUpgradeAvailable(eUpgradeType type) const;
 	int  GetUpgradeLevel(eUpgradeType type) const;
-	bool IsUpgradeMaxed(eUpgradeType type) const;
+	void Reset();
 
 	// Accessors
 	Upgrade const* GetUpgrade(eUpgradeType type) const;
 
+	// Stat getters - returns the effective value for each upgrade type
+	float GetSpeedBonus() const;            // Additional speed per level
+	float GetFireRateMultiplier() const;    // Multiplier on bullet cooldown (lower = faster)
+	int   GetProjectileCount() const;       // Number of bullets per shot
+	float GetHomingStrength() const;        // Homing turn rate (degrees per second)
+	float GetWealthMultiplier() const;      // Coin drop multiplier
+	int   GetMaxHealthBonus() const;        // Additional max HP
+	float GetSplashRadius() const;          // Splash damage radius (0 = no splash)
+	int   GetPiercingCount() const;         // Number of enemies a bullet can pierce through
+
+	// Utility
+	static std::string UpgradeTypeToString(eUpgradeType type);
+	static std::string UpgradeTypeToDisplayName(eUpgradeType type);
+
 private:
+	// Per-upgrade initialization
+	void InitializeUpgradeDefaults();
+
 	// Game reference
 	Game* m_game = nullptr;
 
