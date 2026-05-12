@@ -133,10 +133,7 @@ void Slime::DecreaseHealth(int amount)
 {
 	Entity::DecreaseHealth(amount);
 
-	if (m_healthWidget)
-	{
-		m_healthWidget->SetText(Stringf("SLIME HP=%d", m_health));
-	}
+	// Widget text removed - no text rendering on enemy windows
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -159,7 +156,7 @@ void Slime::LobResidueBlobs()
 		Vec2 const  blobDir   = Vec2::MakeFromPolarDegrees(baseAngle, 1.f);
 
 		Bullet* blob = new Bullet(
-			g_rng->RollRandomIntInRange(100, 10000),
+			Game::AllocateEntityID(),
 			m_position,
 			baseAngle,
 			Rgba8(100, 220, 50, 255),  // sickly green

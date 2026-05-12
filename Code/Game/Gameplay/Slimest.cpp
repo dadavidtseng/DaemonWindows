@@ -153,10 +153,7 @@ void Slimest::DecreaseHealth(int amount)
 {
 	Entity::DecreaseHealth(amount);
 
-	if (m_healthWidget)
-	{
-		m_healthWidget->SetText(Stringf("SLIMEST HP=%d", m_health));
-	}
+	// Widget text removed - no text rendering on enemy windows
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -178,7 +175,7 @@ void Slimest::LobResidueBlobs()
 		Vec2 const  blobDir   = Vec2::MakeFromPolarDegrees(baseAngle, 1.f);
 
 		Bullet* blob = new Bullet(
-			g_rng->RollRandomIntInRange(100, 10000),
+			Game::AllocateEntityID(),
 			m_position,
 			baseAngle,
 			Rgba8(60, 180, 30, 255),  // dark green
@@ -204,7 +201,7 @@ void Slimest::SpawnSlimers()
 		Vec2 const  spawnPos     = m_position + offset;
 
 		Slimer* slimer = new Slimer(
-			g_rng->RollRandomIntInRange(100, 10000),
+			Game::AllocateEntityID(),
 			spawnPos,
 			0.f,
 			Rgba8(80, 220, 50, 255),  // medium green

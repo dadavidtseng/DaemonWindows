@@ -159,10 +159,7 @@ void Spiker::DecreaseHealth(int amount)
 {
 	Entity::DecreaseHealth(amount);
 
-	if (m_healthWidget)
-	{
-		m_healthWidget->SetText(Stringf("SPIKER HP=%d", m_health));
-	}
+	// Widget text removed - no text rendering on enemy windows
 
 	CheckTeleportThreshold();
 }
@@ -181,7 +178,7 @@ void Spiker::FireRadialBulletWave()
 		Vec2 const  direction = Vec2::MakeFromPolarDegrees(angle, 1.f);
 
 		Bullet* bullet = new Bullet(
-			g_rng->RollRandomIntInRange(100, 1000),
+			Game::AllocateEntityID(),
 			m_position,
 			angle,
 			Rgba8(255, 50, 50, 255),
@@ -210,7 +207,7 @@ void Spiker::FireLaser()
 		Vec2 const  spawnPos = m_position + laserDir * offset;
 
 		Bullet* bullet = new Bullet(
-			g_rng->RollRandomIntInRange(100, 1000),
+			Game::AllocateEntityID(),
 			spawnPos,
 			m_laserAimDegrees,
 			Rgba8(255, 255, 0, 255),  // yellow laser bullets

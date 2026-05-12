@@ -149,10 +149,7 @@ void Slimer::DecreaseHealth(int amount)
 {
 	Entity::DecreaseHealth(amount);
 
-	if (m_healthWidget)
-	{
-		m_healthWidget->SetText(Stringf("SLIMER HP=%d", m_health));
-	}
+	// Widget text removed - no text rendering on enemy windows
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -174,7 +171,7 @@ void Slimer::LobResidueBlobs()
 		Vec2 const  blobDir   = Vec2::MakeFromPolarDegrees(baseAngle, 1.f);
 
 		Bullet* blob = new Bullet(
-			g_rng->RollRandomIntInRange(100, 10000),
+			Game::AllocateEntityID(),
 			m_position,
 			baseAngle,
 			Rgba8(80, 200, 40, 255),  // sickly green
@@ -200,7 +197,7 @@ void Slimer::SpawnSlimes()
 		Vec2 const  spawnPos     = m_position + offset;
 
 		Slime* slime = new Slime(
-			g_rng->RollRandomIntInRange(100, 10000),
+			Game::AllocateEntityID(),
 			spawnPos,
 			0.f,
 			Rgba8(120, 255, 80, 255),  // bright green

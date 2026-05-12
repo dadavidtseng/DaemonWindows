@@ -129,7 +129,7 @@ void Octagon::FireBulletAtPlayer()
 
     // Spawn bullet at octagon's position, aimed at player
     Bullet* bullet = new Bullet(
-        g_rng->RollRandomIntInRange(100, 1000),
+        Game::AllocateEntityID(),
         m_position,
         direction.GetOrientationDegrees(),
         m_color,

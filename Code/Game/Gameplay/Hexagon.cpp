@@ -106,7 +106,7 @@ void Hexagon::SpawnSplitHexagons()
         int const randomType = g_rng->RollRandomIntInRange(0, 1);
 
         Hexagon* child = new Hexagon(
-            g_rng->RollRandomIntInRange(100, 1000),
+            Game::AllocateEntityID(),
             spawnPos,
             0.f,
             Rgba8(255, 100, 80, 255),  // lighter red - distinguishes split children from parent
