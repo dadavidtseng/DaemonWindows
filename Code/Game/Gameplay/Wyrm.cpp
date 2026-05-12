@@ -70,14 +70,9 @@ Wyrm::~Wyrm()
 		m_healthWidget->MarkForDestroy();
 	}
 
-	// Null out leader pointers in surviving segments to prevent dangling pointer access
-	for (WyrmSegment* seg : m_segments)
-	{
-		if (seg && !seg->IsDead() && seg->GetLeader() == this)
-		{
-			seg->SetLeader(nullptr);
-		}
-	}
+	// Chain re-linking is handled by Wyrm::Update() while pointers are still valid.
+	// Destructors must NOT access m_segments — they may already be freed
+	// during the deferred deletion pass.
 	m_segments.clear();
 }
 
@@ -124,6 +119,25 @@ void Wyrm::Update(float const deltaSeconds)
 		InitiateSequentialFire();
 	}
 
+	// Validate segment pointers are still in the entity list
+	for (int i = static_cast<int>(m_segments.size()) - 1; i >= 0; --i)
+	{
+		bool found = false;
+		for (Entity* e : g_game->m_entityList)
+		{
+			if (e == m_segments[i])
+			{
+				found = true;
+				break;
+			}
+		}
+		if (!found)
+		{
+			// Dangling pointer detected — remove from tracking
+			m_segments.erase(m_segments.begin() + i);
+		}
+	}
+
 	// Clean up dead segments from our tracking list
 	for (int i = static_cast<int>(m_segments.size()) - 1; i >= 0; --i)
 	{
@@ -134,16 +148,38 @@ void Wyrm::Update(float const deltaSeconds)
 			Entity*      leader   = deadSeg->GetLeader();
 			WyrmSegment* follower = deadSeg->GetFollower();
 
-			// If there's a follower, its new leader is the dead segment's leader
+			// Walk up the chain to find a living leader (skip dead leaders)
+			while (leader && leader->IsDead())
+			{
+				// If leader is a WyrmSegment, follow its leader pointer
+				WyrmSegment* leaderSeg = nullptr;
+				for (WyrmSegment* seg : m_segments)
+				{
+					if (seg == leader)
+					{
+						leaderSeg = seg;
+						break;
+					}
+				}
+				if (leaderSeg)
+					leader = leaderSeg->GetLeader();
+				else
+					break; // leader is the Wyrm head (or unknown), stop
+			}
+
+			// If the leader is also dead (Wyrm head died), set to nullptr
+			if (leader && leader->IsDead())
+				leader = nullptr;
+
+			// If there's a follower, its new leader is the nearest living ancestor
 			if (follower)
 			{
 				follower->SetLeader(leader);
 			}
 
-			// If the leader is a segment, update its follower pointer
+			// If the leader is a living segment, update its follower pointer
 			if (leader)
 			{
-				// Check if leader is a WyrmSegment (not the Wyrm head)
 				for (WyrmSegment* seg : m_segments)
 				{
 					if (seg == leader)
@@ -208,10 +244,7 @@ void Wyrm::DecreaseHealth(int amount)
 {
 	Entity::DecreaseHealth(amount);
 
-	if (m_healthWidget)
-	{
-		m_healthWidget->SetText(Stringf("WYRM HEAD HP=%d", m_health));
-	}
+	// Widget text removed - no text rendering on enemy windows
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -230,7 +263,7 @@ void Wyrm::SpawnSegments()
 		uint8_t const greenShift = static_cast<uint8_t>(255 - (i * 25));
 
 		WyrmSegment* segment = new WyrmSegment(
-			g_rng->RollRandomIntInRange(100, 10000),
+			Game::AllocateEntityID(),
 			segmentPos,
 			m_orientationDegrees,
 			Rgba8(0, greenShift, 100, 255),
@@ -266,7 +299,7 @@ void Wyrm::InitiateSequentialFire()
 	float const angle = dirToPlayer.GetOrientationDegrees();
 
 	Bullet* bullet = new Bullet(
-		g_rng->RollRandomIntInRange(100, 1000),
+		Game::AllocateEntityID(),
 		m_position,
 		angle,
 		Rgba8(0, 255, 100, 255),  // green bullets

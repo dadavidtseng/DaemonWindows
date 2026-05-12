@@ -62,11 +62,11 @@ WyrmSegment::~WyrmSegment()
 		m_healthWidget->MarkForDestroy();
 	}
 
-	// Prevent dangling pointer: null out follower's leader reference
-	if (m_follower && !m_follower->IsDead())
-	{
-		m_follower->SetLeader(m_leader);  // re-link follower to our leader (may be null)
-	}
+	// Chain re-linking is handled by Wyrm::Update() while pointers are still valid.
+	// Destructors must NOT access m_leader or m_follower — they may already be freed
+	// during the deferred deletion pass.
+	m_leader   = nullptr;
+	m_follower = nullptr;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -77,6 +77,43 @@ void WyrmSegment::Update(float const deltaSeconds)
 
 	SyncWindowWidgetToPosition();
 	if (m_isDead) return;
+
+	// Validate leader pointer is still in the entity list (debug crash detection)
+	if (m_leader)
+	{
+		bool leaderFound = false;
+		for (Entity* e : g_game->m_entityList)
+		{
+			if (e == m_leader)
+			{
+				leaderFound = true;
+				break;
+			}
+		}
+		if (!leaderFound)
+		{
+			// Leader pointer is dangling! Null it out to prevent crash
+			m_leader = nullptr;
+		}
+	}
+
+	// Validate follower pointer similarly
+	if (m_follower)
+	{
+		bool followerFound = false;
+		for (Entity* e : g_game->m_entityList)
+		{
+			if (e == m_follower)
+			{
+				followerFound = true;
+				break;
+			}
+		}
+		if (!followerFound)
+		{
+			m_follower = nullptr;
+		}
+	}
 
 	// Follow the leader (head or previous segment) maintaining chain distance
 	if (m_leader && !m_leader->IsDead())
@@ -177,10 +214,7 @@ void WyrmSegment::DecreaseHealth(int amount)
 {
 	Entity::DecreaseHealth(amount);
 
-	if (m_healthWidget)
-	{
-		m_healthWidget->SetText(Stringf("WYRM[%d] HP=%d", m_segmentIndex, m_health));
-	}
+	// Widget text removed - no text rendering on enemy windows
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -203,7 +237,7 @@ void WyrmSegment::FireBulletAtPlayer()
 	float const angle = dirToPlayer.GetOrientationDegrees();
 
 	Bullet* bullet = new Bullet(
-		g_rng->RollRandomIntInRange(100, 1000),
+		Game::AllocateEntityID(),
 		m_position,
 		angle,
 		Rgba8(0, 255, 100, 255),  // green bullets

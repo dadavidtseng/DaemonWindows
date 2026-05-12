@@ -117,16 +117,30 @@ void Game::Update()
         {
             if (!entity->IsDead())
             {
-                entity->Update(gameDeltaSeconds);
-                entity->UpdateFromInput(gameDeltaSeconds);
+                // During SHOP state, only the Shop entity updates and processes input
+                bool isShopEntity = (entity->m_name == "Shop");
+                if (m_gameState != eGameState::SHOP || isShopEntity)
+                {
+                    entity->Update(gameDeltaSeconds);
+                }
+                if (m_gameState != eGameState::SHOP || isShopEntity)
+                {
+                    entity->UpdateFromInput(gameDeltaSeconds);
+                }
             }
-            else
-            {
-                // Clean up dead entity
-                delete entity;
-                m_entityList.erase(m_entityList.begin() + i);
-                --i;
-            }
+        }
+    }
+
+    // Deferred deletion: delete dead entities after all updates complete
+    // This prevents use-after-free when entities hold pointers to each other (e.g., Wyrm chain)
+    for (size_t i = 0; i < m_entityList.size(); ++i)
+    {
+        Entity* entity = m_entityList[i];
+        if (entity != nullptr && entity->IsDead())
+        {
+            delete entity;
+            m_entityList.erase(m_entityList.begin() + i);
+            --i;
         }
     }
 }
@@ -210,7 +224,7 @@ STATIC bool Game::OnEntityDestroyed(EventArgs& args)
         Vec2 const  offset       = Vec2::MakeFromPolarDegrees(scatterAngle, 10.f * static_cast<float>(i > 0));
         Vec2 const  coinPos      = entity->m_position + offset;
 
-        g_game->m_entityList.push_back(new Coin((int)g_game->m_entityList.size(), coinPos, 0.f, Rgba8::YELLOW, true, false));
+        g_game->m_entityList.push_back(new Coin(s_nextEntityID++, coinPos, 0.f, Rgba8::YELLOW, true, false));
     }
 
     return true;
@@ -267,7 +281,7 @@ STATIC bool Game::OnWaveComplete(EventArgs& args)
             Vec2 const  offset       = Vec2::MakeFromPolarDegrees(scatterAngle, 20.f + g_rng->RollRandomFloatInRange(0.f, 30.f));
             Vec2 const  coinPos      = spawnCenter + offset;
 
-            g_game->m_entityList.push_back(new Coin((int)g_game->m_entityList.size(), coinPos, 0.f, Rgba8::YELLOW, true, false));
+            g_game->m_entityList.push_back(new Coin(s_nextEntityID++, coinPos, 0.f, Rgba8::YELLOW, true, false));
         }
 
         DebuggerPrintf("Wave %d reward: %d coins spawned.\n", waveNumber, coinReward);
@@ -472,10 +486,17 @@ bool Game::IsEnemy(Entity const* entity)
 //----------------------------------------------------------------------------------------------------
 void Game::HandleBulletEnemyCollision(Bullet* bullet, Entity* enemy)
 {
+    // Skip if bullet already hit this enemy (piercing pass-through)
+    if (bullet->HasAlreadyHit(enemy->m_entityID)) return;
+
     FireCollisionEvent(bullet, enemy);
 
-    // Kill bullet immediately so it can't hit multiple enemies in the same frame
-    bullet->MarkAsDead();
+    // Register hit and check piercing
+    bullet->RegisterHit(enemy->m_entityID);
+    if (!bullet->CanPierce())
+    {
+        bullet->MarkAsDead();
+    }
 
     enemy->DecreaseHealth(1);
 

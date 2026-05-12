@@ -115,14 +115,20 @@ void Entity::DecreaseHealth(int const amount)
 
 void Entity::SyncWindowWidgetToPosition()
 {
-    if (!m_hasChildWindow || !m_healthWidget) return;
+    if (!m_hasChildWindow) return;
 
     WindowID    windowID   = g_windowSubsystem->FindWindowIDByEntityID(m_entityID);
     WindowData* windowData = g_windowSubsystem->GetWindowData(windowID);
     if (!windowData || !windowData->m_window) return;
 
-    m_healthWidget->SetPosition(windowData->m_window->GetClientPosition());
-    m_healthWidget->SetDimensions(windowData->m_window->GetClientDimensions());
-    m_healthWidget->SetText(Stringf("Health=%d", m_health));
-    windowData->m_window->SetClientPosition(m_position - windowData->m_window->GetClientDimensions() * 0.5f);
+    // Compute new window position and use it directly (avoid read-back delay)
+    Vec2 clientDims   = windowData->m_window->GetClientDimensions();
+    Vec2 newClientPos = m_position - clientDims * 0.5f;
+    windowData->m_window->SetClientPosition(newClientPos);
+
+    // Hide enemy health widget (no text rendering on enemy windows)
+    if (m_healthWidget && m_name != "Player")
+    {
+        m_healthWidget->SetVisible(false);
+    }
 }
