@@ -14,6 +14,7 @@
 #include "Engine/Widget/WidgetSubsystem.hpp"
 #include "Game/Gameplay/Bullet.hpp"
 #include "Game/Gameplay/Game.hpp"
+#include "Game/Gameplay/UpgradeManager.hpp"
 #include "Game/Subsystem/Widget/ButtonWidget.hpp"
 
 //----------------------------------------------------------------------------------------------------
@@ -143,10 +144,19 @@ void Player::UpdateFromInput(float const deltaSeconds)
 {
     if (g_game->GetCurrentGameState() == eGameState::ATTRACT) return;
 
-    if (g_input->IsKeyDown(KEYCODE_W)) m_position.y += deltaSeconds * m_speed;
-    if (g_input->IsKeyDown(KEYCODE_A)) m_position.x -= deltaSeconds * m_speed;
-    if (g_input->IsKeyDown(KEYCODE_S)) m_position.y -= deltaSeconds * m_speed;
-    if (g_input->IsKeyDown(KEYCODE_D)) m_position.x += deltaSeconds * m_speed;
+    // Apply speed upgrade bonus
+    UpgradeManager* upgradeMgr   = g_game->GetUpgradeManager();
+    float           effectiveSpeed = m_speed + (upgradeMgr ? upgradeMgr->GetSpeedBonus() : 0.f);
+
+    if (g_input->IsKeyDown(KEYCODE_W)) m_position.y += deltaSeconds * effectiveSpeed;
+    if (g_input->IsKeyDown(KEYCODE_A)) m_position.x -= deltaSeconds * effectiveSpeed;
+    if (g_input->IsKeyDown(KEYCODE_S)) m_position.y -= deltaSeconds * effectiveSpeed;
+    if (g_input->IsKeyDown(KEYCODE_D)) m_position.x += deltaSeconds * effectiveSpeed;
+
+    // Apply fire rate upgrade to bullet timer period
+    float baseFirePeriod = 0.3f;
+    float fireMultiplier = upgradeMgr ? upgradeMgr->GetFireRateMultiplier() : 1.0f;
+    m_bulletFireTimer.m_period = static_cast<double>(baseFirePeriod * fireMultiplier);
 
     // Continuous fire (hold to shoot)
     if (g_input->IsKeyDown(KEYCODE_LEFT_MOUSE))
@@ -199,14 +209,39 @@ void Player::UpdateWindowFocus()
 //----------------------------------------------------------------------------------------------------
 void Player::FireBullet()
 {
-    Bullet* bullet = new Bullet(g_rng->RollRandomIntInRange(100, 1000), m_position, 0.f, Rgba8::WHITE, true, false);
+    UpgradeManager* upgradeMgr = g_game->GetUpgradeManager();
 
-    Vec2 velocity      = (Window::s_mainWindow->GetCursorPositionOnScreen() - m_position).GetNormalized();
-    bullet->m_velocity = velocity;
+    int   projectileCount = upgradeMgr ? upgradeMgr->GetProjectileCount() : 1;
+    float spreadDegrees   = 5.f; // Fixed 5 degree spread between projectiles
 
-    g_game->m_entityList.push_back(bullet);
-    SoundID const attractBGM = g_audio->CreateOrGetSound("Data/Audio/shoot.mp3", eAudioSystemSoundDimension::Sound2D);
-    g_audio->StartSound(attractBGM, false, 1.f, 0.f, 1.f);
+    Vec2  aimDirection    = (Window::s_mainWindow->GetCursorPositionOnScreen() - m_position).GetNormalized();
+    float aimAngle        = aimDirection.GetOrientationDegrees();
+
+    // Calculate spread: evenly distribute projectiles across the spread angle
+    float startAngle = aimAngle;
+    float angleStep  = 0.f;
+    if (projectileCount > 1 && spreadDegrees > 0.f)
+    {
+        float totalSpread = spreadDegrees * static_cast<float>(projectileCount - 1);
+        startAngle = aimAngle - totalSpread * 0.5f;
+        angleStep  = spreadDegrees;
+    }
+
+    for (int i = 0; i < projectileCount; ++i)
+    {
+        float bulletAngle = startAngle + angleStep * static_cast<float>(i);
+        Vec2  bulletDir   = Vec2::MakeFromPolarDegrees(bulletAngle);
+
+        Bullet* bullet     = new Bullet(Game::AllocateEntityID(), m_position, 0.f, Rgba8::WHITE, true, false);
+        bullet->m_velocity       = bulletDir;
+        bullet->m_piercingCount  = upgradeMgr ? upgradeMgr->GetPiercingCount() : 0;
+        bullet->m_homingStrength = upgradeMgr ? upgradeMgr->GetHomingStrength() : 0.f;
+
+        g_game->m_entityList.push_back(bullet);
+    }
+
+    SoundID const shootSFX = g_audio->CreateOrGetSound("Data/Audio/shoot.mp3", eAudioSystemSoundDimension::Sound2D);
+    g_audio->StartSound(shootSFX, false, 1.f, 0.f, 1.f);
 }
 
 void Player::BounceOffWindow()
