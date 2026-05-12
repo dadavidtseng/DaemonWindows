@@ -615,6 +615,24 @@ void Game::HandleEntityCollision()
             if (entityA->IsDead()) break;
         }
     }
+
+    // Enemy-enemy collision: push overlapping enemies apart
+    for (int i = 0; i < (int)m_entityList.size(); ++i)
+    {
+        Entity* entityA = m_entityList[i];
+        if (entityA->IsDead() || !IsEnemy(entityA)) continue;
+
+        for (int j = i + 1; j < (int)m_entityList.size(); ++j)
+        {
+            Entity* entityB = m_entityList[j];
+            if (entityB->IsDead() || !IsEnemy(entityB)) continue;
+
+            if (DoDiscsOverlap2D(entityA->m_position, entityA->m_physicRadius, entityB->m_position, entityB->m_physicRadius))
+            {
+                PushDiscsOutOfEachOther2D(entityA->m_position, entityA->m_physicRadius, entityB->m_position, entityB->m_physicRadius);
+            }
+        }
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
