@@ -9,7 +9,6 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Resource/ResourceSubsystem.hpp"
 #include "Engine/Math/MathUtils.hpp"
-#include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Widget/WidgetSubsystem.hpp"
 #include "Game/Gameplay/Bullet.hpp"
@@ -104,8 +103,8 @@ void Player::Update(float const deltaSeconds)
     if (m_isTransitioningToGame)
     {
         m_gameTransitionTimer += deltaSeconds;
-        float t      = GetClampedZeroToOne(m_gameTransitionTimer / m_gameTransitionDuration);
-        float easedT = SmoothStep5(t);
+        float t               = GetClampedZeroToOne(m_gameTransitionTimer / m_gameTransitionDuration);
+        float easedT          = SmoothStep5(t);
 
         Vec2 currentDim = Interpolate(m_transitionStartDims, m_gameClientDimensions, easedT);
         windowData->m_window->SetClientDimensions(currentDim);
@@ -125,8 +124,8 @@ void Player::Update(float const deltaSeconds)
         if (m_isScalingIn)
         {
             m_scaleInTimer += deltaSeconds;
-            float t      = GetClampedZeroToOne(m_scaleInTimer / m_scaleInDuration);
-            float easedT = SmoothStep5(t);
+            float t        = GetClampedZeroToOne(m_scaleInTimer / m_scaleInDuration);
+            float easedT   = SmoothStep5(t);
 
             Vec2 currentDim = Interpolate(Vec2(1.f, 1.f), m_targetClientDimensions, easedT);
             windowData->m_window->SetClientDimensions(currentDim);
@@ -163,7 +162,7 @@ void Player::UpdateFromInput(float const deltaSeconds)
     if (g_game->GetCurrentGameState() == eGameState::ATTRACT) return;
 
     // Apply speed upgrade bonus
-    UpgradeManager* upgradeMgr   = g_game->GetUpgradeManager();
+    UpgradeManager* upgradeMgr     = g_game->GetUpgradeManager();
     float           effectiveSpeed = m_speed + (upgradeMgr ? upgradeMgr->GetSpeedBonus() : 0.f);
 
     if (g_input->IsKeyDown(KEYCODE_W)) m_position.y += deltaSeconds * effectiveSpeed;
@@ -172,8 +171,8 @@ void Player::UpdateFromInput(float const deltaSeconds)
     if (g_input->IsKeyDown(KEYCODE_D)) m_position.x += deltaSeconds * effectiveSpeed;
 
     // Apply fire rate upgrade to bullet timer period
-    float baseFirePeriod = 0.3f;
-    float fireMultiplier = upgradeMgr ? upgradeMgr->GetFireRateMultiplier() : 1.0f;
+    float baseFirePeriod       = 0.3f;
+    float fireMultiplier       = upgradeMgr ? upgradeMgr->GetFireRateMultiplier() : 1.0f;
     m_bulletFireTimer.m_period = static_cast<double>(baseFirePeriod * fireMultiplier);
 
     // Continuous fire (hold to shoot)
@@ -232,8 +231,8 @@ void Player::FireBullet()
     int   projectileCount = upgradeMgr ? upgradeMgr->GetProjectileCount() : 1;
     float spreadDegrees   = 5.f; // Fixed 5 degree spread between projectiles
 
-    Vec2  aimDirection    = (Window::s_mainWindow->GetCursorPositionOnScreen() - m_position).GetNormalized();
-    float aimAngle        = aimDirection.GetOrientationDegrees();
+    Vec2  aimDirection = (Window::s_mainWindow->GetCursorPositionOnScreen() - m_position).GetNormalized();
+    float aimAngle     = aimDirection.GetOrientationDegrees();
 
     // Calculate spread: evenly distribute projectiles across the spread angle
     float startAngle = aimAngle;
@@ -241,8 +240,8 @@ void Player::FireBullet()
     if (projectileCount > 1 && spreadDegrees > 0.f)
     {
         float totalSpread = spreadDegrees * static_cast<float>(projectileCount - 1);
-        startAngle = aimAngle - totalSpread * 0.5f;
-        angleStep  = spreadDegrees;
+        startAngle        = aimAngle - totalSpread * 0.5f;
+        angleStep         = spreadDegrees;
     }
 
     for (int i = 0; i < projectileCount; ++i)
@@ -250,7 +249,7 @@ void Player::FireBullet()
         float bulletAngle = startAngle + angleStep * static_cast<float>(i);
         Vec2  bulletDir   = Vec2::MakeFromPolarDegrees(bulletAngle);
 
-        Bullet* bullet     = new Bullet(Game::AllocateEntityID(), m_position, 0.f, Rgba8::WHITE, true, false);
+        Bullet* bullet           = new Bullet(Game::AllocateEntityID(), m_position, 0.f, Rgba8::WHITE, true, false);
         bullet->m_velocity       = bulletDir;
         bullet->m_piercingCount  = upgradeMgr ? upgradeMgr->GetPiercingCount() : 0;
         bullet->m_homingStrength = upgradeMgr ? upgradeMgr->GetHomingStrength() : 0.f;
@@ -322,8 +321,8 @@ void Player::StartScaleInAnimation()
     m_isScalingIn            = true;
     m_scaleInTimer           = 0.f;
 
-    WindowID windowID = g_windowSubsystem->FindWindowIDByEntityID(m_entityID);
-    Window*  window   = g_windowSubsystem->GetWindow(windowID);
+    WindowID const windowID = g_windowSubsystem->FindWindowIDByEntityID(m_entityID);
+    Window *  window   = g_windowSubsystem->GetWindow(windowID);
     if (window)
     {
         window->SetClientDimensions(Vec2(1.f, 1.f));
@@ -341,14 +340,14 @@ bool Player::OnGameStateChanged(EventArgs& args)
         g_game->GetPlayer()->m_healthWidget->SetVisible(true);
 
         // Start transition animation from attract rectangle to game square
-        Player* player = g_game->GetPlayer();
-        WindowID wid = g_windowSubsystem->FindWindowIDByEntityID(player->m_entityID);
-        WindowData* wd = g_windowSubsystem->GetWindowData(wid);
+        Player*     player = g_game->GetPlayer();
+        WindowID    wid    = g_windowSubsystem->FindWindowIDByEntityID(player->m_entityID);
+        WindowData* wd     = g_windowSubsystem->GetWindowData(wid);
         if (wd && wd->m_window)
         {
             player->m_transitionStartDims   = wd->m_window->GetClientDimensions();
-            player->m_isTransitioningToGame  = true;
-            player->m_gameTransitionTimer    = 0.f;
+            player->m_isTransitioningToGame = true;
+            player->m_gameTransitionTimer   = 0.f;
         }
     }
     else if (preGameState == "GAME" && curGameState == "ATTRACT")
